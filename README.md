@@ -1,54 +1,62 @@
-# Bookmark Manager Monorepo
+# Bookmark Manager モノレポ
 
-This repository is organized as a monorepo.
+このリポジトリはモノレポ構成です。
 
-## Layout
+## 構成
 
-- `api/` - FastAPI backend source and tests
-- `frontend/` - Nuxt 4 single-page app
-- `chrome-extension/` - Chrome extension quick-add popup
-- `specs/` - implementation notes and task tracking
+- `api/` - FastAPI のバックエンド本体とテスト
+- `frontend/` - Nuxt 4 の SPA
+- `chrome-extension/` - Chrome 拡張のクイック追加ポップアップ
+- `specs/` - 実装メモとタスク管理
 
 ## API
 
-The backend lives under `api/`.
+バックエンドは `api/` 配下にあります。
 
-The frontend lives under `frontend/` as a Nuxt 4 SPA.
+フロントエンドは `frontend/` 配下にある Nuxt 4 の SPA です。
 
-Run the API from the repository root with:
+リポジトリルートから API を起動するには次を実行します。
 
 ```bash
 api-dev
 ```
 
-Run the frontend from `frontend/` with:
+`frontend/` 配下からフロントエンドを起動するには次を実行します。
 
 ```bash
 bun install
 bun run dev
 ```
 
-Or start both services from the repository root with:
+リポジトリルートから両方まとめて起動する場合は次を実行します。
 
 ```bash
 ./run-local.sh
 ```
 
-Run the API tests with:
+Docker で起動する場合は次を実行します。
+
+```bash
+docker compose up --build
+```
+
+Docker 起動時はフロントエンドが `http://127.0.0.1:3000`、API が `http://127.0.0.1:8000` で利用できます。
+
+API テストは次を実行します。
 
 ```bash
 python -m pytest -q
 ```
 
-Pytest is configured to collect tests from `api/tests`.
+pytest は `api/tests` を対象に収集するよう設定しています。
 
-## Local URLs
+## ローカル URL
 
-- Frontend: `http://127.0.0.1:3001`
+- フロントエンド: `http://127.0.0.1:3001`
 - API: `http://127.0.0.1:8001`
 
-## Chrome Extension
+## Chrome 拡張
 
-Load `chrome-extension/` as an unpacked extension in Chrome.
-The popup pre-fills the current tab's title and URL, and posts the bookmark directly to the DB via the API.
-Default API Base URL is `http://localhost:8001`.
+`chrome-extension/` を Chrome の unpacked extension として読み込みます。
+ポップアップでは現在タブのタイトルと URL を自動入力し、API 経由でそのまま DB に登録します。
+API Base URL のデフォルトは `http://localhost:8001` です。
