@@ -55,7 +55,7 @@ def test_db_error_returns_500(tmp_path, monkeypatch):
 
     client = TestClient(app)
     response = client.post(
-        "/bookmarks", json={"url": "https://example.com", "title": "Test"}
+        "/bookmarks", json={"url": "https://db-error.example", "title": "Test"}
     )
 
     assert response.status_code == 500

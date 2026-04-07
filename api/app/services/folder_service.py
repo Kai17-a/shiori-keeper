@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 
 from api.app.database import get_db
-from api.app.models import FolderCreate, FolderResponse
+from api.app.models import FolderCreate, FolderResponse, FolderUpdate
 from api.app.repositories.folder_repo import FolderRepository
 
 
@@ -17,6 +17,14 @@ class FolderService:
             repo = FolderRepository(conn)
             rows = repo.find_all()
             return [FolderResponse(**row) for row in rows]
+
+    def update(self, folder_id: int, data: FolderUpdate) -> FolderResponse:
+        with get_db() as conn:
+            repo = FolderRepository(conn)
+            row = repo.update(folder_id, data.name)
+            if not row:
+                raise HTTPException(status_code=404, detail="Folder not found")
+            return FolderResponse(**row)
 
     def delete(self, folder_id: int) -> None:
         with get_db() as conn:

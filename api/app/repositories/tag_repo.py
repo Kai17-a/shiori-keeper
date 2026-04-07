@@ -25,6 +25,18 @@ class TagRepository:
         ).fetchone()
         return dict(row) if row else None
 
+    def update(self, tag_id: int, name: str) -> dict | None:
+        cursor = self.conn.execute(
+            "UPDATE tags SET name = ? WHERE id = ?",
+            (name, tag_id),
+        )
+        if cursor.rowcount == 0:
+            return None
+        row = self.conn.execute(
+            "SELECT * FROM tags WHERE id = ?", (tag_id,)
+        ).fetchone()
+        return dict(row) if row else None
+
     def delete(self, tag_id: int) -> bool:
         cursor = self.conn.execute(
             "DELETE FROM tags WHERE id = ?", (tag_id,)

@@ -3,7 +3,7 @@ import sqlite3
 from fastapi import HTTPException
 
 from api.app.database import get_db
-from api.app.models import TagCreate, TagResponse
+from api.app.models import TagCreate, TagResponse, TagUpdate
 from api.app.repositories.tag_repo import TagRepository
 
 
@@ -22,6 +22,17 @@ class TagService:
             repo = TagRepository(conn)
             rows = repo.find_all()
             return [TagResponse(**row) for row in rows]
+
+    def update(self, tag_id: int, data: TagUpdate) -> TagResponse:
+        with get_db() as conn:
+            repo = TagRepository(conn)
+            try:
+                row = repo.update(tag_id, data.name)
+            except sqlite3.IntegrityError:
+                raise HTTPException(status_code=409, detail="Tag name already exists")
+            if not row:
+                raise HTTPException(status_code=404, detail="Tag not found")
+            return TagResponse(**row)
 
     def delete(self, tag_id: int) -> None:
         with get_db() as conn:

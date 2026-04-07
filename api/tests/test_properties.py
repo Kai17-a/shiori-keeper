@@ -79,7 +79,7 @@ def _unique(name: str) -> str:
 @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
 def test_property_1_bookmark_create_roundtrip(client, url, title):
     """Validates: Requirements 1.1, 2.2"""
-    resp = _create_bookmark(client, url=url, title=title)
+    resp = _create_bookmark(client, url=_unique(url), title=title)
     assert resp.status_code == 201
     bookmark_id = resp.json()["id"]
 
@@ -136,7 +136,7 @@ def test_property_4_folder_filter_accuracy(client, folder_count, bookmark_count)
         folder_id = folder_ids[i % folder_count]
         resp = _create_bookmark(
             client,
-            url=f"https://example{i}.com",
+            url=_unique(f"https://example{i}.com"),
             title=f"Bookmark{i}",
             folder_id=folder_id,
         )
@@ -169,7 +169,7 @@ def test_property_5_tag_filter_accuracy(client, tag_count, bookmark_count):
     # Create bookmarks and assign tags
     bm_ids_by_tag = {tid: [] for tid in tag_ids}
     for i in range(bookmark_count):
-        resp = _create_bookmark(client, url=f"https://site{i}.com", title=f"Site{i}")
+        resp = _create_bookmark(client, url=_unique(f"https://site{i}.com"), title=f"Site{i}")
         assert resp.status_code == 201
         bm_id = resp.json()["id"]
         tag_id = tag_ids[i % tag_count]
@@ -195,7 +195,7 @@ def test_property_5_tag_filter_accuracy(client, tag_count, bookmark_count):
 def test_property_6_keyword_search_accuracy(client, q):
     """Validates: Requirements 2.5"""
     # Create a bookmark whose title contains q
-    resp = _create_bookmark(client, url="https://example.com", title=f"prefix{q}suffix")
+    resp = _create_bookmark(client, url=_unique("https://example.com"), title=f"prefix{q}suffix")
     assert resp.status_code == 201
 
     # Search and verify all results contain q in title or url
@@ -218,7 +218,7 @@ def test_property_6_keyword_search_accuracy(client, q):
 @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
 def test_property_7_partial_update_immutability(client, new_title):
     """Validates: Requirements 3.1, 3.2"""
-    original_url = "https://original.com"
+    original_url = _unique("https://original.com")
     original_desc = "original description"
     resp = _create_bookmark(
         client, url=original_url, title="OriginalTitle", description=original_desc
@@ -249,7 +249,7 @@ def test_property_7_partial_update_immutability(client, new_title):
 def test_property_8_bookmark_delete_cascade(client, tag_count):
     """Validates: Requirements 4.1, 4.2"""
     # Create bookmark with tags
-    resp = _create_bookmark(client, url="https://delete-me.com", title="ToDelete")
+    resp = _create_bookmark(client, url=_unique("https://delete-me.com"), title="ToDelete")
     assert resp.status_code == 201
     bm_id = resp.json()["id"]
 
@@ -286,7 +286,7 @@ def test_property_9_folder_delete_nullifies_bookmark_folder(client, bookmark_cou
     for i in range(bookmark_count):
         resp = _create_bookmark(
             client,
-            url=f"https://infolder{i}.com",
+            url=_unique(f"https://infolder{i}.com"),
             title=f"InFolder{i}",
             folder_id=folder_id,
         )
@@ -326,7 +326,7 @@ def test_property_10_tag_name_uniqueness(client, tag_name):
 def test_property_11_tag_attach_detach_roundtrip(client, tag_count):
     """Validates: Requirements 7.1, 7.2"""
     # Create bookmark (starts with no tags)
-    resp = _create_bookmark(client, url="https://roundtrip.com", title="RoundTrip")
+    resp = _create_bookmark(client, url=_unique("https://roundtrip.com"), title="RoundTrip")
     assert resp.status_code == 201
     bm_id = resp.json()["id"]
     assert resp.json()["tags"] == []
@@ -359,7 +359,7 @@ def test_property_11_tag_attach_detach_roundtrip(client, tag_count):
 @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
 def test_property_12_duplicate_tag_attach_returns_409(client, dummy):
     """Validates: Requirements 7.3"""
-    resp = _create_bookmark(client, url="https://dup-tag.com", title="DupTag")
+    resp = _create_bookmark(client, url=_unique("https://dup-tag.com"), title="DupTag")
     assert resp.status_code == 201
     bm_id = resp.json()["id"]
 

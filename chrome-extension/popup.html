@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Bookmark Draft</title>
+        <link rel="stylesheet" href="popup.css" />
+    </head>
+    <body>
+        <main class="card">
+            <header class="header">
+                <div>
+                    <p class="eyebrow">Bookmark Manager</p>
+                    <h1>Quick Add</h1>
+                </div>
+                <button id="prefill" class="ghost" type="button">
+                    Use active tab
+                </button>
+            </header>
+
+            <div class="field">
+                <span>API Base URL</span>
+                <input id="api-base" name="api-base" type="url" readonly />
+            </div>
+
+            <form id="bookmark-form" class="form">
+                <label class="field">
+                    Title
+                    <input
+                        id="title"
+                        name="title"
+                        type="text"
+                        placeholder="Page title"
+                        required
+                    />
+                </label>
+                <label class="field">
+                    URL
+                    <input
+                        id="url"
+                        name="url"
+                        type="url"
+                        placeholder="https://example.com"
+                        required
+                    />
+                </label>
+                <label class="field">
+                    Description
+                    <textarea
+                        id="description"
+                        name="description"
+                        rows="3"
+                        placeholder="Optional note"
+                    ></textarea>
+                </label>
+
+                <label class="field">
+                    Folder
+                    <select id="folder" name="folder">
+                        <option value="">No folder</option>
+                    </select>
+                </label>
+
+                <label class="field">
+                    Tags
+                    <select id="tags" name="tags">
+                        <option value="">No tag</option>
+                    </select>
+                </label>
+
+                <div class="actions">
+                    <button type="submit">Save</button>
+                </div>
+            </form>
+
+            <p id="status" class="status">Waiting for the current tab.</p>
+        </main>
+
+        <script src="popup.js"></script>
+    </body>
+</html>

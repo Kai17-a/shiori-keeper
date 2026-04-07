@@ -15,3 +15,4 @@ dependencies = [
 
 [project.scripts]
 api-dev = "api.app.main:main"
+api-run = "api.app.main:main"

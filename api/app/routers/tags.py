@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from api.app.models import TagCreate, TagResponse
+from api.app.models import TagCreate, TagResponse, TagUpdate
 from api.app.services.tag_service import TagService
 
 router = APIRouter(prefix="/tags", tags=["tags"])
@@ -18,6 +18,11 @@ def create_tag(body: TagCreate, service: TagService = Depends(get_tag_service)):
 @router.get("", status_code=200, response_model=list[TagResponse])
 def list_tags(service: TagService = Depends(get_tag_service)):
     return service.list()
+
+
+@router.patch("/{tag_id}", response_model=TagResponse)
+def update_tag(tag_id: int, body: TagUpdate, service: TagService = Depends(get_tag_service)):
+    return service.update(tag_id, body)
 
 
 @router.delete("/{tag_id}", status_code=204)

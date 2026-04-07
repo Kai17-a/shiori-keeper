@@ -22,7 +22,15 @@ class FolderCreate(BaseModel):
     name: str
 
 
+class FolderUpdate(BaseModel):
+    name: str
+
+
 class TagCreate(BaseModel):
+    name: str
+
+
+class TagUpdate(BaseModel):
     name: str
 
 

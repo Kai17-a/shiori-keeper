@@ -5,3 +5,6 @@ __pycache__/
 *.pyc
 bookmarks.db
 .codex
+frontend/.nuxt/
+frontend/.output/
+frontend/dist/

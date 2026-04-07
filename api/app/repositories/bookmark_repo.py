@@ -46,6 +46,12 @@ class BookmarkRepository:
         ).fetchone()
         return dict(row) if row else None
 
+    def find_by_url(self, url: str) -> dict | None:
+        row = self.conn.execute(
+            "SELECT * FROM bookmarks WHERE url = ?", (url,)
+        ).fetchone()
+        return dict(row) if row else None
+
     def update(self, bookmark_id: int, fields: dict) -> dict | None:
         if not fields:
             return self.find_by_id(bookmark_id)

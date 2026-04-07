@@ -199,3 +199,19 @@ def test_update_bookmark_with_invalid_url_returns_422(client):
     bm_id = create_bookmark(client).json()["id"]
     resp = client.patch(f"/bookmarks/{bm_id}", json={"url": "bad-url"})
     assert resp.status_code == 422
+
+
+def test_create_bookmark_with_duplicate_url_returns_409(client):
+    create_bookmark(client, url="https://dup.example", title="First")
+    resp = create_bookmark(client, url="https://dup.example", title="Second")
+    assert resp.status_code == 409
+
+
+def test_update_bookmark_with_duplicate_url_returns_409(client):
+    first_id = create_bookmark(client, url="https://first.example", title="First").json()["id"]
+    create_bookmark(client, url="https://second.example", title="Second")
+    resp = client.patch(
+        f"/bookmarks/{first_id}",
+        json={"url": "https://second.example"},
+    )
+    assert resp.status_code == 409

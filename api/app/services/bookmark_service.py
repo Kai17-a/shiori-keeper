@@ -24,6 +24,8 @@ class BookmarkService:
             if data.folder_id is not None:
                 self._verify_folder(conn, data.folder_id)
             repo = BookmarkRepository(conn)
+            if repo.find_by_url(str(data.url)) is not None:
+                raise HTTPException(status_code=409, detail="Bookmark URL already exists")
             row = repo.insert(
                 url=str(data.url),
                 title=data.title,
@@ -69,6 +71,10 @@ class BookmarkService:
             if data.folder_id is not None:
                 self._verify_folder(conn, data.folder_id)
                 fields["folder_id"] = data.folder_id
+            if data.url is not None:
+                existing = repo.find_by_url(str(data.url))
+                if existing is not None and existing["id"] != bookmark_id:
+                    raise HTTPException(status_code=409, detail="Bookmark URL already exists")
 
             row = repo.update(bookmark_id, fields)
             return self._to_response(repo, row)

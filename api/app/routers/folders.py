@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from api.app.models import FolderCreate, FolderResponse
+from api.app.models import FolderCreate, FolderResponse, FolderUpdate
 from api.app.services.folder_service import FolderService
 
 router = APIRouter(prefix="/folders", tags=["folders"])
@@ -18,6 +18,11 @@ def create_folder(body: FolderCreate, service: FolderService = Depends(get_folde
 @router.get("", status_code=200, response_model=list[FolderResponse])
 def list_folders(service: FolderService = Depends(get_folder_service)):
     return service.list()
+
+
+@router.patch("/{folder_id}", response_model=FolderResponse)
+def update_folder(folder_id: int, body: FolderUpdate, service: FolderService = Depends(get_folder_service)):
+    return service.update(folder_id, body)
 
 
 @router.delete("/{folder_id}", status_code=204)
