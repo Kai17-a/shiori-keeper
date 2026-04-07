@@ -106,3 +106,11 @@ button {
   font-size: 12px;
   min-height: 1.4em;
 }
+
+.status[data-state="error"] {
+  color: #fca5a5;
+}
+
+.status[data-state="success"] {
+  color: #86efac;
+}

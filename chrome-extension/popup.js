@@ -12,13 +12,36 @@ const SETTINGS_PATH = "/settings"
 
 const setStatus = (text) => {
   status.textContent = text
+  status.dataset.state = "info"
+}
+
+const setErrorStatus = (text) => {
+  status.textContent = text
+  status.dataset.state = "error"
+}
+
+const setSuccessStatus = (text) => {
+  status.textContent = text
+  status.dataset.state = "success"
 }
 
 const storageGet = (keys) =>
-  new Promise((resolve) => chrome.storage.local.get(keys, resolve))
+  new Promise((resolve, reject) => {
+    if (!chrome.storage?.local) {
+      reject(new Error("chrome.storage.local is unavailable."))
+      return
+    }
+    chrome.storage.local.get(keys, resolve)
+  })
 
 const storageSet = (items) =>
-  new Promise((resolve) => chrome.storage.local.set(items, resolve))
+  new Promise((resolve, reject) => {
+    if (!chrome.storage?.local) {
+      reject(new Error("chrome.storage.local is unavailable."))
+      return
+    }
+    chrome.storage.local.set(items, resolve)
+  })
 
 const normalizeBase = (value) => (value || DEFAULT_API_BASE).replace(/\/$/, "")
 
@@ -26,14 +49,14 @@ const fillFromActiveTab = async () => {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
     if (!tab) {
-      setStatus("No active tab found.")
+      setErrorStatus("No active tab found.")
       return
     }
     titleInput.value = tab.title || ""
     urlInput.value = tab.url || ""
-    setStatus("Captured the current tab.")
+    setSuccessStatus("Captured the current tab.")
   } catch (error) {
-    setStatus(error.message || "Failed to read the active tab.")
+    setErrorStatus(error.message || "Failed to read the active tab.")
   }
 }
 
@@ -127,13 +150,13 @@ form.addEventListener("submit", async (event) => {
     if (created?.id && selectedTag) {
       await attachTags(created.id, [selectedTag])
     }
-    setStatus("Bookmark saved to the DB.")
+    setSuccessStatus("Bookmark saved to the DB.")
     window.close()
   } catch (error) {
-    setStatus(error.message || "Failed to save to the DB.")
+    setErrorStatus(error.message || "Failed to save to the DB.")
   }
 })
 
 Promise.all([loadApiBase(), fillFromActiveTab()])
   .then(loadOptions)
-  .catch((error) => setStatus(error.message || "Failed to initialize popup."))
+  .catch((error) => setErrorStatus(error.message || "Failed to initialize popup."))
