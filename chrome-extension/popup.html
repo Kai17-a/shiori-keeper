@@ -3,79 +3,112 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Bookmark Draft</title>
+        <title>Bookmark Manager</title>
         <link rel="stylesheet" href="popup.css" />
     </head>
     <body>
-        <main class="card">
-            <header class="header">
-                <div>
-                    <p class="eyebrow">Bookmark Manager</p>
-                    <h1>Quick Add</h1>
-                </div>
-                <button id="prefill" class="ghost" type="button">
-                    Use active tab
-                </button>
-            </header>
+        <main class="popup">
+            <section class="frame">
+                <header class="topbar">
+                    <div class="brand">
+                        <div class="brand-mark">B</div>
+                        <div>
+                            <h1>Bookmark Manager</h1>
+                        </div>
+                    </div>
 
-            <div class="field">
-                <span>API Base URL</span>
-                <input id="api-base" name="api-base" type="url" readonly />
-            </div>
+                    <button
+                        class="icon-button"
+                        type="button"
+                        aria-label="Use active tab"
+                    >
+                        ↗
+                    </button>
+                </header>
 
-            <form id="bookmark-form" class="form">
-                <label class="field">
-                    Title
-                    <input
-                        id="title"
-                        name="title"
-                        type="text"
-                        placeholder="Page title"
-                        required
-                    />
-                </label>
-                <label class="field">
-                    URL
-                    <input
-                        id="url"
-                        name="url"
-                        type="url"
-                        placeholder="https://example.com"
-                        required
-                    />
-                </label>
-                <label class="field">
-                    Description
-                    <textarea
-                        id="description"
-                        name="description"
-                        rows="3"
-                        placeholder="Optional note"
-                    ></textarea>
-                </label>
+                <section class="panel panel--accent">
+                    <label class="field">
+                        <span>API Server URL</span>
+                        <div class="row">
+                            <input
+                                type="url"
+                                placeholder="http://localhost:8080"
+                            />
+                            <button class="button button--ghost" type="button">
+                                Test
+                            </button>
+                        </div>
+                    </label>
+                    <div class="hint">
+                        <span class="dot dot--success"></span>
+                        Connected to API
+                    </div>
+                </section>
 
-                <label class="field">
-                    Folder
-                    <select id="folder" name="folder">
-                        <option value="">No folder</option>
-                    </select>
-                </label>
+                <section class="panel">
+                    <div class="stack">
+                        <label class="field">
+                            <span>Title</span>
+                            <input type="text" placeholder="Page title" />
+                        </label>
 
-                <label class="field">
-                    Tags
-                    <select id="tags" name="tags">
-                        <option value="">No tag</option>
-                    </select>
-                </label>
+                        <label class="field">
+                            <span>URL</span>
+                            <input
+                                type="url"
+                                placeholder="https://example.com"
+                            />
+                        </label>
 
-                <div class="actions">
-                    <button type="submit">Save</button>
-                </div>
-            </form>
+                        <label class="field">
+                            <span>Note</span>
+                            <textarea
+                                rows="3"
+                                placeholder="Short note"
+                            ></textarea>
+                        </label>
 
-            <p id="status" class="status">Waiting for the current tab.</p>
+                        <div class="split">
+                            <label class="field">
+                                <span>Folder</span>
+                                <select>
+                                    <option>Choose folder</option>
+                                    <option>Reading</option>
+                                    <option>Work</option>
+                                    <option>Research</option>
+                                </select>
+                            </label>
+
+                            <label class="field">
+                                <span>Tag</span>
+                                <select>
+                                    <option>Choose tag</option>
+                                    <option>Important</option>
+                                    <option>Later</option>
+                                    <option>Reference</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <label class="field">
+                            <span>API Server URL</span>
+                            <input
+                                type="url"
+                                placeholder="http://localhost:8080"
+                            />
+                        </label>
+                    </div>
+                </section>
+
+                <footer class="actions">
+                    <button class="button button--ghost" type="button">
+                        Cancel
+                    </button>
+                    <button class="button button--primary" type="button">
+                        Save
+                    </button>
+                </footer>
+            </section>
         </main>
-
-        <script src="popup.js"></script>
     </body>
 </html>

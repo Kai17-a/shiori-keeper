@@ -1,12 +1,12 @@
 {
-  "manifest_version": 3,
-  "name": "Bookmark Manager Quick Add",
-  "version": "0.1.0",
-  "description": "Quickly capture the current page title and URL into a bookmark draft.",
-  "action": {
-    "default_popup": "popup.html",
-    "default_title": "Add bookmark"
-  },
-  "permissions": ["tabs", "storage"],
-  "host_permissions": ["<all_urls>"]
+    "manifest_version": 3,
+    "name": "Bookmark Manager",
+    "version": "0.1.0",
+    "description": "A compact popup for quick bookmark capture and organization.",
+    "action": {
+        "default_popup": "popup.html",
+        "default_title": "Bookmark"
+    },
+    "permissions": ["tabs", "storage"],
+    "host_permissions": ["<all_urls>"]
 }
