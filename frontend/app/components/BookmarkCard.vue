@@ -27,9 +27,10 @@
                         size="xs"
                         variant="ghost"
                         color="neutral"
+                        icon="i-lucide-pencil"
                         @click="$emit('edit', bookmark)"
                     >
-                        Edit
+                        <span class="sr-only">Edit</span>
                     </UButton>
                     <UButton
                         size="xs"

@@ -8,6 +8,7 @@ export interface BookmarkCreateRequest {
     title: string;
     description?: string | null;
     folder_id?: number | null;
+    tag_ids?: number[] | null;
 }
 
 export interface BookmarkUpdateRequest {
@@ -15,6 +16,7 @@ export interface BookmarkUpdateRequest {
     title?: string | null;
     description?: string | null;
     folder_id?: number | null;
+    tag_ids?: number[] | null;
 }
 
 export interface BookmarkResponse {

@@ -25,6 +25,19 @@ class BookmarkService:
         if folder_repo.find_by_id(folder_id) is None:
             raise HTTPException(status_code=404, detail="Folder not found")
 
+    def _verify_tags(self, conn, tag_ids: list[int]) -> None:
+        tag_repo = TagRepository(conn)
+        missing = [tag_id for tag_id in tag_ids if tag_repo.find_by_id(tag_id) is None]
+        if missing:
+            raise HTTPException(status_code=404, detail="Tag not found")
+
+    def _sync_tags(self, repo: BookmarkRepository, bookmark_id: int, tag_ids: list[int] | None) -> None:
+        if tag_ids is None:
+            return
+        unique_tag_ids = list(dict.fromkeys(tag_ids))
+        self._verify_tags(repo.conn, unique_tag_ids)
+        repo.set_tags(bookmark_id, unique_tag_ids)
+
     def create(self, data: BookmarkCreate) -> BookmarkResponse:
         with get_db() as conn:
             if data.folder_id is not None:
@@ -36,6 +49,8 @@ class BookmarkService:
                 description=data.description,
                 folder_id=data.folder_id,
             )
+            self._sync_tags(repo, row["id"], data.tag_ids)
+            row = repo.find_by_id(row["id"])
             return self._to_response(repo, row)
 
     def list(
@@ -92,6 +107,8 @@ class BookmarkService:
                 fields["folder_id"] = data.folder_id
 
             row = repo.update(bookmark_id, fields)
+            self._sync_tags(repo, bookmark_id, data.tag_ids)
+            row = repo.find_by_id(bookmark_id)
             return self._to_response(repo, row)
 
     def delete(self, bookmark_id: int) -> None:

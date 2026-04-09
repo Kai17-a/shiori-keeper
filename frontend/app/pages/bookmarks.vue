@@ -135,7 +135,7 @@
                 <UModal
                     v-model:open="modalOpen"
                     :title="bookmarkForm.id ? 'Edit bookmark' : 'Register bookmark'"
-                    :description="bookmarkForm.id ? 'Update the bookmark details.' : 'Create a bookmark and optionally attach a tag.'"
+                    :description="bookmarkForm.id ? 'Update the bookmark details.' : 'Create a bookmark and attach tags.'"
                 >
                     <template #content="{ close }">
                         <form class="space-y-4 p-6" @submit.prevent="saveBookmark">
@@ -166,22 +166,18 @@
                                     v-model="selectedBookmarkFolder"
                                     :items="bookmarkFolderOptions"
                                     placeholder="No folder"
-                                    value-attribute="value"
-                                    option-attribute="label"
                                 />
                             </UFormField>
 
                             <UFormField
-                                v-if="!bookmarkForm.id"
-                                label="Tag"
-                                description="Attach one tag to the new bookmark."
+                                label="Tags"
+                                description="Attach one or more tags to this bookmark."
                             >
                                 <USelectMenu
-                                    v-model="selectedAttachTag"
+                                    v-model="selectedBookmarkTags"
                                     :items="bookmarkTagOptions"
-                                    placeholder="No tag"
-                                    value-attribute="value"
-                                    option-attribute="label"
+                                    placeholder="No tags"
+                                    multiple
                                 />
                             </UFormField>
 
@@ -243,8 +239,8 @@ const bookmarkForm = reactive({
     title: "",
     description: "",
     folder_id: "",
+    tag_ids: [] as string[],
 });
-const attachForm = reactive({ tag_id: "" });
 
 const filterFolderOptions = computed(() => [
     { label: "All folders", value: "" },
@@ -278,6 +274,11 @@ const bookmarkTagOptions = computed(() => [
     })),
 ]);
 
+type SelectOption = {
+    label: string;
+    value: string;
+};
+
 const normalizeSelectValue = (value: unknown) => {
     if (typeof value === "string" || typeof value === "number") {
         return String(value);
@@ -305,17 +306,25 @@ const selectedFilterTag = computed({
     },
 });
 
-const selectedBookmarkFolder = computed({
-    get: () => bookmarkForm.folder_id,
+const selectedBookmarkFolder = computed<SelectOption | null>({
+    get: () =>
+        bookmarkFolderOptions.value.find(
+            (option) => option.value === bookmarkForm.folder_id,
+        ) || null,
     set: (value) => {
-        bookmarkForm.folder_id = normalizeSelectValue(value);
+        bookmarkForm.folder_id = value?.value || "";
     },
 });
 
-const selectedAttachTag = computed({
-    get: () => attachForm.tag_id,
+const selectedBookmarkTags = computed<SelectOption[]>({
+    get: () =>
+        bookmarkTagOptions.value.filter((option) =>
+            bookmarkForm.tag_ids.includes(option.value),
+        ),
     set: (value) => {
-        attachForm.tag_id = normalizeSelectValue(value);
+        bookmarkForm.tag_ids = (Array.isArray(value) ? value : [])
+            .map((item) => item?.value || "")
+            .filter(Boolean);
     },
 });
 
@@ -439,6 +448,7 @@ const resetBookmarkForm = () => {
     bookmarkForm.title = "";
     bookmarkForm.description = "";
     bookmarkForm.folder_id = "";
+    bookmarkForm.tag_ids = [];
 };
 
 const loadBookmarkForm = (bookmark: BookmarkResponse) => {
@@ -449,13 +459,12 @@ const loadBookmarkForm = (bookmark: BookmarkResponse) => {
     bookmarkForm.folder_id = bookmark.folder_id
         ? String(bookmark.folder_id)
         : "";
-    attachForm.tag_id = "";
+    bookmarkForm.tag_ids = bookmark.tags.map((tag) => String(tag.id));
     modalOpen.value = true;
 };
 
 const openCreateModal = () => {
     resetBookmarkForm();
-    attachForm.tag_id = "";
     modalOpen.value = true;
 };
 
@@ -473,14 +482,44 @@ const refreshAll = async () => {
     await loadData();
 };
 
+const validateBookmarkForm = () => {
+    if (!bookmarkForm.url.trim()) {
+        return "URL is required.";
+    }
+
+    try {
+        new URL(bookmarkForm.url.trim());
+    } catch {
+        return "Please enter a valid URL.";
+    }
+
+    if (!bookmarkForm.title.trim()) {
+        return "Title is required.";
+    }
+
+    return "";
+};
+
 const saveBookmark = async () => {
+    const validationError = validateBookmarkForm();
+    if (validationError) {
+        toast.show({
+            title: "Failed to save bookmark.",
+            description: validationError,
+            color: "error",
+            icon: "i-lucide-circle-alert",
+        });
+        return;
+    }
+
     const payload = {
-        url: bookmarkForm.url,
-        title: bookmarkForm.title,
+        url: bookmarkForm.url.trim(),
+        title: bookmarkForm.title.trim(),
         description: bookmarkForm.description || null,
         folder_id: bookmarkForm.folder_id
             ? Number(bookmarkForm.folder_id)
             : null,
+        tag_ids: bookmarkForm.tag_ids.map((tagId) => Number(tagId)),
     };
 
     saving.value = true;
@@ -493,19 +532,16 @@ const saveBookmark = async () => {
         } else {
             const created = (await request("/bookmarks", {
                 method: "POST",
-                body: JSON.stringify(payload),
+                body: JSON.stringify({
+                    ...payload,
+                }),
             })) as BookmarkResponse;
-
-            if (created?.id && attachForm.tag_id) {
-                await request(`/bookmarks/${created.id}/tags`, {
-                    method: "POST",
-                    body: JSON.stringify({ tag_id: Number(attachForm.tag_id) }),
-                });
+            if (created?.id) {
+                bookmarkForm.id = String(created.id);
             }
         }
 
         resetBookmarkForm();
-        attachForm.tag_id = "";
         modalOpen.value = false;
         await refreshAll();
     } catch (err) {

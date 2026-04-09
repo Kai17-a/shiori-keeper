@@ -71,6 +71,15 @@ def test_create_bookmark_returns_201(client):
     assert data["tags"] == []
 
 
+def test_create_bookmark_accepts_tag_ids(client):
+    tag_a = create_tag(client, name="a").json()["id"]
+    tag_b = create_tag(client, name="b").json()["id"]
+    resp = create_bookmark(client, tag_ids=[tag_a, tag_b])
+    assert resp.status_code == 201
+    tag_ids = [t["id"] for t in resp.json()["tags"]]
+    assert tag_ids == [tag_a, tag_b]
+
+
 def test_list_bookmarks_returns_200(client):
     create_bookmark(client, url="https://a.com", title="A")
     create_bookmark(client, url="https://b.com", title="B")
@@ -120,6 +129,24 @@ def test_update_bookmark_returns_200(client):
     assert resp.json()["title"] == "New"
 
 
+def test_update_bookmark_can_replace_tags(client):
+    tag_a = create_tag(client, name="a").json()["id"]
+    tag_b = create_tag(client, name="b").json()["id"]
+    bm_id = create_bookmark(client, tag_ids=[tag_a]).json()["id"]
+    resp = client.patch(f"/bookmarks/{bm_id}", json={"tag_ids": [tag_b]})
+    assert resp.status_code == 200
+    tag_ids = [t["id"] for t in resp.json()["tags"]]
+    assert tag_ids == [tag_b]
+
+
+def test_update_bookmark_can_clear_tags(client):
+    tag_id = create_tag(client).json()["id"]
+    bm_id = create_bookmark(client, tag_ids=[tag_id]).json()["id"]
+    resp = client.patch(f"/bookmarks/{bm_id}", json={"tag_ids": []})
+    assert resp.status_code == 200
+    assert resp.json()["tags"] == []
+
+
 def test_update_bookmark_changes_updated_at(client):
     bm = create_bookmark(client).json()
     bm_id = bm["id"]
@@ -140,32 +167,6 @@ def test_deleted_bookmark_returns_404(client):
     client.delete(f"/bookmarks/{bm_id}")
     resp = client.get(f"/bookmarks/{bm_id}")
     assert resp.status_code == 404
-
-
-def test_add_tag_to_bookmark_returns_200(client):
-    bm_id = create_bookmark(client).json()["id"]
-    tag_id = create_tag(client).json()["id"]
-    resp = client.post(f"/bookmarks/{bm_id}/tags", json={"tag_id": tag_id})
-    assert resp.status_code == 200
-    tag_ids = [t["id"] for t in resp.json()["tags"]]
-    assert tag_id in tag_ids
-
-
-def test_remove_tag_from_bookmark_returns_204(client):
-    bm_id = create_bookmark(client).json()["id"]
-    tag_id = create_tag(client).json()["id"]
-    client.post(f"/bookmarks/{bm_id}/tags", json={"tag_id": tag_id})
-    resp = client.delete(f"/bookmarks/{bm_id}/tags/{tag_id}")
-    assert resp.status_code == 204
-
-
-def test_remove_tag_clears_from_bookmark(client):
-    bm_id = create_bookmark(client).json()["id"]
-    tag_id = create_tag(client).json()["id"]
-    client.post(f"/bookmarks/{bm_id}/tags", json={"tag_id": tag_id})
-    client.delete(f"/bookmarks/{bm_id}/tags/{tag_id}")
-    bm = client.get(f"/bookmarks/{bm_id}").json()
-    assert bm["tags"] == []
 
 
 def test_create_bookmark_with_folder(client):
@@ -212,15 +213,20 @@ def test_create_bookmark_with_nonexistent_folder_returns_404(client):
     assert resp.status_code == 404
 
 
-def test_add_duplicate_tag_returns_409(client):
-    bm_id = create_bookmark(client).json()["id"]
-    tag_id = create_tag(client).json()["id"]
-    client.post(f"/bookmarks/{bm_id}/tags", json={"tag_id": tag_id})
-    resp = client.post(f"/bookmarks/{bm_id}/tags", json={"tag_id": tag_id})
-    assert resp.status_code == 409
-
-
 def test_update_bookmark_with_invalid_url_returns_422(client):
     bm_id = create_bookmark(client).json()["id"]
     resp = client.patch(f"/bookmarks/{bm_id}", json={"url": "bad-url"})
     assert resp.status_code == 422
+
+
+def test_create_bookmark_with_missing_tag_returns_404(client):
+    resp = create_bookmark(client, tag_ids=[99999])
+    assert resp.status_code == 404
+
+
+def test_update_bookmark_with_duplicate_tag_ids_deduplicates(client):
+    tag_id = create_tag(client).json()["id"]
+    bm_id = create_bookmark(client).json()["id"]
+    resp = client.patch(f"/bookmarks/{bm_id}", json={"tag_ids": [tag_id, tag_id]})
+    assert resp.status_code == 200
+    assert [t["id"] for t in resp.json()["tags"]] == [tag_id]

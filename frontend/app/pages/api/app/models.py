@@ -9,6 +9,7 @@ class BookmarkCreate(BaseModel):
     title: str
     description: str | None = None
     folder_id: int | None = None
+    tag_ids: list[int] | None = None
 
 
 class BookmarkUpdate(BaseModel):
@@ -16,6 +17,7 @@ class BookmarkUpdate(BaseModel):
     title: str | None = None
     description: str | None = None
     folder_id: int | None = None
+    tag_ids: list[int] | None = None
 
 
 class FolderCreate(BaseModel):

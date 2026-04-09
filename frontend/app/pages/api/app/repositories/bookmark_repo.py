@@ -128,3 +128,14 @@ class BookmarkRepository:
             (bookmark_id,),
         ).fetchall()
         return [dict(row) for row in rows]
+
+    def set_tags(self, bookmark_id: int, tag_ids: list[int]) -> None:
+        self.conn.execute(
+            "DELETE FROM bookmark_tags WHERE bookmark_id = ?",
+            (bookmark_id,),
+        )
+        for tag_id in tag_ids:
+            self.conn.execute(
+                "INSERT INTO bookmark_tags (bookmark_id, tag_id) VALUES (?, ?)",
+                (bookmark_id, tag_id),
+            )

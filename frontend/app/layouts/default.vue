@@ -59,7 +59,7 @@ const primaryLinks = computed<NavigationMenuItem[]>(() => [
         label: "Folders",
         icon: "i-lucide-folder",
         to: "/folders",
-        defaultOpen: true,
+        defaultOpen: false,
         children: folders.value.map((folder) => ({
             label: folder.name,
             to: `/folders/${folder.id}`,
@@ -71,7 +71,7 @@ const primaryLinks = computed<NavigationMenuItem[]>(() => [
         label: "Tags",
         icon: "i-lucide-tag",
         to: "/tags",
-        defaultOpen: true,
+        defaultOpen: false,
         children: tags.value.map((tag) => ({
             label: tag.name,
             to: `/tags/${tag.id}`,

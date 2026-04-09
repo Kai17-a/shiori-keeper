@@ -9,7 +9,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from api.app.database import init_db
-from api.app.routers.bookmark_tags import router as bookmark_tags_router
 from api.app.routers.bookmarks import router as bookmarks_router
 from api.app.routers.folders import router as folders_router
 from api.app.routers.tags import router as tags_router
@@ -62,7 +61,6 @@ def health_check():
 
 
 app.include_router(bookmarks_router)
-app.include_router(bookmark_tags_router)
 app.include_router(folders_router)
 app.include_router(tags_router)
 
