@@ -1,17 +1,14 @@
-import type { FolderResponse, TagResponse } from "~/types";
-
-type SidebarCatalogState = {
-  folders: FolderResponse[];
-  tags: TagResponse[];
-  loaded: boolean;
-};
+import {
+  applySidebarCatalogResults,
+  createSidebarCatalogState,
+  type SidebarCatalogState,
+} from "~/utils/sidebarCatalog";
 
 export const useSidebarCatalog = () => {
-  const state = useState<SidebarCatalogState>("sidebar-catalog", () => ({
-    folders: [],
-    tags: [],
-    loaded: false,
-  }));
+  const state = useState<SidebarCatalogState>(
+    "sidebar-catalog",
+    createSidebarCatalogState,
+  );
 
   const { request } = useBookmarkApi();
   const loading = ref(false);
@@ -30,9 +27,7 @@ export const useSidebarCatalog = () => {
           request("/tags"),
         ]);
 
-        state.value.folders = foldersRes;
-        state.value.tags = tagsRes;
-        state.value.loaded = true;
+        applySidebarCatalogResults(state.value, foldersRes, tagsRes);
       } finally {
         loading.value = false;
         loadPromise = null;

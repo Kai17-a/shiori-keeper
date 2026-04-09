@@ -1,10 +1,18 @@
+import {
+  DEFAULT_API_BASE,
+  SETTINGS_PATH,
+  buildRequestHeaders,
+  extractErrorMessage,
+  resolveApiBase,
+  trimTrailingSlash,
+} from "~/utils/bookmarkApi";
+
 export const useBookmarkApi = () => {
   const config = useRuntimeConfig();
-  const defaultApiBase = "http://localhost:8000";
-  const configuredBase = String(config.public.apiBaseUrl || defaultApiBase);
+  const defaultApiBase = DEFAULT_API_BASE;
+  const configuredBase = resolveApiBase(config.public.apiBaseUrl, defaultApiBase);
   const settingsApiBase = ref(configuredBase);
   const apiBase = ref(defaultApiBase);
-  const settingsPath = "/settings";
   let apiBaseLoadPromise: Promise<string> | null = null;
 
   const loadApiBase = async () => {
@@ -14,7 +22,7 @@ export const useBookmarkApi = () => {
 
     apiBaseLoadPromise = (async () => {
       try {
-        const res = await fetch(`${settingsApiBase.value.replace(/\/$/, "")}${settingsPath}`);
+        const res = await fetch(`${trimTrailingSlash(settingsApiBase.value)}${SETTINGS_PATH}`);
         if (!res.ok) {
           apiBase.value = defaultApiBase;
           return defaultApiBase;
@@ -33,7 +41,7 @@ export const useBookmarkApi = () => {
   };
 
   const saveApiBase = async (value: string) => {
-    const res = await fetch(`${settingsApiBase.value.replace(/\/$/, "")}${settingsPath}`, {
+    const res = await fetch(`${trimTrailingSlash(settingsApiBase.value)}${SETTINGS_PATH}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ api_base_url: value }),
@@ -58,24 +66,16 @@ export const useBookmarkApi = () => {
       await apiBaseLoadPromise;
     }
 
-    const { headers, ...rest } = options;
-    const mergedHeaders = {
-      ...(rest.body ? { "Content-Type": "application/json" } : {}),
-      ...(headers || {}),
-    };
+    const { headers: mergedHeaders, rest } = buildRequestHeaders(options);
 
-    const res = await fetch(`${apiBase.value.replace(/\/$/, "")}${path}`, {
+    const res = await fetch(`${trimTrailingSlash(apiBase.value)}${path}`, {
       headers: mergedHeaders,
       ...rest,
     });
 
     const body = await res.json().catch(() => null);
     if (!res.ok) {
-      throw new Error(
-        Array.isArray(body?.detail)
-          ? JSON.stringify(body.detail)
-          : body?.detail || `HTTP ${res.status}`,
-      );
+      throw new Error(extractErrorMessage(res.status, body));
     }
 
     return body;
