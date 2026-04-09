@@ -7,6 +7,8 @@ const apiHealthcheckButton = document.getElementById("api-healthcheck-button");
 const saveStatusMessage = document.getElementById("save-status-message");
 const saveButton = document.getElementById("save-button");
 const cancelButton = document.getElementById("cancel-button");
+const folderSelect = document.getElementById("folder-select");
+const tagSelect = document.getElementById("tag-select");
 
 const API_SERVER_URL_STORAGE_KEY = "apiServerUrl";
 let apiHealthyOnLoad = false;
@@ -94,16 +96,54 @@ async function createBookmark(baseUrl) {
         body: JSON.stringify(payload),
     });
 
-    if (!response.ok) {
-        const errorMessage = await readErrorMessage(response);
-        throw new Error(
-            errorMessage || `Create bookmark failed with status ${response.status}`,
-        );
+    if (response.ok) {
+        const data = await response.json();
+        savedBookmarkId = data.id ?? null;
+        return { ok: true, status: response.status, data };
     }
 
-    const data = await response.json();
-    savedBookmarkId = data.id ?? null;
-    return data;
+    const errorMessage = await readErrorMessage(response);
+    return {
+        ok: false,
+        status: response.status,
+        errorMessage:
+            errorMessage || `Create bookmark failed with status ${response.status}`,
+    };
+}
+
+function setSelectOptions(select, placeholder, items) {
+    select.replaceChildren();
+
+    const placeholderOption = document.createElement("option");
+    placeholderOption.value = "";
+    placeholderOption.textContent = placeholder;
+    select.appendChild(placeholderOption);
+
+    for (const item of items) {
+        const option = document.createElement("option");
+        option.value = String(item.id);
+        option.textContent = item.name;
+        select.appendChild(option);
+    }
+}
+
+async function loadFolderAndTagOptions(baseUrl) {
+    const [foldersResponse, tagsResponse] = await Promise.all([
+        fetch(new URL("/folders", baseUrl)),
+        fetch(new URL("/tags", baseUrl)),
+    ]);
+
+    if (!foldersResponse.ok || !tagsResponse.ok) {
+        throw new Error("Failed to load folders or tags");
+    }
+
+    const [folders, tags] = await Promise.all([
+        foldersResponse.json(),
+        tagsResponse.json(),
+    ]);
+
+    setSelectOptions(folderSelect, "-- Select Folder --", folders);
+    setSelectOptions(tagSelect, "-- Select Tag --", tags);
 }
 
 async function checkApiHealth() {
@@ -127,15 +167,18 @@ async function checkApiHealth() {
         setApiStatus("success", "Connected to API");
         if (!initialBookmarkCreated) {
             initialBookmarkCreated = true;
-            try {
-                await createBookmark(baseUrl);
+            const created = await createBookmark(baseUrl);
+
+            if (created.status !== 500) {
+                await loadFolderAndTagOptions(baseUrl);
+            }
+
+            if (created.ok) {
                 setSaveStatus("success", "Registered");
-            } catch (error) {
+            } else {
                 setSaveStatus(
                     "error",
-                    error instanceof Error && error.message
-                        ? error.message
-                        : "Save failed",
+                    created.errorMessage || "Save failed",
                 );
             }
         }
@@ -182,7 +225,7 @@ async function handleSaveClick() {
             savedBookmarkId = null;
         } else {
             const created = await createBookmark(baseUrl);
-            if (created?.id != null) {
+            if (created?.ok && created?.data?.id != null) {
                 savedBookmarkId = null;
             }
         }
