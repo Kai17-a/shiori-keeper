@@ -16,14 +16,6 @@
                             <h1>Bookmark Manager</h1>
                         </div>
                     </div>
-
-                    <button
-                        class="icon-button"
-                        type="button"
-                        aria-label="Use active tab"
-                    >
-                        ↗
-                    </button>
                 </header>
 
                 <section class="panel panel--accent">
@@ -41,7 +33,10 @@
                         </div>
                     </label>
                     <div class="hint">
-                        <span id="api-status-dot" class="dot dot--success"></span>
+                        <span
+                            id="api-status-dot"
+                            class="dot dot--success"
+                        ></span>
                         <span id="api-status-message">Connected to API</span>
                     </div>
                 </section>
@@ -95,19 +90,15 @@
                                 </select>
                             </label>
                         </div>
-
-                        <label class="field">
-                            <span>API Server URL</span>
-                            <input
-                                type="url"
-                                placeholder="http://localhost:8080"
-                            />
-                        </label>
                     </div>
                 </section>
 
                 <footer class="actions">
-                    <button class="button button--ghost" type="button">
+                    <button
+                        id="cancel-button"
+                        class="button button--ghost"
+                        type="button"
+                    >
                         Cancel
                     </button>
                     <button class="button button--primary" type="button">

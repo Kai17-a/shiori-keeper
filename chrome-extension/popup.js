@@ -3,6 +3,7 @@ const pageUrlInput = document.getElementById("page-url");
 const apiServerUrlInput = document.getElementById("api-server-url");
 const apiStatusMessage = document.getElementById("api-status-message");
 const apiStatusDot = document.getElementById("api-status-dot");
+const cancelButton = document.getElementById("cancel-button");
 
 function setPageDetails(tab) {
     if (!tab) {
@@ -45,6 +46,10 @@ async function checkApiHealth() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    cancelButton.addEventListener("click", () => {
+        window.close();
+    });
+
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         setPageDetails(tabs[0]);
     });
