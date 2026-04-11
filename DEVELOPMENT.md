@@ -33,12 +33,13 @@ bun run dev
 
 ### GitHub Actions をローカル実行
 
-GitHub Actions のワークフローをローカルで再現する場合は `act` を使う。
+GitHub Actions のワークフローをローカルで再現する場合は `mise exec act -- ...` を使う。
 
 ```bash
 ./scripts/run-github-actions.sh
 ```
 
+`act` は `mise.toml` で管理しているので、先に `mise install` を実行しておく。
 デフォルトでは `.github/workflows/pr-tests.yml` の `pull_request` イベントを実行する。
 別のワークフローを試す場合は、ワークフローパスとイベント名を渡す。
 
