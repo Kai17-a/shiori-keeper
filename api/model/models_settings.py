@@ -1,9 +1,5 @@
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel
 
 
 class ApiBaseUrlResponse(BaseModel):
     api_base_url: str
-
-
-class ApiBaseUrlUpdate(BaseModel):
-    api_base_url: HttpUrl

@@ -79,13 +79,6 @@ def _reset_database():
         conn.execute("DELETE FROM bookmarks")
         conn.execute("DELETE FROM folders")
         conn.execute("DELETE FROM tags")
-        conn.execute("DELETE FROM app_settings")
-        conn.execute(
-            """
-            INSERT OR IGNORE INTO app_settings (key, value)
-            VALUES ('api_base_url', 'http://localhost:8000')
-            """
-        )
 
 
 # Feature: bookmark-manager-api, Property 1: ブックマーク作成のラウンドトリップ

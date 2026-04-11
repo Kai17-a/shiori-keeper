@@ -3,7 +3,7 @@ import os
 from contextlib import contextmanager
 
 DATABASE_URL = os.getenv("DATABASE_URL", "bookmarks.db")
-DEFAULT_API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
 
 def init_db(database_url: str = DATABASE_URL) -> None:
@@ -38,11 +38,6 @@ def init_db(database_url: str = DATABASE_URL) -> None:
                 tag_id      INTEGER NOT NULL REFERENCES tags(id)      ON DELETE CASCADE,
                 PRIMARY KEY (bookmark_id, tag_id)
             );
-
-            CREATE TABLE IF NOT EXISTS app_settings (
-                key   TEXT PRIMARY KEY,
-                value TEXT NOT NULL
-            );
         """)
         conn.execute(
             """
@@ -59,13 +54,6 @@ def init_db(database_url: str = DATABASE_URL) -> None:
             CREATE UNIQUE INDEX IF NOT EXISTS idx_bookmarks_url_unique
             ON bookmarks(url)
             """
-        )
-        conn.execute(
-            """
-            INSERT OR IGNORE INTO app_settings (key, value)
-            VALUES ('api_base_url', ?)
-            """,
-            (DEFAULT_API_BASE_URL,),
         )
         conn.commit()
     finally:
