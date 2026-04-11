@@ -1,39 +1,15 @@
 services:
-    api:
-        container_name: bookmark-manager-api
+    bookmark-manager:
+        container_name: bookmark-manager
         build:
             context: .
-            dockerfile: api/Dockerfile
+            dockerfile: Dockerfile
         environment:
-            DATABASE_URL: /data/bookmarks.db
-        ports:
-            - "8000:8000"
-        volumes:
-            - bookmarks-data:/data
-        healthcheck:
-            test:
-                [
-                    "CMD",
-                    "python",
-                    "-c",
-                    "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/docs')",
-                ]
-            interval: 5s
-            timeout: 3s
-            retries: 10
-
-    frontend:
-        container_name: bookmark-manager-frontend
-        build:
-            context: .
-            dockerfile: frontend/Dockerfile
-        environment:
-            NUXT_PUBLIC_API_BASE_URL: http://localhost:8000
+            DATABASE_URL: /data/bookmark.db
+            API_BASE_URL: http://127.0.0.1:8000
+            NUXT_PUBLIC_API_BASE_URL: http://127.0.0.1:8000
         ports:
             - "3000:3000"
-        depends_on:
-            api:
-                condition: service_healthy
-
-volumes:
-    bookmarks-data:
+            - "8000:8000"
+        volumes:
+            - ./data:/data
