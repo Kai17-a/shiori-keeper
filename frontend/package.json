@@ -8,6 +8,9 @@
         "start": "node .output/server/index.mjs",
         "generate": "nuxt generate",
         "preview": "nuxt preview",
+        "e2e": "env -u FORCE_COLOR -u NO_COLOR playwright test",
+        "e2e:run": "bash -lc 'set -o pipefail; mkdir -p .artifacts && env -u FORCE_COLOR -u NO_COLOR playwright test | tee .artifacts/playwright-e2e.log'",
+        "e2e:headed": "env -u FORCE_COLOR -u NO_COLOR playwright test --headed",
         "test": "vitest run"
     },
     "dependencies": {
@@ -29,6 +32,8 @@
     },
     "devDependencies": {
         "@nuxt/eslint": "^1.15.2",
+        "@playwright/test": "^1.59.1",
+        "@playwright/mcp": "^0.0.70",
         "eslint": "^10.1.0",
         "typescript": "^6.0.2",
         "vitest": "^3.2.4",

@@ -8,6 +8,7 @@
 - `frontend/` - Nuxt 4 の SPA
 - `chrome-extension/` - Chrome 拡張のクイック追加ポップアップ
 - `specs/` - 実装メモとタスク管理
+- `doc/` - テスト観点と実装済みテストの整理
 
 ## API
 
@@ -50,6 +51,30 @@ python -m pytest -q
 ```
 
 pytest は `api/tests` を対象に収集するよう設定しています。
+
+## テスト仕様
+
+テスト観点と実装済みテストの整理は `doc/` にあります。
+
+- [総覧](doc/test-observations.md)
+- [API](doc/api/test-observations.md)
+- [Frontend](doc/frontend/test-observations.md)
+- [Frontend E2E](doc/frontend-e2e/test-observations.md)
+
+## Frontend Tests
+
+`frontend/` 配下ではユニットテストと E2E テストを分けて実行します。
+
+```bash
+cd frontend
+bun run test
+bun run e2e
+bun run e2e:run
+bun run e2e:headed
+```
+
+`e2e:run` は結果ログを `.artifacts/playwright-e2e.log` に保存します。
+`e2e:headed` はブラウザを開いて実行します。
 
 ## ローカル URL
 

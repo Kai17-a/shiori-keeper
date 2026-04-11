@@ -10,3 +10,4 @@ frontend/.output/
 frontend/dist/
 
 data/*
+*/test-results
