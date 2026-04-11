@@ -1,3 +1,4 @@
+# Frontend build stage
 FROM oven/bun:1.1.38-alpine AS frontend-build
 
 WORKDIR /app/frontend
@@ -8,6 +9,8 @@ RUN bun install
 COPY frontend/ ./
 RUN bun run build
 
+
+# Runtime stage
 FROM oven/bun:1.1.38-alpine
 
 WORKDIR /app
@@ -24,9 +27,11 @@ COPY --from=frontend-build /app/frontend/.output /app/frontend/.output
 COPY --from=frontend-build /app/frontend/node_modules /app/frontend/node_modules
 COPY --from=frontend-build /app/frontend/package.json /app/frontend/package.json
 
-COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
+# Runtime defaults; users can override these with `docker run -e` or compose
+ENV NUXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
+ENV API_BASE_URL=http://127.0.0.1:8000
+ENV DATABASE_URL=/data/bookmark.db
 
 EXPOSE 3000 8000
 
-CMD ["/app/start.sh"]
+CMD ["sh", "-c", "fastapi run api/main.py --host 0.0.0.0 --port 8000 & API_PID=$!; cd /app/frontend; bun run start & FRONTEND_PID=$!; trap 'kill $API_PID $FRONTEND_PID 2>/dev/null || true' INT TERM EXIT; wait $API_PID $FRONTEND_PID"]

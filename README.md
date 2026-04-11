@@ -12,55 +12,51 @@
 - `specs/frontend/` - フロントエンド仕様
 - `docs/commit-policy.md` - コミット規約
 
-## API
+## 利用方法
 
-バックエンドは `api/` 配下にあります。
+### 開発者向け
 
-フロントエンドは `frontend/` 配下にある Nuxt 4 の SPA です。
+ローカル開発は [DEVELOPMENT.md](/home/kaito/workspaces/bookmark-manager/DEVELOPMENT.md) を参照する。
 
-リポジトリルートから API を起動するには次を実行します。
+### OSS 利用者向け
 
-```bash
-cd api
-api-dev
-```
-
-`api-dev` は `uvicorn` を使って起動します。
-
-`frontend/` 配下からフロントエンドを起動するには次を実行します。
+公開イメージを使う場合は、Docker Hub から pull して実行する。
 
 ```bash
-bun install
-bun run dev
+docker pull <dockerhub-namespace>/bookmark-manager:latest
+docker run --rm -p 3000:3000 -p 8000:8000 \
+  -e DATABASE_URL=/data/bookmark.db \
+  -e API_BASE_URL=http://127.0.0.1:8000 \
+  -e NUXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000 \
+  -v "$(pwd)/data:/data" \
+  <dockerhub-namespace>/bookmark-manager:latest
 ```
 
-リポジトリルートから両方まとめて起動する場合は次を実行します。
+実際に使うときの `docker-compose.yml` は次の形です。
 
-```bash
-./run-local.sh
+```yaml
+services:
+    bookmark-manager:
+        container_name: bookmark-manager
+        image: <dockerhub-namespace>/bookmark-manager:latest
+        environment:
+            DATABASE_URL: /data/bookmark.db
+            API_BASE_URL: http://127.0.0.1:8000
+            NUXT_PUBLIC_API_BASE_URL: http://127.0.0.1:8000
+        ports:
+            - "3000:3000"
+            - "8000:8000"
+        volumes:
+            - ./data:/data
 ```
 
-Docker で起動する場合は次を実行します。
-
-```bash
-docker compose up --build
-```
-
-Docker 起動時は API を `fastapi run api/main.py` で起動し、1 つのコンテナでフロントエンドが `http://127.0.0.1:3000`、API が `http://127.0.0.1:8000` で利用できます。
-
-API テストは次を実行します。
-
-```bash
-python -m pytest -q
-```
-
-pytest は `api/tests` を対象に収集するよう設定しています。
+Docker Hub への publish は [`.github/workflows/dockerhub-publish.yml`](/home/kaito/workspaces/bookmark-manager/.github/workflows/dockerhub-publish.yml) で行う想定です。
+`DOCKERHUB_IMAGE`、`DOCKERHUB_USERNAME`、`DOCKERHUB_TOKEN` を GitHub Secrets に設定してください。
 
 ## テスト仕様
 
 要件・設計・タスク・テスト観点の整理は `specs/` にあります。
 
-- このリポジトリでの作業前提として、`AGENTS.md` と `specs/llm-reading-guide.md` を先に読み、公式 LLM 参照資料も確認してください。
 - [LLM 読み学習ガイド](specs/llm-reading-guide.md)
 - [Nuxt modules LLM](https://nuxt.com/modules/llms)
 - [Nuxt LLM full](https://nuxt.com/llms-full.txt)
@@ -76,28 +72,3 @@ pytest は `api/tests` を対象に収集するよう設定しています。
 
 `specs/requirements.md` は要件の上位定義、`specs/api/` は API 挙動の詳細、`specs/frontend/` は画面と操作の詳細です。
 
-## Frontend Tests
-
-`frontend/` 配下ではユニットテストと E2E テストを分けて実行します。
-
-```bash
-cd frontend
-bun run test
-bun run e2e
-bun run e2e:run
-bun run e2e:headed
-```
-
-`e2e:run` は結果ログを `.artifacts/playwright-e2e.log` に保存します。
-`e2e:headed` はブラウザを開いて実行します。
-
-## ローカル URL
-
-- フロントエンド: `http://127.0.0.1:3001`
-- API: `http://127.0.0.1:8001`
-
-## Chrome 拡張
-
-`chrome-extension/` を Chrome の unpacked extension として読み込みます。
-ポップアップでは現在タブのタイトルと URL を自動入力し、API 経由でそのまま DB に登録します。
-API Base URL のデフォルトは `http://localhost:8001` です。
