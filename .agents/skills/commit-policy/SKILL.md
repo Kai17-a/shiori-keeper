@@ -23,9 +23,10 @@ Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.
 
 ## Revert-safe rules
 
-- A commit should contain one coherent change only.
+- A commit should contain one feature-sized change only.
+- A feature-sized change is a single user-visible behavior addition, modification, or removal.
 - A commit should not mix feature code with unrelated cleanup.
-- A commit should not bundle code changes with spec cleanup unless they are the same behavior change.
+- Code, tests, and specs for one feature should stay in the same commit.
 - Each commit should be independently revertible without leaving the repository in an obviously inconsistent state.
 - When a behavior change touches code, tests, and specs, keep them aligned in the same change set.
 
