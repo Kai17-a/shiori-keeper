@@ -23,7 +23,6 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from "@nuxt/ui";
 
-const toast = useSingleToast();
 const { folders, tags, refresh } = useSidebarCatalog();
 
 const open = ref(true);
@@ -82,31 +81,5 @@ const secondaryLinks = computed<NavigationMenuItem[]>(() => [
 
 onMounted(async () => {
     await refresh();
-
-    const cookie = useCookie("cookie-consent");
-    if (cookie.value === "accepted") {
-        return;
-    }
-
-    toast.show({
-        title: "We use first-party cookies to enhance your experience on our website.",
-        duration: 0,
-        close: false,
-        actions: [
-            {
-                label: "Accept",
-                color: "neutral",
-                variant: "outline",
-                onClick: () => {
-                    cookie.value = "accepted";
-                },
-            },
-            {
-                label: "Opt out",
-                color: "neutral",
-                variant: "ghost",
-            },
-        ],
-    });
 });
 </script>
