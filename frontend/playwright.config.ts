@@ -7,7 +7,7 @@ const frontendBaseUrl =
 delete process.env.FORCE_COLOR;
 
 export default defineConfig({
-  testDir: "../tests/e2e",
+  testDir: "./tests/e2e",
   fullyParallel: false,
   retries: 0,
   reporter: "list",

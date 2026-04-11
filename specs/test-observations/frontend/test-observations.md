@@ -16,5 +16,5 @@
 ## Notes
 
 - The current frontend test suite does not include page/component/smoke tests.
-- Page-level behavior is covered by the separate E2E suite in `tests/e2e`.
+- Page-level behavior is covered by the separate E2E suite in `frontend/tests/e2e`.
 - Add new unit tests here when logic can be verified without a browser.
