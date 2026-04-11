@@ -4,7 +4,7 @@
     "type": "module",
     "scripts": {
         "dev": "nuxt dev --host 0.0.0.0",
-        "build": "bash -lc 'set -o pipefail; nuxt build 2>&1 | grep -v \"Sourcemap is likely to be incorrect\"'",
+        "build": "nuxt build",
         "start": "node .output/server/index.mjs",
         "generate": "nuxt generate",
         "preview": "nuxt preview",
