@@ -156,31 +156,8 @@ jobs:
         working-directory: frontend
         run: bunx playwright install --with-deps chromium
 
-      - name: Start API
-        run: |
-          uv run --directory api uvicorn api.main:app --host 127.0.0.1 --port 8000 > /tmp/api.log 2>&1 &
-          echo $! > /tmp/api.pid
-
-      - name: Start frontend
-        run: |
-          cd frontend
-          bun run dev > /tmp/frontend.log 2>&1 &
-          echo $! > /tmp/frontend.pid
-
-      - name: Wait for services
-        run: |
-          for url in http://127.0.0.1:8000/health http://127.0.0.1:3000; do
-            for i in {1..60}; do
-              if curl -fsS "$url" >/dev/null; then
-                break
-              fi
-              sleep 2
-            done
-          done
-
       - name: Run E2E tests
-        working-directory: frontend
-        run: bun run e2e
+        run: ./scripts/run-e2e-tests.sh
 
       - name: Upload logs on failure
         if: failure()
@@ -190,8 +167,5 @@ jobs:
           path: |
             /tmp/api.log
             /tmp/frontend.log
-
-      - name: Stop services
-        if: always()
-        run: |
-          kill "$(cat /tmp/api.pid)" "$(cat /tmp/frontend.pid)" 2>/dev/null || true
+            /tmp/bookmark-manager-api-e2e.log
+            /tmp/bookmark-manager-frontend-e2e.log
