@@ -162,8 +162,6 @@ const { request } = useBookmarkApi();
 const { refresh: refreshSidebarCatalog } = useSidebarCatalog();
 const toast = useSingleToast();
 
-const connectionLabel = ref("Connecting...");
-const connectionColor = ref<"warning" | "success" | "error">("warning");
 const tags = ref<TagResponse[]>([]);
 const tagName = ref("");
 const editOpen = ref(false);
@@ -175,16 +173,12 @@ const refresh = async () => {
     try {
         tags.value = await request("/tags");
         await refreshSidebarCatalog();
-        connectionLabel.value = "Connected";
-        connectionColor.value = "success";
         toast.show({
             title: "Tags loaded.",
             color: "success",
             icon: "i-lucide-check",
         });
     } catch (err) {
-        connectionLabel.value = "Serverに接続できない";
-        connectionColor.value = "error";
         toast.show({
             title: "Failed to load tags.",
             description: err instanceof Error ? err.message : undefined,

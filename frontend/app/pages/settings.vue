@@ -50,8 +50,6 @@
 <script setup lang="ts">
 const { loadApiBase } = useBookmarkApi();
 const toast = useSingleToast();
-const connectionLabel = ref("Connecting...");
-const statusColor = ref<"warning" | "success" | "error">("warning");
 const checking = ref(false);
 const form = reactive({
     apiBaseUrl: "",
@@ -61,8 +59,6 @@ const syncSettings = async () => {
     try {
         const base = await loadApiBase();
         form.apiBaseUrl = base || "";
-        statusColor.value = "success";
-        connectionLabel.value = "Connected";
         toast.show({
             title: "API settings loaded.",
             color: "success",
@@ -70,8 +66,6 @@ const syncSettings = async () => {
         });
     } catch {
         form.apiBaseUrl = "";
-        connectionLabel.value = "Serverに接続できない";
-        statusColor.value = "error";
         toast.show({
             title: "Failed to load API settings.",
             color: "error",
@@ -82,8 +76,6 @@ const syncSettings = async () => {
 
 const checkHealth = async () => {
     if (!form.apiBaseUrl) {
-        statusColor.value = "error";
-        connectionLabel.value = "Serverに接続できない";
         toast.show({
             title: "API base URL is not configured.",
             color: "error",
@@ -100,16 +92,12 @@ const checkHealth = async () => {
         }
         const body = await res.json();
         if (body?.status === "ok") {
-            statusColor.value = "success";
-            connectionLabel.value = "Connected";
             toast.show({
                 title: "API server is reachable.",
                 color: "success",
                 icon: "i-lucide-check",
             });
         } else {
-            statusColor.value = "warning";
-            connectionLabel.value = "Serverに接続できない";
             toast.show({
                 title: "API server responded unexpectedly.",
                 color: "warning",
@@ -117,8 +105,6 @@ const checkHealth = async () => {
             });
         }
     } catch {
-        statusColor.value = "error";
-        connectionLabel.value = "Serverに接続できない";
         toast.show({
             title: "API server is unreachable.",
             color: "error",

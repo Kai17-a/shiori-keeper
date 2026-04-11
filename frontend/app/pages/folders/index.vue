@@ -164,8 +164,6 @@ const { request } = useBookmarkApi();
 const { refresh: refreshSidebarCatalog } = useSidebarCatalog();
 const toast = useSingleToast();
 
-const connectionLabel = ref("Connecting...");
-const connectionColor = ref<"warning" | "success" | "error">("warning");
 const folders = ref<FolderResponse[]>([]);
 const folderName = ref("");
 const editOpen = ref(false);
@@ -177,16 +175,12 @@ const refresh = async () => {
     try {
         folders.value = await request("/folders");
         await refreshSidebarCatalog();
-        connectionLabel.value = "Connected";
-        connectionColor.value = "success";
         toast.show({
             title: "Folders loaded.",
             color: "success",
             icon: "i-lucide-check",
         });
     } catch (err) {
-        connectionLabel.value = "Serverに接続できない";
-        connectionColor.value = "error";
         toast.show({
             title: "Failed to load folders.",
             description: err instanceof Error ? err.message : undefined,

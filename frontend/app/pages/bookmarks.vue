@@ -333,7 +333,6 @@ const loadData = async () => {
         ]);
 
         bookmarkList.value = bookmarkRes;
-        page.value = bookmarkRes.page || 1;
         folders.value = folderRes;
         tags.value = tagRes;
     } catch (err) {
