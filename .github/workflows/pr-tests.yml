@@ -74,6 +74,8 @@ jobs:
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.1.38
 
       - name: Restore frontend dependency cache
         id: frontend-cache
@@ -116,6 +118,8 @@ jobs:
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.1.38
 
       - name: Restore API virtualenv cache
         id: api-cache
