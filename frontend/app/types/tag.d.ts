@@ -1,5 +1,6 @@
 export interface TagCreateRequest {
     name: string;
+    description?: string | null;
 }
 
 export interface TagAttachRequest {
@@ -9,4 +10,5 @@ export interface TagAttachRequest {
 export interface TagResponse {
     id: number;
     name: string;
+    description?: string | null;
 }

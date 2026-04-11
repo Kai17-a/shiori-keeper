@@ -49,6 +49,9 @@
                         <h1 class="text-2xl font-semibold text-default">
                             {{ folder.name }}
                         </h1>
+                        <p v-if="folder.description" class="text-sm text-muted">
+                            {{ folder.description }}
+                        </p>
                         <p class="text-sm text-muted">
                             {{ bookmarks.length }} bookmark{{ bookmarks.length === 1 ? "" : "s" }} in this folder.
                         </p>
@@ -100,6 +103,9 @@
                         <form class="space-y-4 p-6" @submit.prevent="saveFolder">
                             <UFormField label="Folder name">
                                 <UInput v-model="editForm.name" />
+                            </UFormField>
+                            <UFormField label="Description">
+                                <UTextarea v-model="editForm.description" :rows="3" />
                             </UFormField>
                             <div class="flex justify-end gap-3">
                                 <UButton color="neutral" variant="ghost" @click="close">
@@ -156,7 +162,7 @@ const editOpen = ref(false);
 const confirmOpen = ref(false);
 const saving = ref(false);
 const deleting = ref(false);
-const editForm = reactive({ name: "" });
+const editForm = reactive({ name: "", description: "" });
 
 const loadFolder = async () => {
     state.value = "loading";
@@ -187,6 +193,7 @@ const loadFolder = async () => {
 const openEdit = () => {
     if (!folder.value) return;
     editForm.name = folder.value.name;
+    editForm.description = folder.value.description || "";
     editOpen.value = true;
 };
 
@@ -206,7 +213,10 @@ const saveFolder = async () => {
     try {
         await request(`/folders/${folder.value.id}`, {
             method: "PATCH",
-            body: JSON.stringify({ name }),
+            body: JSON.stringify({
+                name,
+                description: editForm.description || null,
+            }),
         });
         await refreshSidebarCatalog();
         await loadFolder();

@@ -49,6 +49,9 @@
                         <h1 class="text-2xl font-semibold text-default">
                             {{ tag.name }}
                         </h1>
+                        <p v-if="tag.description" class="text-sm text-muted">
+                            {{ tag.description }}
+                        </p>
                         <div class="flex flex-wrap gap-3">
                             <UButton to="/tags" variant="ghost" size="sm">
                                 Back to tags
@@ -97,6 +100,9 @@
                         <form class="space-y-4 p-6" @submit.prevent="saveTag">
                             <UFormField label="Tag name">
                                 <UInput v-model="editForm.name" />
+                            </UFormField>
+                            <UFormField label="Description">
+                                <UTextarea v-model="editForm.description" :rows="3" />
                             </UFormField>
                             <div class="flex justify-end gap-3">
                                 <UButton color="neutral" variant="ghost" @click="close">
@@ -153,7 +159,7 @@ const editOpen = ref(false);
 const confirmOpen = ref(false);
 const saving = ref(false);
 const deleting = ref(false);
-const editForm = reactive({ name: "" });
+const editForm = reactive({ name: "", description: "" });
 
 const loadTag = async () => {
     state.value = "loading";
@@ -183,6 +189,7 @@ const loadTag = async () => {
 const openEdit = () => {
     if (!tag.value) return;
     editForm.name = tag.value.name;
+    editForm.description = tag.value.description || "";
     editOpen.value = true;
 };
 
@@ -202,7 +209,10 @@ const saveTag = async () => {
     try {
         await request(`/tags/${tag.value.id}`, {
             method: "PATCH",
-            body: JSON.stringify({ name }),
+            body: JSON.stringify({
+                name,
+                description: editForm.description || null,
+            }),
         });
         await refreshSidebarCatalog();
         await loadTag();

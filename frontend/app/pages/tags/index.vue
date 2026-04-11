@@ -15,29 +15,27 @@
                     description="Add a new tag for organizing bookmarks"
                     :ui="{ body: 'space-y-4' }"
                 >
-                    <form
-                        class="flex flex-col gap-3 sm:flex-row"
-                        @submit.prevent="createTag"
-                    >
+                    <form class="space-y-3" @submit.prevent="createTag">
                         <UInput
                             v-model="tagName"
                             placeholder="New tag name"
-                            class="flex-1"
+                            class="w-full"
                         />
-                        <UButton
-                            type="submit"
-                            icon="i-lucide-plus"
-                            @click="createTag"
-                        >
-                            Add tag
-                        </UButton>
+                        <UTextarea
+                            v-model="tagDescription"
+                            placeholder="Optional tag description"
+                            :rows="3"
+                            class="w-full"
+                        />
+                        <div class="flex justify-end">
+                            <UButton type="submit" icon="i-lucide-plus">
+                                Add tag
+                            </UButton>
+                        </div>
                     </form>
                 </UPageCard>
 
-                <UPageCard
-                    title="Tag list"
-                    :ui="{ body: 'space-y-3' }"
-                >
+                <UPageCard title="Tag list" :ui="{ body: 'space-y-3' }">
                     <div
                         v-if="tags.length"
                         class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
@@ -48,6 +46,7 @@
                             :title="tag.name"
                             :to="`/tags/${tag.id}`"
                             :meta="`Tag ID ${tag.id}`"
+                            :description="tag.description || undefined"
                             @edit="openEdit(tag)"
                             @remove="askDelete(tag)"
                         />
@@ -78,6 +77,14 @@
                                     class="w-full"
                                 />
                             </UFormField>
+                            <UFormField label="Description" class="w-full">
+                                <UTextarea
+                                    v-model="editForm.description"
+                                    placeholder="Optional tag description"
+                                    :rows="3"
+                                    class="w-full"
+                                />
+                            </UFormField>
                             <div class="flex justify-end gap-3">
                                 <UButton
                                     color="neutral"
@@ -86,9 +93,9 @@
                                 >
                                     Cancel
                                 </UButton>
-                                <UButton @click="saveEdit"
-                                    >Save changes</UButton
-                                >
+                                <UButton @click="saveEdit">
+                                    Save changes
+                                </UButton>
                             </div>
                         </div>
                     </template>
@@ -135,10 +142,11 @@ const toast = useSingleToast();
 
 const tags = ref<TagResponse[]>([]);
 const tagName = ref("");
+const tagDescription = ref("");
 const editOpen = ref(false);
 const confirmOpen = ref(false);
 const pendingTag = ref<TagResponse | null>(null);
-const editForm = reactive({ id: "", name: "" });
+const editForm = reactive({ id: "", name: "", description: "" });
 
 const refresh = async () => {
     try {
@@ -172,9 +180,13 @@ const createTag = async () => {
     try {
         await request("/tags", {
             method: "POST",
-            body: JSON.stringify({ name }),
+            body: JSON.stringify({
+                name,
+                description: tagDescription.value || null,
+            }),
         });
         tagName.value = "";
+        tagDescription.value = "";
         await refresh();
     } catch (err) {
         toast.show({
@@ -189,6 +201,7 @@ const createTag = async () => {
 const openEdit = (tag: TagResponse) => {
     editForm.id = String(tag.id);
     editForm.name = tag.name;
+    editForm.description = tag.description || "";
     editOpen.value = true;
 };
 
@@ -196,6 +209,7 @@ const closeEdit = () => {
     editOpen.value = false;
     editForm.id = "";
     editForm.name = "";
+    editForm.description = "";
 };
 
 const saveEdit = async () => {
@@ -204,7 +218,10 @@ const saveEdit = async () => {
     try {
         await request(`/tags/${editForm.id}`, {
             method: "PATCH",
-            body: JSON.stringify({ name }),
+            body: JSON.stringify({
+                name,
+                description: editForm.description || null,
+            }),
         });
         closeEdit();
         await refresh();

@@ -15,22 +15,23 @@
                     description="Add a new folder to organize bookmarks"
                     :ui="{ body: 'space-y-4' }"
                 >
-                    <form
-                        class="flex flex-col gap-3 sm:flex-row"
-                        @submit.prevent="createFolder"
-                    >
+                    <form class="space-y-3" @submit.prevent="createFolder">
                         <UInput
                             v-model="folderName"
                             placeholder="New folder name"
-                            class="flex-1"
+                            class="w-full"
                         />
-                        <UButton
-                            type="submit"
-                            icon="i-lucide-plus"
-                            @click="createFolder"
-                        >
-                            Add folder
-                        </UButton>
+                        <UTextarea
+                            v-model="folderDescription"
+                            placeholder="Optional folder description"
+                            :rows="3"
+                            class="w-full"
+                        />
+                        <div class="flex justify-end">
+                            <UButton type="submit" icon="i-lucide-plus">
+                                Add folder
+                            </UButton>
+                        </div>
                     </form>
                 </UPageCard>
 
@@ -48,6 +49,7 @@
                             :title="folder.name"
                             :to="`/folders/${folder.id}`"
                             :meta="`Folder ID ${folder.id}`"
+                            :description="folder.description || undefined"
                             @edit="openEdit(folder)"
                             @remove="askDelete(folder)"
                         />
@@ -75,6 +77,14 @@
                                 <UInput
                                     v-model="editForm.name"
                                     placeholder="Folder name"
+                                    class="w-full"
+                                />
+                            </UFormField>
+                            <UFormField label="Description" class="w-full">
+                                <UTextarea
+                                    v-model="editForm.description"
+                                    placeholder="Optional folder description"
+                                    :rows="3"
                                     class="w-full"
                                 />
                             </UFormField>
@@ -135,10 +145,11 @@ const toast = useSingleToast();
 
 const folders = ref<FolderResponse[]>([]);
 const folderName = ref("");
+const folderDescription = ref("");
 const editOpen = ref(false);
 const confirmOpen = ref(false);
 const pendingFolder = ref<FolderResponse | null>(null);
-const editForm = reactive({ id: "", name: "" });
+const editForm = reactive({ id: "", name: "", description: "" });
 
 const refresh = async () => {
     try {
@@ -172,9 +183,13 @@ const createFolder = async () => {
     try {
         await request("/folders", {
             method: "POST",
-            body: JSON.stringify({ name }),
+            body: JSON.stringify({
+                name,
+                description: folderDescription.value || null,
+            }),
         });
         folderName.value = "";
+        folderDescription.value = "";
         await refresh();
     } catch (err) {
         toast.show({
@@ -189,6 +204,7 @@ const createFolder = async () => {
 const openEdit = (folder: FolderResponse) => {
     editForm.id = String(folder.id);
     editForm.name = folder.name;
+    editForm.description = folder.description || "";
     editOpen.value = true;
 };
 
@@ -196,6 +212,7 @@ const closeEdit = () => {
     editOpen.value = false;
     editForm.id = "";
     editForm.name = "";
+    editForm.description = "";
 };
 
 const saveEdit = async () => {
@@ -204,7 +221,10 @@ const saveEdit = async () => {
     try {
         await request(`/folders/${editForm.id}`, {
             method: "PATCH",
-            body: JSON.stringify({ name }),
+            body: JSON.stringify({
+                name,
+                description: editForm.description || null,
+            }),
         });
         closeEdit();
         await refresh();
