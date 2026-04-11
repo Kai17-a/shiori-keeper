@@ -1,4 +1,4 @@
-FROM oven/bun:1.1.38-alpine AS build
+FROM oven/bun:1.3.12-alpine AS build
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ COPY frontend/public /app/public
 RUN bun install
 RUN bun run build
 
-FROM oven/bun:1.1.38-alpine
+FROM oven/bun:1.3.12-alpine
 
 WORKDIR /app
 

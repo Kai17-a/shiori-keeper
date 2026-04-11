@@ -1,5 +1,6 @@
 [tools]
 bun = "1.1.38"
 codex = "latest"
+git-cliff = "2.12.0"
 opencode = "latest"
 uv = "latest"

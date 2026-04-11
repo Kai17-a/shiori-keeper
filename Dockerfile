@@ -1,5 +1,5 @@
 # Frontend build stage
-FROM oven/bun:1.1.38-alpine AS frontend-build
+FROM oven/bun:1.3.12-alpine AS frontend-build
 
 WORKDIR /app/frontend
 
@@ -16,7 +16,7 @@ RUN bun run build
 
 
 # Runtime stage
-FROM oven/bun:1.1.38-alpine
+FROM oven/bun:1.3.12-alpine
 
 WORKDIR /app
 
