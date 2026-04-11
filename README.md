@@ -58,6 +58,13 @@ pytest は `api/tests` を対象に収集するよう設定しています。
 
 要件・設計・タスク・テスト観点の整理は `specs/` にあります。
 
+- このリポジトリでの作業前提として、`AGENTS.md` と `specs/llm-reading-guide.md` を先に読み、公式 LLM 参照資料も確認してください。
+- [LLM 読み学習ガイド](specs/llm-reading-guide.md)
+- [Nuxt modules LLM](https://nuxt.com/modules/llms)
+- [Nuxt LLM full](https://nuxt.com/llms-full.txt)
+- [Nuxt UI LLM](https://ui.nuxt.com/llms.txt)
+- [Nuxt UI LLM full](https://ui.nuxt.com/llms-full.txt)
+- [Vue LLM full](https://vuejs.org/llms-full.txt)
 - [API 仕様](specs/api/README.md)
 - [総覧](specs/test-observations/README.md)
 - [API](specs/test-observations/api/test-observations.md)
