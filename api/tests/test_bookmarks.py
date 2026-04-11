@@ -151,11 +151,8 @@ def test_update_bookmark_changes_updated_at(client):
     bm = create_bookmark(client).json()
     bm_id = bm["id"]
     old_updated = bm["updated_at"]
-    import time
-
-    time.sleep(1)
     resp = client.patch(f"/bookmarks/{bm_id}", json={"title": "Changed"})
-    assert resp.json()["updated_at"] >= old_updated
+    assert resp.json()["updated_at"] != old_updated
 
 
 def test_delete_bookmark_returns_204(client):

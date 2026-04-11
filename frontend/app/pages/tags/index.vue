@@ -24,7 +24,7 @@
                             placeholder="New tag name"
                             class="flex-1"
                         />
-                        <UButton type="submit" icon="i-lucide-plus">
+                        <UButton type="submit" icon="i-lucide-plus" @click="createTag">
                             Add tag
                         </UButton>
                     </form>
@@ -36,7 +36,7 @@
                     :ui="{ body: 'space-y-3' }"
                 >
                     <div v-if="tags.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                        <EntityCard
+                        <CardsEntityCard
                             v-for="tag in tags"
                             :key="tag.id"
                             :title="tag.name"

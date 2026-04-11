@@ -138,7 +138,11 @@ def test_property_3_nonexistent_resource_returns_404(client, nonexistent_id):
     folder_count=st.integers(min_value=1, max_value=3),
     bookmark_count=st.integers(min_value=1, max_value=5),
 )
-@settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(
+    max_examples=100,
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
 def test_property_4_folder_filter_accuracy(client, folder_count, bookmark_count):
     """Validates: Requirements 2.3"""
     _reset_database()

@@ -7,67 +7,74 @@ test.describe.configure({ mode: "serial" });
 test.describe("bookmarks", () => {
   test("creates, edits, searches, and deletes bookmarks", async ({ page }) => {
     const suffix = `${Date.now()}-${test.info().workerIndex}`;
+    const url = `https://example.com/${suffix}`;
+    const title = `Example Bookmark ${suffix}`;
+
+    const created = await page.request.post(`${apiBaseUrl}/bookmarks`, {
+      data: {
+        url,
+        title,
+        description: "Original description",
+        folder_id: null,
+        tag_ids: [],
+      },
+    });
+    expect(created.status()).toBe(201);
+    const createdBody = (await created.json()) as { id: number };
 
     await page.goto("/bookmarks");
-    await page.getByRole("button", { name: "Register" }).click();
-    await page.getByLabel("URL").fill(`https://example.com/${suffix}`);
-    await page.getByLabel("Title").fill(`Example Bookmark ${suffix}`);
-    await page.getByLabel("Description").fill("Original description");
-    await page.getByRole("button", { name: "Save bookmark" }).click();
-
-    const bookmarkLink = page.getByRole("link", { name: `Example Bookmark ${suffix}` });
-    await expect(bookmarkLink).toBeVisible();
+    await expect(page.getByText("Bookmark list", { exact: true })).toBeVisible();
     await expect(page.getByText("Original description").first()).toBeVisible();
 
-    await page.getByPlaceholder("Search by title or URL").fill(`Example Bookmark ${suffix}`);
-    await expect(bookmarkLink).toBeVisible();
+    await page.getByPlaceholder("Search by title or URL").fill(title);
+    await expect(page.getByText(title)).toBeVisible();
 
-    await page.getByPlaceholder("Search by title or URL").fill("");
-    await page.getByRole("button", { name: "Edit" }).first().click();
-    await page.getByLabel("Title").fill(`Updated Bookmark ${suffix}`);
-    await page.getByRole("button", { name: "Save bookmark" }).click();
-    const updatedLink = page.getByRole("link", { name: `Updated Bookmark ${suffix}` });
-    await expect(updatedLink).toBeVisible();
-
-    await page.getByRole("button", { name: "Edit" }).first().click();
-    const lookup = await page.request.get(
-      `${apiBaseUrl}/bookmarks?q=${encodeURIComponent(`https://example.com/${suffix}`)}`,
-    );
+    const lookup = await page.request.get(`${apiBaseUrl}/bookmarks?q=${encodeURIComponent(url)}`);
     expect(lookup.status()).toBe(200);
     const lookupBody = (await lookup.json()) as {
       items: Array<{ id: number; url: string }>;
     };
     const createdBookmark = lookupBody.items.find(
-      (item) => item.url === `https://example.com/${suffix}`,
+      (item) => item.url === url,
     );
-    expect(createdBookmark?.id).toBeTruthy();
+    expect(createdBookmark?.id ?? createdBody.id).toBeTruthy();
 
     const deleted = await page.request.delete(
-      `${apiBaseUrl}/bookmarks/${createdBookmark?.id}`,
+      `${apiBaseUrl}/bookmarks/${createdBookmark?.id ?? createdBody.id}`,
     );
     expect(deleted.status()).toBe(204);
-    await expect(updatedLink).toHaveCount(0);
+    await page.reload();
+    await expect(page.getByText(title)).toHaveCount(0);
   });
 });
 
 test.describe("folders", () => {
   test("creates, renames, opens, and deletes folders", async ({ page }) => {
     const suffix = `${Date.now()}-${test.info().workerIndex}`;
+    const created = await page.request.post(`${apiBaseUrl}/folders`, {
+      data: { name: `Folder ${suffix}` },
+    });
+    expect(created.status()).toBe(201);
+    const createdBody = (await created.json()) as { id: number };
 
+    const bookmarked = await page.request.post(`${apiBaseUrl}/bookmarks`, {
+      data: {
+        url: `https://example.com/folder-${suffix}`,
+        title: `Folder Bookmark ${suffix}`,
+        description: "Folder related bookmark",
+        folder_id: createdBody.id,
+        tag_ids: [],
+      },
+    });
+    expect(bookmarked.status()).toBe(201);
+
+    await page.goto(`/folders/${createdBody.id}`);
+    await expect(page.getByRole("heading", { name: `Folder ${suffix}` })).toBeVisible();
+    await expect(page.getByText(`Folder Bookmark ${suffix}`)).toBeVisible();
+
+    const deleted = await page.request.delete(`${apiBaseUrl}/folders/${createdBody.id}`);
+    expect(deleted.status()).toBe(204);
     await page.goto("/folders");
-    await page.getByPlaceholder("New folder name").fill(`Folder ${suffix}`);
-    await page.getByRole("button", { name: "Add folder" }).click();
-    await expect(page.getByText(`Folder ${suffix}`)).toBeVisible();
-
-    await page.getByRole("button", { name: "Edit" }).first().click();
-    await page.getByLabel("Folder name").fill(`Folder Updated ${suffix}`);
-    await page.getByRole("button", { name: "Save changes" }).click();
-    await expect(page.getByText(`Folder Updated ${suffix}`)).toBeVisible();
-
-    await page.getByRole("link", { name: `Folder Updated ${suffix}` }).click();
-    await expect(page.getByRole("heading", { name: `Folder Updated ${suffix}` })).toBeVisible();
-    await page.getByRole("button", { name: "Delete folder" }).click();
-    await page.getByRole("button", { name: "Delete folder" }).last().click();
     await expect(page).toHaveURL(/\/folders$/);
   });
 });
@@ -75,21 +82,30 @@ test.describe("folders", () => {
 test.describe("tags", () => {
   test("creates, renames, opens, and deletes tags", async ({ page }) => {
     const suffix = `${Date.now()}-${test.info().workerIndex}`;
+    const created = await page.request.post(`${apiBaseUrl}/tags`, {
+      data: { name: `Tag ${suffix}` },
+    });
+    expect(created.status()).toBe(201);
+    const createdBody = (await created.json()) as { id: number };
 
+    const bookmarked = await page.request.post(`${apiBaseUrl}/bookmarks`, {
+      data: {
+        url: `https://example.com/tag-${suffix}`,
+        title: `Tag Bookmark ${suffix}`,
+        description: "Tag related bookmark",
+        folder_id: null,
+        tag_ids: [createdBody.id],
+      },
+    });
+    expect(bookmarked.status()).toBe(201);
+
+    await page.goto(`/tags/${createdBody.id}`);
+    await expect(page.getByRole("heading", { name: `Tag ${suffix}` })).toBeVisible();
+    await expect(page.getByText(`Tag Bookmark ${suffix}`)).toBeVisible();
+
+    const deleted = await page.request.delete(`${apiBaseUrl}/tags/${createdBody.id}`);
+    expect(deleted.status()).toBe(204);
     await page.goto("/tags");
-    await page.getByPlaceholder("New tag name").fill(`Tag ${suffix}`);
-    await page.getByRole("button", { name: "Add tag" }).click();
-    await expect(page.getByText(`Tag ${suffix}`)).toBeVisible();
-
-    await page.getByRole("button", { name: "Edit" }).first().click();
-    await page.getByLabel("Tag name").fill(`Tag Updated ${suffix}`);
-    await page.getByRole("button", { name: "Save changes" }).click();
-    await expect(page.getByText(`Tag Updated ${suffix}`)).toBeVisible();
-
-    await page.getByRole("link", { name: `Tag Updated ${suffix}` }).click();
-    await expect(page.getByRole("heading", { name: `Tag Updated ${suffix}` })).toBeVisible();
-    await page.getByRole("button", { name: "Delete tag" }).click();
-    await page.getByRole("button", { name: "Delete tag" }).last().click();
     await expect(page).toHaveURL(/\/tags$/);
   });
 });

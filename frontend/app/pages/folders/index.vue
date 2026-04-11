@@ -24,7 +24,7 @@
                             placeholder="New folder name"
                             class="flex-1"
                         />
-                        <UButton type="submit" icon="i-lucide-plus">
+                        <UButton type="submit" icon="i-lucide-plus" @click="createFolder">
                             Add folder
                         </UButton>
                     </form>
@@ -36,7 +36,7 @@
                     :ui="{ body: 'space-y-3' }"
                 >
                     <div v-if="folders.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                        <EntityCard
+                        <CardsEntityCard
                             v-for="folder in folders"
                             :key="folder.id"
                             :title="folder.name"

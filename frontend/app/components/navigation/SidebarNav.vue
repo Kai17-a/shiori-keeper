@@ -1,12 +1,5 @@
 <template>
     <div class="flex h-full flex-col gap-4">
-        <div class="space-y-1">
-            <p class="text-xs uppercase tracking-[0.2em] text-muted">
-                Bookmark Manager
-            </p>
-            <strong class="block text-base text-default">Dashboard</strong>
-        </div>
-
         <UNavigationMenu
             :collapsed="collapsed"
             :items="primaryLinks"

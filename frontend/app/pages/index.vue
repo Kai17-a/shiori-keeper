@@ -11,7 +11,7 @@
         <template #body>
             <div class="space-y-6">
                 <UPageGrid class="grid gap-4 lg:grid-cols-3">
-                    <StatCard
+                    <CardsStatCard
                         v-for="stat in stats"
                         :key="stat.title"
                         :title="stat.title"
@@ -26,7 +26,7 @@
                     :ui="{ body: 'space-y-4' }"
                 >
                     <div v-if="bookmarks.items.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                        <BookmarkPreviewCard
+                        <CardsBookmarkPreviewCard
                             v-for="bookmark in bookmarks.items.slice(0, 6)"
                             :key="bookmark.id"
                             :bookmark="bookmark"

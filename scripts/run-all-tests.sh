@@ -14,6 +14,24 @@ cleanup() {
 
 trap cleanup EXIT INT TERM
 
+start_api_server() {
+    export API_BASE_URL=http://127.0.0.1:8000
+    uv run --directory "$repo_root/api" uvicorn api.main:app --app-dir "$repo_root" --host 127.0.0.1 --port 8000 > /tmp/bookmark-manager-api.log 2>&1 &
+    api_pid=$!
+}
+
+start_frontend_server() {
+    cd "$repo_root/frontend"
+    export API_BASE_URL=http://127.0.0.1:8000
+    export NUXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
+    bun run build
+
+    export HOST=0.0.0.0
+    export PORT=3000
+    bun .output/server/index.mjs > /tmp/bookmark-manager-frontend.log 2>&1 &
+    frontend_pid=$!
+}
+
 cd "$repo_root/api"
 uv run ruff check .
 uv run pytest -q
@@ -25,11 +43,8 @@ if [ ! -d "$HOME/.cache/ms-playwright" ] || [ -z "$(find "$HOME/.cache/ms-playwr
     bunx playwright install --with-deps chromium
 fi
 
-uv run --directory "$repo_root/api" uvicorn api.main:app --host 127.0.0.1 --port 8000 > /tmp/bookmark-manager-api.log 2>&1 &
-api_pid=$!
-
-bun run dev > /tmp/bookmark-manager-frontend.log 2>&1 &
-frontend_pid=$!
+start_api_server
+start_frontend_server
 
 for url in http://127.0.0.1:8000/health http://127.0.0.1:3000; do
     for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30; do
@@ -40,4 +55,7 @@ for url in http://127.0.0.1:8000/health http://127.0.0.1:3000; do
     done
 done
 
-bun run e2e
+cd "$repo_root/frontend"
+PLAYWRIGHT_API_BASE_URL=http://127.0.0.1:8000 \
+PLAYWRIGHT_FRONTEND_BASE_URL=http://127.0.0.1:3000 \
+bunx playwright test

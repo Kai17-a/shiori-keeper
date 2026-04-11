@@ -4,12 +4,11 @@
             id="default"
             v-model:open="open"
             collapsible
-            resizable
-            class="bg-elevated/25"
+            class="bg-elevated/25 lg:sticky lg:top-0 lg:h-dvh"
             :ui="{ footer: 'lg:border-t lg:border-default' }"
         >
             <template #default="{ collapsed }">
-                <SidebarNav
+                <NavigationSidebarNav
                     :collapsed="collapsed"
                     :primary-links="primaryLinks"
                     :secondary-links="secondaryLinks"
@@ -27,7 +26,7 @@ import type { NavigationMenuItem } from "@nuxt/ui";
 const toast = useSingleToast();
 const { folders, tags, refresh } = useSidebarCatalog();
 
-const open = ref(false);
+const open = ref(true);
 
 const closeSidebar = () => {
     open.value = false;

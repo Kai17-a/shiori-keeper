@@ -418,6 +418,7 @@ const saveBookmark = async () => {
 
     saving.value = true;
     try {
+        const isEditing = Boolean(bookmarkForm.id);
         if (bookmarkForm.id) {
             await request(`/bookmarks/${bookmarkForm.id}`, {
                 method: "PATCH",
@@ -438,6 +439,11 @@ const saveBookmark = async () => {
         modalOpen.value = false;
         resetBookmarkForm();
         await loadData();
+        toast.show({
+            title: isEditing ? "Bookmark updated." : "Bookmark created.",
+            color: "success",
+            icon: "i-lucide-check",
+        });
     } catch (err) {
         toast.show({
             title: "Failed to save bookmark.",
@@ -454,6 +460,11 @@ const removeBookmark = async (id: number) => {
     try {
         await request(`/bookmarks/${id}`, { method: "DELETE" });
         await loadData();
+        toast.show({
+            title: "Bookmark deleted.",
+            color: "success",
+            icon: "i-lucide-check",
+        });
     } catch (err) {
         toast.show({
             title: "Failed to delete bookmark.",

@@ -76,7 +76,7 @@
                     </div>
 
                     <div v-else-if="bookmarks.length" class="grid gap-3">
-                        <BookmarkPreviewCard
+                        <CardsBookmarkPreviewCard
                             v-for="bookmark in bookmarks"
                             :key="bookmark.id"
                             :bookmark="bookmark"
