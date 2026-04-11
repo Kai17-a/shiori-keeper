@@ -20,6 +20,21 @@ cleanup() {
 
 trap cleanup EXIT INT TERM
 
+wait_for_url() {
+    url=$1
+    attempts=${2:-30}
+
+    for i in $(seq 1 "$attempts"); do
+        if curl -fsS "$url" >/dev/null; then
+            return 0
+        fi
+        sleep 2
+    done
+
+    echo "Timed out waiting for $url" >&2
+    return 1
+}
+
 start_api_server() {
     export API_BASE_URL="http://127.0.0.1:$api_port"
     uv run --directory "$repo_root/api" uvicorn api.main:app --app-dir "$repo_root" --host 127.0.0.1 --port "$api_port" > /tmp/bookmark-manager-api-e2e.log 2>&1 &
@@ -50,22 +65,11 @@ if [ ! -d "$HOME/.cache/ms-playwright" ] || [ -z "$(find "$HOME/.cache/ms-playwr
 fi
 
 start_api_server
-for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30; do
-    if curl -fsS "http://127.0.0.1:$api_port/health" >/dev/null; then
-        break
-    fi
-    sleep 2
-done
+wait_for_url "http://127.0.0.1:$api_port/health"
 start_frontend_server
 
-for url in "http://127.0.0.1:$api_port/health" "http://127.0.0.1:$frontend_port"; do
-    for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30; do
-        if curl -fsS "$url" >/dev/null; then
-            break
-        fi
-        sleep 2
-    done
-done
+wait_for_url "http://127.0.0.1:$api_port/health"
+wait_for_url "http://127.0.0.1:$frontend_port"
 
 PLAYWRIGHT_API_BASE_URL="http://127.0.0.1:$api_port" \
 PLAYWRIGHT_FRONTEND_BASE_URL="http://127.0.0.1:$frontend_port" \
