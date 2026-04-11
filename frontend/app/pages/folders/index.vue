@@ -95,13 +95,18 @@
                     v-model:open="editOpen"
                     title="Edit folder"
                     description="Rename the selected folder."
+                    :ui="{
+                        content:
+                            'w-[calc(100vw-2rem)] max-w-md max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-4rem)]',
+                    }"
                 >
                     <template #content="{ close }">
                         <div class="space-y-4 p-6">
-                            <UFormField label="Folder name">
+                            <UFormField label="Folder name" class="w-full">
                                 <UInput
                                     v-model="editForm.name"
                                     placeholder="Folder name"
+                                    class="w-full"
                                 />
                             </UFormField>
                             <div class="flex justify-end gap-3">

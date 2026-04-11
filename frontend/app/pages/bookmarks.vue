@@ -131,45 +131,52 @@
                 >
                     <template #content="{ close }">
                         <form class="space-y-4 p-6" @submit.prevent="saveBookmark">
-                            <UFormField label="URL" required>
+                            <UFormField label="URL" required class="w-full">
                                 <UInput
                                     v-model="bookmarkForm.url"
                                     placeholder="https://example.com"
+                                    class="w-full"
                                 />
                             </UFormField>
 
-                            <UFormField label="Title" required>
+                            <UFormField label="Title" required class="w-full">
                                 <UInput
                                     v-model="bookmarkForm.title"
                                     placeholder="Bookmark title"
+                                    class="w-full"
                                 />
                             </UFormField>
 
-                            <UFormField label="Description">
+                            <UFormField label="Description" class="w-full">
                                 <UTextarea
                                     v-model="bookmarkForm.description"
                                     placeholder="Optional description"
                                     :rows="4"
+                                    class="w-full"
                                 />
                             </UFormField>
 
-                            <UFormField label="Folder">
-                            <USelectMenu
+                            <UFormField label="Folder" class="w-full">
+                                <USelectMenu
                                     v-model="selectedBookmarkFolder"
                                     :items="bookmarkFolderOptions"
                                     placeholder="No folder"
+                                    class="w-full"
                                 />
                             </UFormField>
 
                             <UFormField
                                 label="Tags"
                                 description="Attach one or more tags to this bookmark."
+                                class="w-full"
                             >
                                 <USelectMenu
-                                    v-model="selectedBookmarkTags"
+                                    v-model="bookmarkForm.tag_ids"
                                     :items="bookmarkTagOptions"
                                     placeholder="No tags"
                                     multiple
+                                    value-key="value"
+                                    class="w-full"
                                 />
                             </UFormField>
 
@@ -259,7 +266,6 @@ const bookmarkFolderOptions = computed(() => [
 ]);
 
 const bookmarkTagOptions = computed(() => [
-    { label: "No tag", value: "" },
     ...tags.value.map((tag) => ({
         label: tag.name,
         value: String(tag.id),
@@ -305,18 +311,6 @@ const selectedBookmarkFolder = computed<SelectOption | null>({
         ) || null,
     set: (value) => {
         bookmarkForm.folder_id = value?.value || "";
-    },
-});
-
-const selectedBookmarkTags = computed<SelectOption[]>({
-    get: () =>
-        bookmarkTagOptions.value.filter((option) =>
-            bookmarkForm.tag_ids.includes(option.value),
-        ),
-    set: (value) => {
-        bookmarkForm.tag_ids = (Array.isArray(value) ? value : [])
-            .map((item) => item?.value || "")
-            .filter(Boolean);
     },
 });
 
@@ -533,8 +527,8 @@ const saveBookmark = async () => {
             }
         }
 
-        resetBookmarkForm();
         modalOpen.value = false;
+        resetBookmarkForm();
         await refreshAll();
     } catch (err) {
         toast.show({
