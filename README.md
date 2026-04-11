@@ -50,7 +50,7 @@ services:
             - ./data:/data
 ```
 
-GHCR への publish は [`.github/workflows/dockerhub-publish.yml`](/home/kaito/workspaces/bookmark-manager/.github/workflows/dockerhub-publish.yml) で行う想定です。
+GitHub の Docker image 公開機能を使う場合は、別途ワークフローを用意してください。
 `GITHUB_TOKEN` に `packages: write` 権限が付くように設定してください。
 
 ## テスト仕様
