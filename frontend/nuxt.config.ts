@@ -15,7 +15,6 @@ export default defineNuxtConfig({
         client: true,
         server: false,
     },
-    cssSourceMap: true,
     vite: {
         logLevel: "error",
         build: {
