@@ -42,22 +42,23 @@ def client(tmp_path, monkeypatch):
 # --- Happy path ---
 
 def test_create_folder_returns_201(client):
-    response = client.post("/folders", json={"name": "Work"})
+    response = client.post("/folders", json={"name": "Work", "description": "Notes"})
     assert response.status_code == 201
     data = response.json()
     assert data["name"] == "Work"
+    assert data["description"] == "Notes"
     assert "id" in data
     assert "created_at" in data
 
 
 def test_list_folders_returns_200(client):
-    client.post("/folders", json={"name": "A"})
-    client.post("/folders", json={"name": "B"})
+    client.post("/folders", json={"name": "A", "description": "First"})
+    client.post("/folders", json={"name": "B", "description": "Second"})
     response = client.get("/folders")
     assert response.status_code == 200
-    names = [f["name"] for f in response.json()]
-    assert "A" in names
-    assert "B" in names
+    items = response.json()
+    assert any(item["name"] == "A" and item["description"] == "First" for item in items)
+    assert any(item["name"] == "B" and item["description"] == "Second" for item in items)
 
 
 def test_delete_folder_returns_204(client):
@@ -100,6 +101,16 @@ def test_update_folder_to_duplicate_name_returns_409(client):
     response = client.patch(f"/folders/{first}", json={"name": "B"})
     assert response.status_code == 409
     assert response.json()["detail"] == "Folder name already exists"
+
+
+def test_update_folder_can_change_description(client):
+    folder_id = client.post("/folders", json={"name": "A", "description": "Old"}).json()["id"]
+    response = client.patch(
+        f"/folders/{folder_id}",
+        json={"name": "A", "description": "New"},
+    )
+    assert response.status_code == 200
+    assert response.json()["description"] == "New"
 
 
 def test_delete_nonexistent_folder_returns_404(client):

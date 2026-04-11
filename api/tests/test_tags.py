@@ -41,21 +41,22 @@ def client(tmp_path, monkeypatch):
 # --- Happy path ---
 
 def test_create_tag_returns_201(client):
-    response = client.post("/tags", json={"name": "python"})
+    response = client.post("/tags", json={"name": "python", "description": "Lang"})
     assert response.status_code == 201
     data = response.json()
     assert data["name"] == "python"
+    assert data["description"] == "Lang"
     assert "id" in data
 
 
 def test_list_tags_returns_200(client):
-    client.post("/tags", json={"name": "alpha"})
-    client.post("/tags", json={"name": "beta"})
+    client.post("/tags", json={"name": "alpha", "description": "First"})
+    client.post("/tags", json={"name": "beta", "description": "Second"})
     response = client.get("/tags")
     assert response.status_code == 200
-    names = [t["name"] for t in response.json()]
-    assert "alpha" in names
-    assert "beta" in names
+    items = response.json()
+    assert any(item["name"] == "alpha" and item["description"] == "First" for item in items)
+    assert any(item["name"] == "beta" and item["description"] == "Second" for item in items)
 
 
 def test_delete_tag_returns_204(client):
@@ -92,6 +93,16 @@ def test_update_tag_to_duplicate_name_returns_409(client):
     response = client.patch(f"/tags/{first}", json={"name": "beta"})
     assert response.status_code == 409
     assert response.json()["detail"] == "Tag name already exists"
+
+
+def test_update_tag_can_change_description(client):
+    tag_id = client.post("/tags", json={"name": "alpha", "description": "Old"}).json()["id"]
+    response = client.patch(
+        f"/tags/{tag_id}",
+        json={"name": "alpha", "description": "New"},
+    )
+    assert response.status_code == 200
+    assert response.json()["description"] == "New"
 
 
 def test_delete_nonexistent_tag_returns_404(client):

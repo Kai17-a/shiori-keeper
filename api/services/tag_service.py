@@ -9,7 +9,12 @@ MAX_TAGS = 20
 
 
 class TagService(NamedResourceService):
-    def _ensure_name_available(self, repo: TagRepository, name: str, tag_id: int | None = None) -> None:
+    def _ensure_name_available(
+        self,
+        repo: TagRepository,
+        name: str,
+        tag_id: int | None = None,
+    ) -> None:
         super()._ensure_name_available(
             repo,
             name,
@@ -27,7 +32,7 @@ class TagService(NamedResourceService):
                     status_code=400,
                     detail=f"Tag limit reached: maximum {MAX_TAGS} tags",
                 )
-            row = repo.insert(data.name)
+            row = repo.insert(data.name, data.description)
             return TagResponse(**row)
 
     def list(self) -> list[TagResponse]:
@@ -40,7 +45,7 @@ class TagService(NamedResourceService):
         with get_db() as conn:
             repo = TagRepository(conn)
             self._ensure_name_available(repo, data.name, tag_id=tag_id)
-            row = repo.update(tag_id, data.name)
+            row = repo.update(tag_id, data.name, data.description)
             if not row:
                 raise HTTPException(status_code=404, detail="Tag not found")
             return TagResponse(**row)

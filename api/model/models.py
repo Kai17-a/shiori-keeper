@@ -58,6 +58,7 @@ class BookmarkUpdate(BaseModel):
 
 class FolderCreate(BaseModel):
     name: str = Field(min_length=1)
+    description: str | None = None
 
     @field_validator("name")
     @classmethod
@@ -70,6 +71,7 @@ class FolderCreate(BaseModel):
 
 class FolderUpdate(BaseModel):
     name: str = Field(min_length=1)
+    description: str | None = None
 
     @field_validator("name")
     @classmethod
@@ -82,6 +84,7 @@ class FolderUpdate(BaseModel):
 
 class TagCreate(BaseModel):
     name: str = Field(min_length=1)
+    description: str | None = None
 
     @field_validator("name")
     @classmethod
@@ -94,6 +97,7 @@ class TagCreate(BaseModel):
 
 class TagUpdate(BaseModel):
     name: str = Field(min_length=1)
+    description: str | None = None
 
     @field_validator("name")
     @classmethod
@@ -113,11 +117,13 @@ class TagAttach(BaseModel):
 class TagResponse(BaseModel):
     id: int
     name: str
+    description: str | None = None
 
 
 class FolderResponse(BaseModel):
     id: int
     name: str
+    description: str | None = None
     created_at: datetime
 
 

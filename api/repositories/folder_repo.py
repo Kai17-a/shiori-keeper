@@ -5,9 +5,10 @@ class FolderRepository:
     def __init__(self, conn: sqlite3.Connection) -> None:
         self.conn = conn
 
-    def insert(self, name: str) -> dict:
+    def insert(self, name: str, description: str | None = None) -> dict:
         cursor = self.conn.execute(
-            "INSERT INTO folders (name) VALUES (?)", (name,)
+            "INSERT INTO folders (name, description) VALUES (?, ?)",
+            (name, description),
         )
         row = self.conn.execute(
             "SELECT * FROM folders WHERE id = ?", (cursor.lastrowid,)
@@ -31,10 +32,10 @@ class FolderRepository:
         ).fetchone()
         return dict(row) if row else None
 
-    def update(self, folder_id: int, name: str) -> dict | None:
+    def update(self, folder_id: int, name: str, description: str | None = None) -> dict | None:
         cursor = self.conn.execute(
-            "UPDATE folders SET name = ? WHERE id = ?",
-            (name, folder_id),
+            "UPDATE folders SET name = ?, description = ? WHERE id = ?",
+            (name, description, folder_id),
         )
         if cursor.rowcount == 0:
             return None

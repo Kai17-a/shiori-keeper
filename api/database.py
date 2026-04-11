@@ -13,6 +13,7 @@ def init_db(database_url: str = DATABASE_URL) -> None:
             CREATE TABLE IF NOT EXISTS folders (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
                 name       TEXT    NOT NULL,
+                description TEXT,
                 created_at TEXT    NOT NULL DEFAULT (datetime('now'))
             );
 
@@ -28,7 +29,8 @@ def init_db(database_url: str = DATABASE_URL) -> None:
 
             CREATE TABLE IF NOT EXISTS tags (
                 id   INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL UNIQUE
+                name TEXT NOT NULL UNIQUE,
+                description TEXT
             );
 
             CREATE TABLE IF NOT EXISTS bookmark_tags (
@@ -69,6 +71,18 @@ def init_db(database_url: str = DATABASE_URL) -> None:
             ON folders(name)
             """
         )
+        folder_columns = {
+            row[1]
+            for row in conn.execute("PRAGMA table_info(folders)").fetchall()
+        }
+        if "description" not in folder_columns:
+            conn.execute("ALTER TABLE folders ADD COLUMN description TEXT")
+        tag_columns = {
+            row[1]
+            for row in conn.execute("PRAGMA table_info(tags)").fetchall()
+        }
+        if "description" not in tag_columns:
+            conn.execute("ALTER TABLE tags ADD COLUMN description TEXT")
         conn.commit()
     finally:
         conn.close()

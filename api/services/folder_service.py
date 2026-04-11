@@ -11,7 +11,12 @@ MAX_FOLDERS = 20
 
 
 class FolderService(NamedResourceService):
-    def _ensure_name_available(self, repo: FolderRepository, name: str, folder_id: int | None = None) -> None:
+    def _ensure_name_available(
+        self,
+        repo: FolderRepository,
+        name: str,
+        folder_id: int | None = None,
+    ) -> None:
         super()._ensure_name_available(
             repo,
             name,
@@ -30,7 +35,7 @@ class FolderService(NamedResourceService):
                     detail=f"Folder limit reached: maximum {MAX_FOLDERS} folders",
                 )
             try:
-                row = repo.insert(data.name)
+                row = repo.insert(data.name, data.description)
             except sqlite3.IntegrityError:
                 raise HTTPException(status_code=409, detail="Folder name already exists")
             return FolderResponse(**row)
@@ -46,7 +51,7 @@ class FolderService(NamedResourceService):
             repo = FolderRepository(conn)
             self._ensure_name_available(repo, data.name, folder_id=folder_id)
             try:
-                row = repo.update(folder_id, data.name)
+                row = repo.update(folder_id, data.name, data.description)
             except sqlite3.IntegrityError:
                 raise HTTPException(status_code=409, detail="Folder name already exists")
             if not row:

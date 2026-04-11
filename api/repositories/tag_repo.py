@@ -5,10 +5,11 @@ class TagRepository:
     def __init__(self, conn: sqlite3.Connection) -> None:
         self.conn = conn
 
-    def insert(self, name: str) -> dict:
+    def insert(self, name: str, description: str | None = None) -> dict:
         # Let sqlite3.IntegrityError propagate on duplicate name (UNIQUE constraint)
         cursor = self.conn.execute(
-            "INSERT INTO tags (name) VALUES (?)", (name,)
+            "INSERT INTO tags (name, description) VALUES (?, ?)",
+            (name, description),
         )
         row = self.conn.execute(
             "SELECT * FROM tags WHERE id = ?", (cursor.lastrowid,)
@@ -32,10 +33,10 @@ class TagRepository:
         ).fetchone()
         return dict(row) if row else None
 
-    def update(self, tag_id: int, name: str) -> dict | None:
+    def update(self, tag_id: int, name: str, description: str | None = None) -> dict | None:
         cursor = self.conn.execute(
-            "UPDATE tags SET name = ? WHERE id = ?",
-            (name, tag_id),
+            "UPDATE tags SET name = ?, description = ? WHERE id = ?",
+            (name, description, tag_id),
         )
         if cursor.rowcount == 0:
             return None
