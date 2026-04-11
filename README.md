@@ -20,16 +20,16 @@
 
 ### OSS 利用者向け
 
-公開イメージを使う場合は、Docker Hub から pull して実行する。
+公開イメージを使う場合は、GitHub Container Registry から pull して実行する。
 
 ```bash
-docker pull <dockerhub-namespace>/bookmark-manager:latest
+docker pull ghcr.io/<github-owner>/bookmark-manager:latest
 docker run --rm -p 3000:3000 -p 8000:8000 \
   -e DATABASE_URL=/data/bookmark.db \
   -e API_BASE_URL=http://127.0.0.1:8000 \
   -e NUXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000 \
   -v "$(pwd)/data:/data" \
-  <dockerhub-namespace>/bookmark-manager:latest
+  ghcr.io/<github-owner>/bookmark-manager:latest
 ```
 
 実際に使うときの `docker-compose.yml` は次の形です。
@@ -38,7 +38,7 @@ docker run --rm -p 3000:3000 -p 8000:8000 \
 services:
     bookmark-manager:
         container_name: bookmark-manager
-        image: <dockerhub-namespace>/bookmark-manager:latest
+        image: ghcr.io/<github-owner>/bookmark-manager:latest
         environment:
             DATABASE_URL: /data/bookmark.db
             API_BASE_URL: http://127.0.0.1:8000
@@ -50,8 +50,8 @@ services:
             - ./data:/data
 ```
 
-Docker Hub への publish は [`.github/workflows/dockerhub-publish.yml`](/home/kaito/workspaces/bookmark-manager/.github/workflows/dockerhub-publish.yml) で行う想定です。
-`DOCKERHUB_IMAGE`、`DOCKERHUB_USERNAME`、`DOCKERHUB_TOKEN` を GitHub Secrets に設定してください。
+GHCR への publish は [`.github/workflows/dockerhub-publish.yml`](/home/kaito/workspaces/bookmark-manager/.github/workflows/dockerhub-publish.yml) で行う想定です。
+`GITHUB_TOKEN` に `packages: write` 権限が付くように設定してください。
 
 ## テスト仕様
 
