@@ -4,8 +4,8 @@
 
 ## 構成
 
-- `api/` - FastAPI のバックエンド本体とテスト
-- `frontend/` - Nuxt 4 の SPA
+- [api/README.md](api/README.md) - FastAPI のバックエンド本体とテスト
+- [frontend/README.md](frontend/README.md) - Nuxt 4 の SPA
 - `chrome-extension/` - Chrome 拡張のクイック追加ポップアップ
 - `specs/` - 要件・設計・タスク・テスト観点の整理
 - `specs/api/` - API 仕様
@@ -71,4 +71,3 @@ Docker Hub への publish は [`.github/workflows/dockerhub-publish.yml`](/home/
 - [コミット規約](docs/commit-policy.md)
 
 `specs/requirements.md` は要件の上位定義、`specs/api/` は API 挙動の詳細、`specs/frontend/` は画面と操作の詳細です。
-
