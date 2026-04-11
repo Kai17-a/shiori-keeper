@@ -44,6 +44,9 @@ services:
         image: ghcr.io/kai17-a/browser-bookmark-manager:latest
         environment:
             DATABASE_URL: /data/bookmark.db
+            # API を別ホストや別ポートで公開する場合だけ設定する
+            API_BASE_URL: http://127.0.0.1:8000
+            NUXT_PUBLIC_API_BASE_URL: http://127.0.0.1:8000
         ports:
             - "3000:3000"
             - "8000:8000"
