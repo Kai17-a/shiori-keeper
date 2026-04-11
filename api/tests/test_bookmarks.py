@@ -2,8 +2,8 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from api.app.main import app
-from api.app.database import init_db
+from api.main import app
+from api.database import init_db
 
 
 @pytest.fixture
@@ -12,10 +12,10 @@ def client(tmp_path, monkeypatch):
     db_path = str(tmp_path / "test.db")
     init_db(database_url=db_path)
 
-    import api.app.database as db_module
-    import api.app.services.bookmark_service as bs_module
-    import api.app.services.folder_service as fs_module
-    import api.app.services.tag_service as ts_module
+    import api.database as db_module
+    import api.services.bookmark_service as bs_module
+    import api.services.folder_service as fs_module
+    import api.services.tag_service as ts_module
     from contextlib import contextmanager
     import sqlite3
 
@@ -219,17 +219,27 @@ def test_update_bookmark_with_invalid_url_returns_422(client):
     assert resp.status_code == 422
 
 
+def test_create_bookmark_with_empty_title_returns_422(client):
+    resp = client.post("/bookmarks", json={"url": "https://example.com", "title": "   "})
+    assert resp.status_code == 422
+
+
+def test_create_bookmark_with_duplicate_tag_ids_returns_422(client):
+    tag_id = create_tag(client).json()["id"]
+    resp = create_bookmark(client, tag_ids=[tag_id, tag_id])
+    assert resp.status_code == 422
+
+
 def test_create_bookmark_with_missing_tag_returns_404(client):
     resp = create_bookmark(client, tag_ids=[99999])
     assert resp.status_code == 404
 
 
-def test_update_bookmark_with_duplicate_tag_ids_deduplicates(client):
+def test_update_bookmark_with_duplicate_tag_ids_returns_422(client):
     tag_id = create_tag(client).json()["id"]
     bm_id = create_bookmark(client).json()["id"]
     resp = client.patch(f"/bookmarks/{bm_id}", json={"tag_ids": [tag_id, tag_id]})
-    assert resp.status_code == 200
-    assert [t["id"] for t in resp.json()["tags"]] == [tag_id]
+    assert resp.status_code == 422
 
 
 def test_create_bookmark_with_duplicate_url_returns_409(client):

@@ -2,7 +2,7 @@
 name = "bookmark-manager"
 version = "0.1.0"
 description = "Add your description here"
-readme = "README.md"
+readme = "../README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.111.0",
@@ -14,5 +14,5 @@ dependencies = [
 ]
 
 [project.scripts]
-api-dev = "api.app.main:main"
-api-run = "api.app.main:main"
+api-dev = "api.main:main"
+api-run = "api.main:main"

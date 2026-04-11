@@ -92,7 +92,7 @@ class BookmarkRepository:
             return self.find_by_id(bookmark_id)
 
         set_clauses = ", ".join(f"{key} = ?" for key in fields)
-        set_clauses += ", updated_at = datetime('now')"
+        set_clauses += ", updated_at = strftime('%Y-%m-%d %H:%M:%f', 'now')"
         params = list(fields.values()) + [bookmark_id]
 
         cursor = self.conn.execute(

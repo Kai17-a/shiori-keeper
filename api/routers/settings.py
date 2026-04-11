@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 
-from api.app.database import get_db
-from api.app.models_settings import ApiBaseUrlResponse, ApiBaseUrlUpdate
-from api.app.repositories.settings_repo import SettingsRepository
+from api.database import get_db
+from api.model.models_settings import ApiBaseUrlResponse, ApiBaseUrlUpdate
+from api.repositories.settings_repo import SettingsRepository
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 

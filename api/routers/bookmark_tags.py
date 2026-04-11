@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 
-from api.app.models import BookmarkResponse, TagAttach
-from api.app.services.bookmark_service import BookmarkService
+from api.model.models import BookmarkResponse, TagAttach
+from api.services.bookmark_service import BookmarkService
 
 router = APIRouter(prefix="/bookmarks", tags=["bookmark-tags"])
 

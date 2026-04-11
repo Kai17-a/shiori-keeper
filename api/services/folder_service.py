@@ -1,8 +1,8 @@
 from fastapi import HTTPException
 
-from api.app.database import get_db
-from api.app.models import FolderCreate, FolderResponse, FolderUpdate
-from api.app.repositories.folder_repo import FolderRepository
+from api.database import get_db
+from api.model.models import FolderCreate, FolderResponse, FolderUpdate
+from api.repositories.folder_repo import FolderRepository
 
 MAX_FOLDERS = 20
 

@@ -2,8 +2,8 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from api.app.main import app
-from api.app.database import init_db
+from api.main import app
+from api.database import init_db
 
 
 @pytest.fixture
@@ -12,8 +12,8 @@ def client(tmp_path, monkeypatch):
     db_path = str(tmp_path / "test.db")
     init_db(database_url=db_path)
 
-    import api.app.database as db_module
-    import api.app.services.tag_service as ts_module
+    import api.database as db_module
+    import api.services.tag_service as ts_module
     from contextlib import contextmanager
     import sqlite3
 
@@ -79,6 +79,11 @@ def test_create_duplicate_tag_returns_409(client):
     client.post("/tags", json={"name": "unique"})
     response = client.post("/tags", json={"name": "unique"})
     assert response.status_code == 409
+
+
+def test_create_tag_with_empty_name_returns_422(client):
+    response = client.post("/tags", json={"name": "   "})
+    assert response.status_code == 422
 
 
 def test_delete_nonexistent_tag_returns_404(client):

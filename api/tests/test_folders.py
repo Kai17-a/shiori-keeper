@@ -2,8 +2,8 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from api.app.main import app
-from api.app.database import init_db, get_db
+from api.main import app
+from api.database import init_db, get_db
 
 
 @pytest.fixture
@@ -13,8 +13,8 @@ def client(tmp_path, monkeypatch):
     init_db(database_url=db_path)
 
     # Patch get_db to use the temp DB
-    import api.app.database as db_module
-    import api.app.services.folder_service as fs_module
+    import api.database as db_module
+    import api.services.folder_service as fs_module
     from contextlib import contextmanager
     import sqlite3
 
@@ -79,6 +79,11 @@ def test_deleted_folder_not_in_list(client):
 
 def test_create_folder_without_name_returns_422(client):
     response = client.post("/folders", json={})
+    assert response.status_code == 422
+
+
+def test_create_folder_with_empty_name_returns_422(client):
+    response = client.post("/folders", json={"name": "   "})
     assert response.status_code == 422
 
 

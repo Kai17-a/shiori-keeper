@@ -2,17 +2,17 @@ import sqlite3
 
 from fastapi import HTTPException
 
-from api.app.database import get_db
-from api.app.models import (
+from api.database import get_db
+from api.model.models import (
     BookmarkCreate,
     BookmarkListResponse,
     BookmarkResponse,
     BookmarkUpdate,
     TagResponse,
 )
-from api.app.repositories.bookmark_repo import BookmarkRepository
-from api.app.repositories.folder_repo import FolderRepository
-from api.app.repositories.tag_repo import TagRepository
+from api.repositories.bookmark_repo import BookmarkRepository
+from api.repositories.folder_repo import FolderRepository
+from api.repositories.tag_repo import TagRepository
 
 
 class BookmarkService:

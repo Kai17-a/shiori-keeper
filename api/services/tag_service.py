@@ -2,9 +2,9 @@ import sqlite3
 
 from fastapi import HTTPException
 
-from api.app.database import get_db
-from api.app.models import TagCreate, TagResponse, TagUpdate
-from api.app.repositories.tag_repo import TagRepository
+from api.database import get_db
+from api.model.models import TagCreate, TagResponse, TagUpdate
+from api.repositories.tag_repo import TagRepository
 
 MAX_TAGS = 20
 

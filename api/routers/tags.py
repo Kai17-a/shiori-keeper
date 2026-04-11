@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 
-from api.app.models import ErrorResponse, TagCreate, TagResponse, TagUpdate
-from api.app.services.tag_service import TagService
+from api.model.models import ErrorResponse, TagCreate, TagResponse, TagUpdate
+from api.services.tag_service import TagService
 
 router = APIRouter(prefix="/tags", tags=["tags"])
 

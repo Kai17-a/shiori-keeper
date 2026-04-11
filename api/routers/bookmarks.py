@@ -2,14 +2,14 @@ from fastapi import APIRouter, Depends
 
 from fastapi import Query
 
-from api.app.models import (
+from api.model.models import (
     BookmarkCreate,
     BookmarkListResponse,
     BookmarkResponse,
     BookmarkUpdate,
     ErrorResponse,
 )
-from api.app.services.bookmark_service import BookmarkService
+from api.services.bookmark_service import BookmarkService
 
 router = APIRouter(prefix="/bookmarks", tags=["bookmarks"])
 

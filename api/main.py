@@ -8,11 +8,11 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from api.app.database import init_db
-from api.app.routers.bookmarks import router as bookmarks_router
-from api.app.routers.folders import router as folders_router
-from api.app.routers.settings import router as settings_router
-from api.app.routers.tags import router as tags_router
+from api.database import init_db
+from api.routers.bookmarks import router as bookmarks_router
+from api.routers.folders import router as folders_router
+from api.routers.settings import router as settings_router
+from api.routers.tags import router as tags_router
 
 logging.basicConfig(
     level=logging.ERROR,
@@ -70,4 +70,4 @@ app.include_router(tags_router)
 def main() -> None:
     import uvicorn
 
-    uvicorn.run("api.app.main:app", reload=True)
+    uvicorn.run("api.main:app", reload=True)

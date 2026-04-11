@@ -9,20 +9,25 @@ from fastapi.testclient import TestClient
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
-from api.app.database import init_db
-from api.app.main import app
+from api.database import get_db, init_db
+from api.main import app
+
+
+TEST_DB_PATH: str | None = None
 
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     """TestClient with an isolated temp DB for each test."""
+    global TEST_DB_PATH
     db_path = str(tmp_path / "test.db")
+    TEST_DB_PATH = db_path
     init_db(database_url=db_path)
 
-    import api.app.database as db_module
-    import api.app.services.bookmark_service as bs_module
-    import api.app.services.folder_service as fs_module
-    import api.app.services.tag_service as ts_module
+    import api.database as db_module
+    import api.services.bookmark_service as bs_module
+    import api.services.folder_service as fs_module
+    import api.services.tag_service as ts_module
 
     @contextmanager
     def patched_get_db(database_url=db_path):
@@ -67,6 +72,22 @@ def _unique(name: str) -> str:
     return f"{name}-{uuid4().hex[:8]}"
 
 
+def _reset_database():
+    assert TEST_DB_PATH is not None
+    with get_db(database_url=TEST_DB_PATH) as conn:
+        conn.execute("DELETE FROM bookmark_tags")
+        conn.execute("DELETE FROM bookmarks")
+        conn.execute("DELETE FROM folders")
+        conn.execute("DELETE FROM tags")
+        conn.execute("DELETE FROM app_settings")
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO app_settings (key, value)
+            VALUES ('api_base_url', 'http://localhost:8000')
+            """
+        )
+
+
 # Feature: bookmark-manager-api, Property 1: ブックマーク作成のラウンドトリップ
 @given(
     url=st.from_regex(r"https?://[a-z]{3,10}\.[a-z]{2,4}(/[a-z]*)?", fullmatch=True),
@@ -79,6 +100,7 @@ def _unique(name: str) -> str:
 @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
 def test_property_1_bookmark_create_roundtrip(client, url, title):
     """Validates: Requirements 1.1, 2.2"""
+    _reset_database()
     resp = _create_bookmark(client, url=_unique(url), title=title)
     assert resp.status_code == 201
     bookmark_id = resp.json()["id"]
@@ -95,6 +117,7 @@ def test_property_1_bookmark_create_roundtrip(client, url, title):
 @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
 def test_property_2_invalid_url_returns_422(client, url):
     """Validates: Requirements 1.3, 3.4"""
+    _reset_database()
     resp = client.post("/bookmarks", json={"url": url, "title": "test"})
     assert resp.status_code == 422
 
@@ -106,6 +129,7 @@ def test_property_2_invalid_url_returns_422(client, url):
 @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
 def test_property_3_nonexistent_resource_returns_404(client, nonexistent_id):
     """Validates: Requirements 1.5, 2.6, 3.3, 4.3, 5.6, 6.6, 7.4"""
+    _reset_database()
     assert client.get(f"/bookmarks/{nonexistent_id}").status_code == 404
     assert (
         client.patch(f"/bookmarks/{nonexistent_id}", json={"title": "x"}).status_code
@@ -124,6 +148,7 @@ def test_property_3_nonexistent_resource_returns_404(client, nonexistent_id):
 @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
 def test_property_4_folder_filter_accuracy(client, folder_count, bookmark_count):
     """Validates: Requirements 2.3"""
+    _reset_database()
     # Create folders
     folder_ids = []
     for i in range(folder_count):
@@ -159,6 +184,7 @@ def test_property_4_folder_filter_accuracy(client, folder_count, bookmark_count)
 @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
 def test_property_5_tag_filter_accuracy(client, tag_count, bookmark_count):
     """Validates: Requirements 2.4"""
+    _reset_database()
     # Create tags
     tag_ids = []
     for i in range(tag_count):
@@ -194,6 +220,7 @@ def test_property_5_tag_filter_accuracy(client, tag_count, bookmark_count):
 @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
 def test_property_6_keyword_search_accuracy(client, q):
     """Validates: Requirements 2.5"""
+    _reset_database()
     # Create a bookmark whose title contains q
     resp = _create_bookmark(client, url=_unique("https://example.com"), title=f"prefix{q}suffix")
     assert resp.status_code == 201
@@ -218,6 +245,7 @@ def test_property_6_keyword_search_accuracy(client, q):
 @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
 def test_property_7_partial_update_immutability(client, new_title):
     """Validates: Requirements 3.1, 3.2"""
+    _reset_database()
     original_url = _unique("https://original.com")
     original_desc = "original description"
     resp = _create_bookmark(
@@ -248,6 +276,7 @@ def test_property_7_partial_update_immutability(client, new_title):
 @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
 def test_property_8_bookmark_delete_cascade(client, tag_count):
     """Validates: Requirements 4.1, 4.2"""
+    _reset_database()
     # Create bookmark with tags
     resp = _create_bookmark(client, url=_unique("https://delete-me.com"), title="ToDelete")
     assert resp.status_code == 201
@@ -276,6 +305,7 @@ def test_property_8_bookmark_delete_cascade(client, tag_count):
 @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
 def test_property_9_folder_delete_nullifies_bookmark_folder(client, bookmark_count):
     """Validates: Requirements 5.4"""
+    _reset_database()
     # Create folder
     folder_resp = _create_folder(client, name="tempfolder")
     assert folder_resp.status_code == 201
@@ -311,6 +341,7 @@ def test_property_9_folder_delete_nullifies_bookmark_folder(client, bookmark_cou
 @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
 def test_property_10_tag_name_uniqueness(client, tag_name):
     """Validates: Requirements 6.5"""
+    _reset_database()
     first = _create_tag(client, name=tag_name)
     assert first.status_code == 201
 
@@ -325,6 +356,7 @@ def test_property_10_tag_name_uniqueness(client, tag_name):
 @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
 def test_property_11_tag_attach_detach_roundtrip(client, tag_count):
     """Validates: Requirements 7.1, 7.2"""
+    _reset_database()
     # Create bookmark (starts with no tags)
     resp = _create_bookmark(client, url=_unique("https://roundtrip.com"), title="RoundTrip")
     assert resp.status_code == 201
@@ -359,6 +391,7 @@ def test_property_11_tag_attach_detach_roundtrip(client, tag_count):
 @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
 def test_property_12_duplicate_tag_attach_returns_409(client, dummy):
     """Validates: Requirements 7.3"""
+    _reset_database()
     resp = _create_bookmark(client, url=_unique("https://dup-tag.com"), title="DupTag")
     assert resp.status_code == 201
     bm_id = resp.json()["id"]

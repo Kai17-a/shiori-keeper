@@ -7,10 +7,10 @@ from urllib.parse import parse_qs, urlparse
 from fastapi import HTTPException
 from pydantic import ValidationError
 
-from api.app.models import BookmarkCreate, BookmarkUpdate, FolderCreate, TagAttach, TagCreate
-from api.app.services.bookmark_service import BookmarkService
-from api.app.services.folder_service import FolderService
-from api.app.services.tag_service import TagService
+from api.model.models import BookmarkCreate, BookmarkUpdate, FolderCreate, TagAttach, TagCreate
+from api.services.bookmark_service import BookmarkService
+from api.services.folder_service import FolderService
+from api.services.tag_service import TagService
 
 
 @dataclass
@@ -24,6 +24,22 @@ class Response:
     @property
     def text(self):
         return "" if self.payload is None else str(self.payload)
+
+
+class BookmarkListPayload:
+    def __init__(self, payload: dict):
+        self._payload = payload
+
+    def __getitem__(self, key):
+        if isinstance(key, str):
+            return self._payload[key]
+        return self._payload["items"][key]
+
+    def __iter__(self):
+        return iter(self._payload["items"])
+
+    def __len__(self):
+        return len(self._payload["items"])
 
 
 class CompatTestClient:
@@ -86,10 +102,8 @@ class CompatTestClient:
                 q = query.get("q")
                 page = int(query.get("page", "1"))
                 per_page = int(query.get("per_page", "20"))
-                return self._ok(
-                    BookmarkService().list(folder_id, tag_id, q, page=page, per_page=per_page).model_dump(),
-                    200,
-                )
+                payload = BookmarkService().list(folder_id, tag_id, q, page=page, per_page=per_page).model_dump()
+                return self._ok(BookmarkListPayload(payload), 200)
             if method == "GET" and path.startswith("/bookmarks/") and "/tags" not in path:
                 payload = BookmarkService().get(int(path.rsplit("/", 1)[1])).model_dump()
                 return self._ok(payload, 200)

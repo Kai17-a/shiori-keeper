@@ -2,19 +2,26 @@ FROM oven/bun:1.1.38-alpine AS build
 
 WORKDIR /app
 
-# COPY frontend/package.json frontend/nuxt.config.ts frontend/app.vue ./
-# COPY frontend/pages ./pages
-# COPY frontend/components ./components
-# COPY frontend/composables ./composables
-
 COPY frontend /app
 
 RUN bun install
-RUN bun run generate
+RUN bun run build
 
-FROM nginx:1.27-alpine
+FROM oven/bun:1.1.38-alpine
 
-COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/.output/public /usr/share/nginx/html
+WORKDIR /app
 
-EXPOSE 80
+COPY --from=build /app/.output /app/.output
+COPY --from=build /app/node_modules /app/node_modules
+COPY --from=build /app/package.json /app/package.json
+COPY --from=build /app/nuxt.config.ts /app/nuxt.config.ts
+COPY --from=build /app/app /app/app
+COPY --from=build /app/public /app/public
+COPY --from=build /app/tsconfig.json /app/tsconfig.json
+
+ENV NUXT_HOST=0.0.0.0
+ENV NUXT_PORT=3000
+
+EXPOSE 3000
+
+CMD ["bun", "run", "start"]

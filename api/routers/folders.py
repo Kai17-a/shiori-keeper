@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 
-from api.app.models import FolderCreate, FolderResponse, FolderUpdate
-from api.app.services.folder_service import FolderService
+from api.model.models import FolderCreate, FolderResponse, FolderUpdate
+from api.services.folder_service import FolderService
 
 router = APIRouter(prefix="/folders", tags=["folders"])
 
