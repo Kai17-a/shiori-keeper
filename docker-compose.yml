@@ -1,15 +1,14 @@
 services:
   bookmark-manager:
     container_name: bookmark-manager
-    # image: ghcr.io/kai17-a/browser-bookmark-manager:latest
     build:
       context: .
       dockerfile: Dockerfile
     environment:
       DATABASE_URL: /data/bookmark.db
-      API_BASE_URL: http://127.0.0.1:${API_PORT:-8000}
+      API_BASE_URL: http://127.0.0.1:8005
     ports:
-      - "${FRONTEND_PORT:-9500}:3000"
-      - "${API_PORT:-9501}:8000"
+      - "3001:3000"
+      - "8005:8000"
     volumes:
-      - ./local-data:/data
+      - ./data:/data
