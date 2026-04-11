@@ -1,5 +1,5 @@
 [tools]
-bun = "latest"
+bun = "1.1.38"
 codex = "latest"
 opencode = "latest"
 uv = "latest"
