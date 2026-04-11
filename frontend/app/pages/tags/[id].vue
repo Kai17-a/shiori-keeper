@@ -90,6 +90,8 @@
                             :bookmark="bookmark"
                             :show-folder="true"
                             :show-tags="false"
+                            @edit="loadBookmarkForm"
+                            @remove="askDeleteBookmark"
                         />
                     </div>
                     <div
@@ -122,6 +124,83 @@
                                 </UButton>
                             </div>
                         </form>
+                    </template>
+                </UModal>
+
+                <UModal
+                    v-model:open="editBookmarkOpen"
+                    title="Edit bookmark"
+                    description="Update the bookmark details."
+                >
+                    <template #content="{ close }">
+                        <form class="space-y-4 p-6" @submit.prevent="saveBookmark">
+                            <UFormField label="URL" required class="w-full">
+                                <UInput v-model="bookmarkForm.url" class="w-full" />
+                            </UFormField>
+
+                            <UFormField label="Title" required class="w-full">
+                                <UInput v-model="bookmarkForm.title" class="w-full" />
+                            </UFormField>
+
+                            <UFormField label="Description" class="w-full">
+                                <UTextarea v-model="bookmarkForm.description" :rows="4" class="w-full" />
+                            </UFormField>
+
+                            <UFormField label="Folder" class="w-full">
+                                <USelectMenu
+                                    v-model="selectedBookmarkFolder"
+                                    :items="bookmarkFolderOptions"
+                                    placeholder="No folder"
+                                    class="w-full"
+                                />
+                            </UFormField>
+
+                            <UFormField
+                                label="Tags"
+                                description="Attach one or more tags to this bookmark."
+                                class="w-full"
+                            >
+                                <USelectMenu
+                                    v-model="bookmarkForm.tag_ids"
+                                    :items="bookmarkTagOptions"
+                                    placeholder="No tags"
+                                    multiple
+                                    value-key="value"
+                                    class="w-full"
+                                />
+                            </UFormField>
+
+                            <div class="flex justify-end gap-3">
+                                <UButton color="neutral" variant="ghost" @click="close">
+                                    Cancel
+                                </UButton>
+                                <UButton type="submit" :loading="saving">
+                                    Save bookmark
+                                </UButton>
+                            </div>
+                        </form>
+                    </template>
+                </UModal>
+
+                <UModal
+                    v-model:open="deleteBookmarkOpen"
+                    title="Delete bookmark"
+                    description="This action cannot be undone."
+                >
+                    <template #content>
+                        <div class="space-y-4 p-6">
+                            <p class="text-sm text-default">
+                                Delete <strong>{{ pendingBookmark?.title }}</strong>?
+                            </p>
+                            <div class="flex justify-end gap-3">
+                                <UButton color="neutral" variant="ghost" @click="closeBookmarkDelete">
+                                    Cancel
+                                </UButton>
+                                <UButton color="error" :loading="deletingBookmark" @click="confirmDeleteBookmark">
+                                    Delete bookmark
+                                </UButton>
+                            </div>
+                        </div>
                     </template>
                 </UModal>
 
@@ -204,7 +283,8 @@ const loadTag = async () => {
             tagsRes.find(
                 (item: TagResponse) => String(item.id) === String(route.params.id),
             ) || null;
-                        bookmarks.value = bookmarksRes.items || [];
+        folders.value = foldersRes;
+        bookmarks.value = bookmarksRes.items || [];
         state.value = tag.value ? "ready" : "not-found";
     } catch (err) {
         tag.value = null;
@@ -223,6 +303,29 @@ const bookmarksWithFolderNames = computed(() =>
             null,
     })),
 );
+
+const bookmarkFolderOptions = computed<SelectOption[]>(() => [
+    { label: "No folder", value: "" },
+    ...createSelectOptions(
+        folders.value,
+        (folder) => folder.name,
+        (folder) => folder.id,
+    ),
+]);
+
+const bookmarkTagOptions = computed<SelectOption[]>(() =>
+    createSelectOptions(allTags.value, (tag) => tag.name, (tag) => tag.id),
+);
+
+const selectedBookmarkFolder = computed<SelectOption | null>({
+    get: () =>
+        bookmarkFolderOptions.value.find(
+            (option) => option.value === bookmarkForm.folder_id,
+        ) || null,
+    set: (value) => {
+        bookmarkForm.folder_id = normalizeSelectValue(value);
+    },
+});
 
 const openEdit = () => {
     if (!tag.value) return;
@@ -269,6 +372,89 @@ const saveTag = async () => {
         });
     } finally {
         saving.value = false;
+    }
+};
+
+const loadBookmarkForm = (bookmark: BookmarkResponse) => {
+    bookmarkForm.id = String(bookmark.id);
+    bookmarkForm.url = bookmark.url;
+    bookmarkForm.title = bookmark.title;
+    bookmarkForm.description = bookmark.description || "";
+    bookmarkForm.folder_id = bookmark.folder_id ? String(bookmark.folder_id) : "";
+    bookmarkForm.tag_ids = bookmark.tags.map((item) => String(item.id));
+    editBookmarkOpen.value = true;
+};
+
+const saveBookmark = async () => {
+    if (!bookmarkForm.id) return;
+    const url = bookmarkForm.url.trim();
+    const title = bookmarkForm.title.trim();
+    if (!url || !title) return;
+
+    saving.value = true;
+    try {
+        await request(`/bookmarks/${bookmarkForm.id}`, {
+            method: "PATCH",
+            body: JSON.stringify({
+                url,
+                title,
+                description: bookmarkForm.description || null,
+                folder_id: bookmarkForm.folder_id ? Number(bookmarkForm.folder_id) : null,
+                tag_ids: bookmarkForm.tag_ids.map((item) => Number(item)),
+            }),
+        });
+        editBookmarkOpen.value = false;
+        Object.assign(bookmarkForm, createBookmarkFormState());
+        await loadTag();
+        toast.show({
+            title: "Bookmark updated.",
+            color: "success",
+            icon: "i-lucide-check",
+        });
+    } catch (err) {
+        toast.show({
+            title: "Failed to save bookmark.",
+            description: err instanceof Error ? err.message : undefined,
+            color: "error",
+            icon: "i-lucide-circle-alert",
+        });
+    } finally {
+        saving.value = false;
+    }
+};
+
+const askDeleteBookmark = (bookmark: BookmarkResponse) => {
+    pendingBookmark.value = bookmark;
+    deleteBookmarkOpen.value = true;
+};
+
+const closeBookmarkDelete = () => {
+    deleteBookmarkOpen.value = false;
+    pendingBookmark.value = null;
+};
+
+const confirmDeleteBookmark = async () => {
+    if (!pendingBookmark.value) return;
+
+    deletingBookmark.value = true;
+    try {
+        await request(`/bookmarks/${pendingBookmark.value.id}`, { method: "DELETE" });
+        closeBookmarkDelete();
+        await loadTag();
+        toast.show({
+            title: "Bookmark deleted.",
+            color: "success",
+            icon: "i-lucide-check",
+        });
+    } catch (err) {
+        toast.show({
+            title: "Failed to delete bookmark.",
+            description: err instanceof Error ? err.message : undefined,
+            color: "error",
+            icon: "i-lucide-circle-alert",
+        });
+    } finally {
+        deletingBookmark.value = false;
     }
 };
 
