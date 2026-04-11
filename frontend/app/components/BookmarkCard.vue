@@ -23,9 +23,8 @@
             {{ bookmark.description }}
         </p>
 
-        <div v-if="bookmark.folder_name || bookmark.tags.length" class="flex flex-wrap gap-2">
+        <div v-if="showFolder && bookmark.folder_name" class="flex flex-wrap gap-2">
             <UBadge
-                v-if="bookmark.folder_name"
                 size="xs"
                 color="primary"
                 variant="soft"
@@ -33,7 +32,9 @@
             >
                 {{ bookmark.folder_name }}
             </UBadge>
+        </div>
 
+        <div v-if="showTags && bookmark.tags.length" class="flex flex-wrap gap-2">
             <UBadge
                 v-for="tag in bookmark.tags"
                 :key="tag.id"
@@ -45,25 +46,6 @@
                 {{ tag.name }}
             </UBadge>
         </div>
-
-        <div class="flex justify-end gap-2">
-            <UButton
-                size="xs"
-                variant="ghost"
-                color="neutral"
-                icon="i-lucide-pencil"
-                @click="$emit('edit', bookmark)"
-            >
-                <span class="sr-only">Edit</span>
-            </UButton>
-            <UButton
-                size="xs"
-                variant="soft"
-                color="error"
-                icon="i-lucide-trash-2"
-                @click="$emit('remove', bookmark.id)"
-            />
-        </div>
     </article>
 </template>
 
@@ -72,10 +54,7 @@ import type { BookmarkResponse } from "~/types";
 
 defineProps<{
     bookmark: BookmarkResponse & { folder_name?: string | null };
-}>();
-
-defineEmits<{
-    edit: [bookmark: BookmarkResponse & { folder_name?: string | null }];
-    remove: [id: number];
+    showFolder?: boolean;
+    showTags?: boolean;
 }>();
 </script>

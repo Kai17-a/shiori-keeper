@@ -84,11 +84,12 @@
                     </div>
 
                     <div v-else-if="bookmarks.length" class="grid gap-3">
-                        <CardsBookmarkPreviewCard
-                            v-for="bookmark in bookmarks"
+                        <BookmarkCard
+                            v-for="bookmark in bookmarksWithFolderNames"
                             :key="bookmark.id"
                             :bookmark="bookmark"
-                            :max-tags="0"
+                            :show-folder="true"
+                            :show-tags="false"
                         />
                     </div>
                     <div
@@ -151,7 +152,19 @@
 </template>
 
 <script setup lang="ts">
-import type { BookmarkListResponse, TagResponse } from "~/types";
+import type {
+    BookmarkListResponse,
+    BookmarkResponse,
+    FolderResponse,
+    TagResponse,
+} from "~/types";
+import {
+    createBookmarkFormState,
+    createSelectOptions,
+    normalizeSelectValue,
+    type BookmarkFormState,
+    type SelectOption,
+} from "~/utils/bookmarkList";
 
 const route = useRoute();
 const router = useRouter();
@@ -163,19 +176,27 @@ const state = ref<"loading" | "ready" | "error" | "not-found">("loading");
 const errorMessage = ref("");
 const tag = ref<TagResponse | null>(null);
 const bookmarks = ref<BookmarkListResponse["items"]>([]);
+const folders = ref<FolderResponse[]>([]);
+const allTags = ref<TagResponse[]>([]);
 const editOpen = ref(false);
+const editBookmarkOpen = ref(false);
+const deleteBookmarkOpen = ref(false);
 const confirmOpen = ref(false);
 const saving = ref(false);
 const deleting = ref(false);
+const deletingBookmark = ref(false);
 const editForm = reactive({ name: "", description: "" });
+const bookmarkForm = reactive<BookmarkFormState>(createBookmarkFormState());
+const pendingBookmark = ref<BookmarkResponse | null>(null);
 
 const loadTag = async () => {
     state.value = "loading";
     errorMessage.value = "";
 
     try {
-        const [tagsRes, bookmarksRes] = await Promise.all([
+        const [tagsRes, foldersRes, bookmarksRes] = await Promise.all([
             request("/tags"),
+            request("/folders"),
             request(`/bookmarks?tag_id=${route.params.id}`),
         ]);
 
@@ -183,7 +204,7 @@ const loadTag = async () => {
             tagsRes.find(
                 (item: TagResponse) => String(item.id) === String(route.params.id),
             ) || null;
-        bookmarks.value = bookmarksRes.items || [];
+                        bookmarks.value = bookmarksRes.items || [];
         state.value = tag.value ? "ready" : "not-found";
     } catch (err) {
         tag.value = null;
@@ -193,6 +214,15 @@ const loadTag = async () => {
         state.value = "error";
     }
 };
+
+const bookmarksWithFolderNames = computed(() =>
+    bookmarks.value.map((bookmark) => ({
+        ...bookmark,
+        folder_name:
+            folders.value.find((folder) => folder.id === bookmark.folder_id)?.name ||
+            null,
+    })),
+);
 
 const openEdit = () => {
     if (!tag.value) return;
