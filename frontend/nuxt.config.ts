@@ -9,6 +9,13 @@ export default defineNuxtConfig({
     devtools: { enabled: false },
     css: ["~/assets/css/main.css"],
     ssr: false,
+    vite: {
+        build: {
+            modulePreload: {
+                polyfill: false,
+            },
+        },
+    },
     app: {
         head: {
             title: "Bookmark Manager",
