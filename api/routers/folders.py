@@ -1,13 +1,10 @@
+from api.model.models import FolderCreate, FolderResponse, FolderUpdate
 from fastapi import APIRouter, Depends
 
-from api.model.models import FolderCreate, FolderResponse, FolderUpdate
+from api.dependencies import get_folder_service
 from api.services.folder_service import FolderService
 
 router = APIRouter(prefix="/folders", tags=["folders"])
-
-
-def get_folder_service() -> FolderService:
-    return FolderService()
 
 
 @router.post("", status_code=201, response_model=FolderResponse)

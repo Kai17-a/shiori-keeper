@@ -3,15 +3,20 @@ from fastapi import HTTPException
 from api.database import get_db
 from api.model.models import TagCreate, TagResponse, TagUpdate
 from api.repositories.tag_repo import TagRepository
+from api.services.base import NamedResourceService
 
 MAX_TAGS = 20
 
 
-class TagService:
+class TagService(NamedResourceService):
     def _ensure_name_available(self, repo: TagRepository, name: str, tag_id: int | None = None) -> None:
-        existing = repo.find_by_name(name)
-        if existing is not None and existing["id"] != tag_id:
-            raise HTTPException(status_code=409, detail="Tag name already exists")
+        super()._ensure_name_available(
+            repo,
+            name,
+            resource_label="Tag",
+            already_exists_message="Tag name already exists",
+            resource_id=tag_id,
+        )
 
     def create(self, data: TagCreate) -> TagResponse:
         with get_db() as conn:

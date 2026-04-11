@@ -1,13 +1,10 @@
+from api.model.models import BookmarkResponse, TagAttach
 from fastapi import APIRouter, Depends
 
-from api.model.models import BookmarkResponse, TagAttach
+from api.dependencies import get_bookmark_service
 from api.services.bookmark_service import BookmarkService
 
 router = APIRouter(prefix="/bookmarks", tags=["bookmark-tags"])
-
-
-def get_bookmark_service() -> BookmarkService:
-    return BookmarkService()
 
 
 @router.post("/{bookmark_id}/tags", status_code=200, response_model=BookmarkResponse)

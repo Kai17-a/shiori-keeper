@@ -1,13 +1,10 @@
+from api.model.models import ErrorResponse, TagCreate, TagResponse, TagUpdate
 from fastapi import APIRouter, Depends
 
-from api.model.models import ErrorResponse, TagCreate, TagResponse, TagUpdate
+from api.dependencies import get_tag_service
 from api.services.tag_service import TagService
 
 router = APIRouter(prefix="/tags", tags=["tags"])
-
-
-def get_tag_service() -> TagService:
-    return TagService()
 
 
 @router.post(

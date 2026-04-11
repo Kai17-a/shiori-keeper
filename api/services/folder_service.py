@@ -5,15 +5,20 @@ from fastapi import HTTPException
 from api.database import get_db
 from api.model.models import FolderCreate, FolderResponse, FolderUpdate
 from api.repositories.folder_repo import FolderRepository
+from api.services.base import NamedResourceService
 
 MAX_FOLDERS = 20
 
 
-class FolderService:
+class FolderService(NamedResourceService):
     def _ensure_name_available(self, repo: FolderRepository, name: str, folder_id: int | None = None) -> None:
-        existing = repo.find_by_name(name)
-        if existing is not None and existing["id"] != folder_id:
-            raise HTTPException(status_code=409, detail="Folder name already exists")
+        super()._ensure_name_available(
+            repo,
+            name,
+            resource_label="Folder",
+            already_exists_message="Folder name already exists",
+            resource_id=folder_id,
+        )
 
     def create(self, data: FolderCreate) -> FolderResponse:
         with get_db() as conn:
