@@ -65,7 +65,6 @@ services:
         environment:
             DATABASE_URL: /data/bookmark.db
             API_BASE_URL: http://127.0.0.1:8000
-            NUXT_PUBLIC_API_BASE_URL: http://127.0.0.1:8000
         ports:
             - "3000:3000"
             - "8000:8000"
@@ -117,7 +116,7 @@ bun run e2e:headed
 
 `e2e:run` は結果ログを `.artifacts/playwright-e2e.log` に保存する。
 `e2e:headed` はブラウザを開いて実行する。
-`e2e:run` は `API_BASE_URL=http://127.0.0.1:8001` と `NUXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8001` で API と frontend を起動し、`http://127.0.0.1:8001` と `http://127.0.0.1:3001` を使って E2E を実行する。
+`e2e:run` は `API_BASE_URL=http://127.0.0.1:8001` で API と frontend を起動し、内部的に同じ値を `NUXT_PUBLIC_API_BASE_URL` として扱う。`http://127.0.0.1:8001` と `http://127.0.0.1:3001` を使って E2E を実行する。
 
 ## ローカル URL
 

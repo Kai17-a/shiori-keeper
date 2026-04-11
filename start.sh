@@ -1,8 +1,8 @@
 #!/bin/sh
 set -e
 
-export NUXT_PUBLIC_API_BASE_URL="${NUXT_PUBLIC_API_BASE_URL:-http://127.0.0.1:8000}"
 export API_BASE_URL="${API_BASE_URL:-http://127.0.0.1:8000}"
+export NUXT_PUBLIC_API_BASE_URL="${NUXT_PUBLIC_API_BASE_URL:-$API_BASE_URL}"
 export DATABASE_URL="${DATABASE_URL:-/data/bookmark.db}"
 
 python3 -m uvicorn api.main:app --host 0.0.0.0 --port 8000 &

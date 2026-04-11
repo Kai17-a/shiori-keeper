@@ -3,7 +3,7 @@
 ## API 依存
 
 - フロントエンドは `GET /settings` に依存してバックエンドの base URL を解決する。
-- `NUXT_PUBLIC_API_BASE_URL` が未設定のとき、フロントエンドはアクセス中のホスト名を使って `http(s)://<host>:8000` を既定値として組み立てる。
+- `API_BASE_URL` が未設定のとき、フロントエンドはアクセス中のホスト名を使って `http(s)://<host>:8000` を既定値として組み立てる。
 - `useBookmarkApi()` は設定取得結果を保持し、解決済み base URL を全 API リクエストに付与する。
 - リクエストエラーは `extractErrorMessage()` で正規化する。
 
