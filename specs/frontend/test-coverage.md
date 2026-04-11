@@ -14,7 +14,7 @@
 
 ## E2E テスト
 
-- `frontend/tests/e2e/bookmark-manager.spec.ts`
+- `tests/e2e/bookmark-manager.spec.ts`
   - Bookmark create, edit, search, delete
   - Folder create, rename, detail, delete
   - Tag create, rename, detail, delete
