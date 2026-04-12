@@ -11,6 +11,28 @@
     <template #body>
       <div class="space-y-6">
         <UPageCard
+          title="Theme"
+          description="Switch the app appearance between light, dark, and system"
+          :ui="{ body: 'space-y-5' }"
+        >
+          <div class="space-y-3">
+            <div>
+              <p class="text-sm font-medium text-default">Appearance</p>
+              <p class="text-sm text-muted">Changes apply immediately and are saved in your browser.</p>
+            </div>
+
+            <UTabs
+              v-model="selectedTheme"
+              :items="themeOptions"
+              class="w-full max-w-md"
+              color="primary"
+              variant="soft"
+              orientation="horizontal"
+            />
+          </div>
+        </UPageCard>
+
+        <UPageCard
           title="API Base URL"
           description="Configured from runtime environment"
           :ui="{ body: 'space-y-5' }"
@@ -44,9 +66,23 @@
 <script setup lang="ts">
 const { apiBase, defaultApiBase } = useBookmarkApi();
 const toast = useSingleToast();
+const colorMode = useColorMode();
 const checking = ref(false);
 const form = reactive({
   apiBaseUrl: "",
+});
+
+const themeOptions = [
+  { label: "System", value: "system" },
+  { label: "Light", value: "light" },
+  { label: "Dark", value: "dark" },
+] as const;
+
+const selectedTheme = computed({
+  get: () => colorMode.preference,
+  set: (value) => {
+    colorMode.preference = value;
+  },
 });
 
 const syncSettings = () => {
