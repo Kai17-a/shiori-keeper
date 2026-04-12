@@ -86,6 +86,103 @@ class CompatTestClient:
     def _serialize(self, items):
         return [item.model_dump() for item in items]
 
+    def _handle_folders(self, method: str, path: str, json):
+        if method == "POST" and path == "/folders":
+            body = FolderCreate(**(json or {}))
+            payload = FolderService().create(body).model_dump()
+            return self._ok(payload, 201)
+        if method == "GET" and path == "/folders":
+            return self._ok(self._serialize(FolderService().list()), 200)
+        if method == "PATCH" and path.startswith("/folders/"):
+            body = FolderUpdate(**(json or {}))
+            payload = FolderService().update(int(path.rsplit("/", 1)[1]), body).model_dump()
+            return self._ok(payload, 200)
+        if method == "DELETE" and path.startswith("/folders/"):
+            FolderService().delete(int(path.rsplit("/", 1)[1]))
+            return self._ok(status_code=204)
+        return None
+
+    def _handle_tags(self, method: str, path: str, json):
+        if method == "POST" and path == "/tags":
+            body = TagCreate(**(json or {}))
+            payload = TagService().create(body).model_dump()
+            return self._ok(payload, 201)
+        if method == "GET" and path == "/tags":
+            return self._ok(self._serialize(TagService().list()), 200)
+        if method == "PATCH" and path.startswith("/tags/"):
+            body = TagUpdate(**(json or {}))
+            payload = TagService().update(int(path.rsplit("/", 1)[1]), body).model_dump()
+            return self._ok(payload, 200)
+        if method == "DELETE" and path.startswith("/tags/"):
+            TagService().delete(int(path.rsplit("/", 1)[1]))
+            return self._ok(status_code=204)
+        return None
+
+    def _handle_rss_feeds(self, method: str, path: str, query, json):
+        if method == "POST" and path == "/rss-feeds":
+            body = RSSFeedCreate(**(json or {}))
+            payload = RSSFeedService().create(body).model_dump()
+            return self._ok(payload, 201)
+        if method == "GET" and path == "/rss-feeds":
+            q = query.get("q")
+            page = int(query.get("page", "1"))
+            per_page = int(query.get("per_page", "20"))
+            payload = RSSFeedService().list(q=q, page=page, per_page=per_page).model_dump()
+            return self._ok(payload, 200)
+        if method == "GET" and path.startswith("/rss-feeds/"):
+            payload = RSSFeedService().get(int(path.rsplit("/", 1)[1])).model_dump()
+            return self._ok(payload, 200)
+        if method == "POST" and path.startswith("/rss-feeds/") and path.endswith("/execute"):
+            feed_id = int(path.split("/")[2])
+            payload = RSSFeedService().execute(feed_id).model_dump()
+            return self._ok(payload, 200)
+        if method == "PATCH" and path.startswith("/rss-feeds/"):
+            body = RSSFeedUpdate(**(json or {}))
+            payload = RSSFeedService().update(int(path.rsplit("/", 1)[1]), body).model_dump()
+            return self._ok(payload, 200)
+        if method == "DELETE" and path.startswith("/rss-feeds/"):
+            RSSFeedService().delete(int(path.rsplit("/", 1)[1]))
+            return self._ok(status_code=204)
+        return None
+
+    def _handle_bookmarks(self, method: str, path: str, query, json):
+        if method == "POST" and path == "/bookmarks":
+            body = BookmarkCreate(**(json or {}))
+            payload = BookmarkService().create(body).model_dump()
+            return self._ok(payload, 201)
+        if method == "GET" and path == "/bookmarks":
+            folder_id = int(query["folder_id"]) if "folder_id" in query else None
+            tag_id = int(query["tag_id"]) if "tag_id" in query else None
+            q = query.get("q")
+            page = int(query.get("page", "1"))
+            per_page = int(query.get("per_page", "20"))
+            payload = BookmarkService().list(folder_id, tag_id, q, page=page, per_page=per_page).model_dump()
+            return self._ok(BookmarkListPayload(payload), 200)
+        if method == "GET" and path.startswith("/bookmarks/") and "/tags" not in path:
+            payload = BookmarkService().get(int(path.rsplit("/", 1)[1])).model_dump()
+            return self._ok(payload, 200)
+        if method == "PATCH" and path == "/bookmarks/favorite":
+            body = BookmarkFavoriteUpdate(**(json or {}))
+            payload = BookmarkService().set_favorite(body).model_dump()
+            return self._ok(payload, 200)
+        if method == "PATCH" and path.startswith("/bookmarks/") and "/tags" not in path:
+            body = BookmarkUpdate(**(json or {}))
+            payload = BookmarkService().update(int(path.rsplit("/", 1)[1]), body).model_dump()
+            return self._ok(payload, 200)
+        if method == "DELETE" and path.startswith("/bookmarks/") and "/tags" not in path:
+            BookmarkService().delete(int(path.rsplit("/", 1)[1]))
+            return self._ok(status_code=204)
+        if method == "POST" and path.endswith("/tags") and path.startswith("/bookmarks/"):
+            bookmark_id = int(path.split("/")[2])
+            body = TagAttach(**(json or {}))
+            payload = BookmarkService().add_tag(bookmark_id, body.tag_id).model_dump()
+            return self._ok(payload, 200)
+        if method == "DELETE" and "/tags/" in path and path.startswith("/bookmarks/"):
+            parts = path.split("/")
+            BookmarkService().remove_tag(int(parts[2]), int(parts[4]))
+            return self._ok(status_code=204)
+        return None
+
     def _build_request(self, path: str) -> Request:
         parsed = urlparse(self.base_url)
         port = parsed.port or (443 if parsed.scheme == "https" else 80)
@@ -112,38 +209,18 @@ class CompatTestClient:
                 payload = DashboardService().metrics().model_dump()
                 return self._ok(payload, 200)
 
-            if method == "POST" and path == "/folders":
-                body = FolderCreate(**(json or {}))
-                payload = FolderService().create(body).model_dump()
-                return self._ok(payload, 201)
-            if method == "GET" and path == "/folders":
-                return self._ok(self._serialize(FolderService().list()), 200)
-            if method == "PATCH" and path.startswith("/folders/"):
-                body = FolderUpdate(**(json or {}))
-                payload = FolderService().update(int(path.rsplit("/", 1)[1]), body).model_dump()
-                return self._ok(payload, 200)
-            if method == "DELETE" and path.startswith("/folders/"):
-                FolderService().delete(int(path.rsplit("/", 1)[1]))
-                return self._ok(status_code=204)
+            folders_response = self._handle_folders(method, path, json)
+            if folders_response is not None:
+                return folders_response
 
-            if method == "POST" and path == "/tags":
-                body = TagCreate(**(json or {}))
-                payload = TagService().create(body).model_dump()
-                return self._ok(payload, 201)
-            if method == "GET" and path == "/tags":
-                return self._ok(self._serialize(TagService().list()), 200)
-            if method == "PATCH" and path.startswith("/tags/"):
-                body = TagUpdate(**(json or {}))
-                payload = TagService().update(int(path.rsplit("/", 1)[1]), body).model_dump()
-                return self._ok(payload, 200)
-            if method == "DELETE" and path.startswith("/tags/"):
-                TagService().delete(int(path.rsplit("/", 1)[1]))
-                return self._ok(status_code=204)
+            tags_response = self._handle_tags(method, path, json)
+            if tags_response is not None:
+                return tags_response
 
-            if method == "POST" and path == "/rss-feeds":
-                body = RSSFeedCreate(**(json or {}))
-                payload = RSSFeedService().create(body).model_dump()
-                return self._ok(payload, 201)
+            rss_feeds_response = self._handle_rss_feeds(method, path, query, json)
+            if rss_feeds_response is not None:
+                return rss_feeds_response
+
             if method == "PUT" and path == "/settings/webhook":
                 body = SettingsWebhookUpdate(**(json or {}))
                 payload = SettingsService().set_webhook(body).model_dump()
@@ -155,62 +232,9 @@ class CompatTestClient:
             if method == "GET" and path == "/settings/webhook":
                 payload = SettingsService().get_webhook().model_dump()
                 return self._ok(payload, 200)
-            if method == "GET" and path == "/rss-feeds":
-                q = query.get("q")
-                page = int(query.get("page", "1"))
-                per_page = int(query.get("per_page", "20"))
-                payload = RSSFeedService().list(q=q, page=page, per_page=per_page).model_dump()
-                return self._ok(payload, 200)
-            if method == "GET" and path.startswith("/rss-feeds/"):
-                payload = RSSFeedService().get(int(path.rsplit("/", 1)[1])).model_dump()
-                return self._ok(payload, 200)
-            if method == "POST" and path.startswith("/rss-feeds/") and path.endswith("/execute"):
-                feed_id = int(path.split("/")[2])
-                payload = RSSFeedService().execute(feed_id).model_dump()
-                return self._ok(payload, 200)
-            if method == "PATCH" and path.startswith("/rss-feeds/"):
-                body = RSSFeedUpdate(**(json or {}))
-                payload = RSSFeedService().update(int(path.rsplit("/", 1)[1]), body).model_dump()
-                return self._ok(payload, 200)
-            if method == "DELETE" and path.startswith("/rss-feeds/"):
-                RSSFeedService().delete(int(path.rsplit("/", 1)[1]))
-                return self._ok(status_code=204)
-
-            if method == "POST" and path == "/bookmarks":
-                body = BookmarkCreate(**(json or {}))
-                payload = BookmarkService().create(body).model_dump()
-                return self._ok(payload, 201)
-            if method == "GET" and path == "/bookmarks":
-                folder_id = int(query["folder_id"]) if "folder_id" in query else None
-                tag_id = int(query["tag_id"]) if "tag_id" in query else None
-                q = query.get("q")
-                page = int(query.get("page", "1"))
-                per_page = int(query.get("per_page", "20"))
-                payload = BookmarkService().list(folder_id, tag_id, q, page=page, per_page=per_page).model_dump()
-                return self._ok(BookmarkListPayload(payload), 200)
-            if method == "GET" and path.startswith("/bookmarks/") and "/tags" not in path:
-                payload = BookmarkService().get(int(path.rsplit("/", 1)[1])).model_dump()
-                return self._ok(payload, 200)
-            if method == "PATCH" and path == "/bookmarks/favorite":
-                body = BookmarkFavoriteUpdate(**(json or {}))
-                payload = BookmarkService().set_favorite(body).model_dump()
-                return self._ok(payload, 200)
-            if method == "PATCH" and path.startswith("/bookmarks/") and "/tags" not in path:
-                body = BookmarkUpdate(**(json or {}))
-                payload = BookmarkService().update(int(path.rsplit("/", 1)[1]), body).model_dump()
-                return self._ok(payload, 200)
-            if method == "DELETE" and path.startswith("/bookmarks/") and "/tags" not in path:
-                BookmarkService().delete(int(path.rsplit("/", 1)[1]))
-                return self._ok(status_code=204)
-            if method == "POST" and path.endswith("/tags") and path.startswith("/bookmarks/"):
-                bookmark_id = int(path.split("/")[2])
-                body = TagAttach(**(json or {}))
-                payload = BookmarkService().add_tag(bookmark_id, body.tag_id).model_dump()
-                return self._ok(payload, 200)
-            if method == "DELETE" and "/tags/" in path and path.startswith("/bookmarks/"):
-                parts = path.split("/")
-                BookmarkService().remove_tag(int(parts[2]), int(parts[4]))
-                return self._ok(status_code=204)
+            bookmarks_response = self._handle_bookmarks(method, path, query, json)
+            if bookmarks_response is not None:
+                return bookmarks_response
         except ValidationError as exc:
             return self._error(422, exc.errors())
         except HTTPException as exc:

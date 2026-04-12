@@ -50,9 +50,11 @@ class BookmarkService(BookmarkServiceBase):
                 is_favorite=False,
             )
             self._sync_tags(repo, row["id"], data.tag_ids)
-            row = repo.find_by_id(row["id"])
-            assert row is not None
-            return self._build_bookmark_response(repo, repo.normalize_row(row))
+            saved_row = repo.find_by_id(row["id"])
+            assert saved_row is not None
+            return self._build_bookmark_response(
+                repo, repo.normalize_row(saved_row)
+            )
 
     def list(
         self,
@@ -86,6 +88,7 @@ class BookmarkService(BookmarkServiceBase):
             row = repo.find_by_id(bookmark_id)
             if row is None:
                 self._raise_not_found("Bookmark")
+            assert row is not None
             return self._build_bookmark_response(repo, repo.normalize_row(row))
 
     def update(self, bookmark_id: int, data: BookmarkUpdate) -> BookmarkResponse:

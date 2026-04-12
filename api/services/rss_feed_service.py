@@ -1,7 +1,8 @@
 import sqlite3
 import xml.etree.ElementTree as ET
+from typing import Any, cast
 
-import feedparser
+import feedparser  # type: ignore
 import httpx
 from fastapi import HTTPException
 
@@ -30,6 +31,12 @@ class RSSFeedService:
                 status_code=422, detail="RSS feed URL is not a valid RSS feed"
             )
         return parsed
+
+    def _get_feed_title(
+        self, parsed_feed: feedparser.FeedParserDict, fallback_title: str
+    ) -> str:
+        feed_data = cast(dict[str, Any], parsed_feed["feed"])
+        return str(feed_data.get("title") or fallback_title)
 
     def _validate_rss_feed_url(self, url: str) -> None:
         try:
@@ -189,7 +196,7 @@ class RSSFeedService:
                 )
 
             parsed_feed = self._parse_rss_feed(response.content)
-            feed_title = parsed_feed.feed.get("title") or row["title"]
+            feed_title = self._get_feed_title(parsed_feed, str(row["title"]))
             sent_urls = self._load_sent_article_urls(conn, feed_id)
             articles: list[dict[str, object]] = []
             embeds: list[dict[str, object]] = []
