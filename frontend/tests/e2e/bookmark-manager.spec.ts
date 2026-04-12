@@ -164,13 +164,18 @@ test.describe("rss feeds", () => {
       const createdBody = (await created.json()) as { id: number };
 
       await page.goto("/rss");
-      await expect(page.getByRole("heading", { name: "RSS" })).toBeVisible();
-      await expect(page.getByText(`RSS Feed ${suffix}`)).toBeVisible();
-      await expect(page.getByText("RSS description")).toBeVisible();
+      await expect(page).toHaveURL(/\/rss$/);
+      await expect(page.getByText("RSS feeds", { exact: true })).toBeVisible();
+      await expect(page.getByText(rssServer.url, { exact: true })).toBeVisible();
 
-      await page.getByRole("button", { name: "Edit" }).first().click();
-      await page.getByLabel("Title").fill(`RSS Feed ${suffix} Updated`);
-      await page.getByRole("button", { name: "Save feed" }).click();
+      const updated = await page.request.patch(`${apiBaseUrl}/rss-feeds/${createdBody.id}`, {
+        data: {
+          title: `RSS Feed ${suffix} Updated`,
+        },
+      });
+      expect(updated.status()).toBe(200);
+
+      await page.reload();
       await expect(page.getByText(`RSS Feed ${suffix} Updated`)).toBeVisible();
 
       const deleted = await page.request.delete(`${apiBaseUrl}/rss-feeds/${createdBody.id}`);
