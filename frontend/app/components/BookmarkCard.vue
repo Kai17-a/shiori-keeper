@@ -4,33 +4,53 @@
   >
     <div class="flex items-start justify-between gap-4">
       <div class="min-w-0">
-        <NuxtLink
-          :to="bookmark.url"
-          external
-          target="_blank"
-          rel="noreferrer"
-          class="block truncate text-base font-semibold text-default hover:underline"
-        >
-          {{ bookmark.title }}
-        </NuxtLink>
+        <div class="flex items-center gap-1.5">
+          <UButton
+            type="button"
+            size="xs"
+            variant="ghost"
+            class="shrink-0 px-1"
+            :color="bookmark.is_favorite ? 'warning' : 'neutral'"
+            :icon="bookmark.is_favorite ? 'i-lucide-star' : 'i-lucide-star-off'"
+            @click.stop="$emit('favorite', bookmark)"
+          >
+            <span class="sr-only">{{ bookmark.is_favorite ? "Remove from favorites" : "Add to favorites" }}</span>
+          </UButton>
+          <NuxtLink
+            :to="bookmark.url"
+            external
+            target="_blank"
+            rel="noreferrer"
+            class="block truncate text-base font-semibold text-default hover:underline"
+          >
+            {{ bookmark.title }}
+          </NuxtLink>
+        </div>
         <p class="mt-1 break-all text-sm text-muted">
           {{ bookmark.url }}
         </p>
       </div>
-      <UButton
-        type="button"
-        size="xs"
-        variant="ghost"
-        :color="bookmark.is_favorite ? 'warning' : 'neutral'"
-        :icon="bookmark.is_favorite ? 'i-lucide-star' : 'i-lucide-star-off'"
-        @click.stop="$emit('favorite', bookmark)"
-      >
-        <span class="sr-only">
-          {{
-            bookmark.is_favorite ? "Remove from favorites" : "Add to favorites"
-          }}
-        </span>
-      </UButton>
+
+      <div class="hidden shrink-0 items-center gap-2 sm:flex">
+        <UButton
+          type="button"
+          size="xs"
+          variant="ghost"
+          color="neutral"
+          icon="i-lucide-pencil"
+          @click.stop="$emit('edit', bookmark)"
+        >
+          <span class="sr-only">Edit</span>
+        </UButton>
+        <UButton
+          type="button"
+          size="xs"
+          variant="soft"
+          color="error"
+          icon="i-lucide-trash-2"
+          @click.stop="$emit('remove', bookmark.id)"
+        />
+      </div>
     </div>
 
     <p v-if="bookmark.description" class="text-sm text-default">
@@ -56,7 +76,7 @@
       </UBadge>
     </div>
 
-    <div class="flex items-center justify-end gap-2">
+    <div class="flex justify-end gap-2 sm:hidden">
       <UButton
         type="button"
         size="xs"
