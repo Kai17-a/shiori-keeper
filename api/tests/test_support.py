@@ -19,6 +19,7 @@ from api.model.models import (
     TagUpdate,
 )
 from api.services.bookmark_service import BookmarkService
+from api.services.dashboard_service import DashboardService
 from api.services.folder_service import FolderService
 from api.services.tag_service import TagService
 
@@ -101,6 +102,9 @@ class CompatTestClient:
         try:
             if method == "GET" and path == "/health":
                 return self._ok({"status": "ok"}, 200)
+            if method == "GET" and path == "/metrics/dashboard":
+                payload = DashboardService().metrics().model_dump()
+                return self._ok(payload, 200)
 
             if method == "POST" and path == "/folders":
                 body = FolderCreate(**(json or {}))

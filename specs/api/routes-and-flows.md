@@ -12,6 +12,7 @@
 | PATCH | `/bookmarks/favorite` | ブックマークのお気に入り状態更新 |
 | POST | `/bookmarks/{id}/tags` | ブックマークへタグ付与 |
 | DELETE | `/bookmarks/{id}/tags/{tag_id}` | ブックマークからタグ解除 |
+| GET | `/metrics/dashboard` | ダッシュボード用集計取得 |
 | POST | `/folders` | フォルダ作成 |
 | GET | `/folders` | フォルダ一覧取得 |
 | PATCH | `/folders/{id}` | フォルダ更新 |
@@ -31,6 +32,10 @@
 - 詳細を確認して編集または削除する
 - 必要に応じてタグを追加・削除する
 - 必要に応じてお気に入り状態を切り替える
+
+### ダッシュボード
+
+- ブックマーク、フォルダ、タグ、お気に入りの総数を確認する
 
 ### フォルダ
 
@@ -87,7 +92,21 @@
 
 20. `POST /bookmarks/{id}/tags` は、タグ紐付けを追加し更新後ブックマークを返す。
 21. `DELETE /bookmarks/{id}/tags/{tag_id}` は、204 を返す。
-22. `GET /health` は、`status: ok` を返す。
+22. `GET /metrics/dashboard` は、ダッシュボードで使う総数を返す。
+23. `GET /health` は、`status: ok` を返す。
+
+### `GET /metrics/dashboard`
+
+Response:
+
+```json
+{
+  "bookmarks_total": 12,
+  "folders_total": 3,
+  "tags_total": 8,
+  "favorites_total": 4
+}
+```
 
 ## エンドポイント詳細
 

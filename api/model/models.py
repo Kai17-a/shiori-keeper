@@ -152,5 +152,12 @@ class BookmarkListResponse(BaseModel):
     total_pages: int
 
 
+class DashboardMetricsResponse(BaseModel):
+    bookmarks_total: int
+    folders_total: int
+    tags_total: int
+    favorites_total: int
+
+
 class ErrorResponse(BaseModel):
     detail: str
