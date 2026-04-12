@@ -218,6 +218,7 @@ class RSSFeedService:
                     title=row["title"],
                     webhook_url=webhook_url,
                     delivered=True,
+                    message="No new articles found.",
                 )
 
             try:
@@ -254,4 +255,5 @@ class RSSFeedService:
                 title=row["title"],
                 webhook_url=webhook_url,
                 delivered=True,
+                message=f"Posted {len(articles)} new article(s).",
             )

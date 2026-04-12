@@ -204,6 +204,7 @@ class RSSFeedExecuteResponse(BaseModel):
     title: str
     webhook_url: str
     delivered: bool
+    message: str | None = None
 
 
 class SettingsWebhookUpdate(BaseModel):
