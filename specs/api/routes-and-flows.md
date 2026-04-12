@@ -2,26 +2,26 @@
 
 ## ルート
 
-| Method | Path | Purpose |
-|---|---|---|
-| POST | `/bookmarks` | ブックマーク作成 |
-| GET | `/bookmarks` | ブックマーク一覧取得 |
-| GET | `/bookmarks/{id}` | ブックマーク詳細取得 |
-| PATCH | `/bookmarks/{id}` | ブックマーク部分更新 |
-| DELETE | `/bookmarks/{id}` | ブックマーク削除 |
-| PATCH | `/bookmarks/favorite` | ブックマークのお気に入り状態更新 |
-| POST | `/bookmarks/{id}/tags` | ブックマークへタグ付与 |
-| DELETE | `/bookmarks/{id}/tags/{tag_id}` | ブックマークからタグ解除 |
-| GET | `/metrics/dashboard` | ダッシュボード用集計取得 |
-| POST | `/folders` | フォルダ作成 |
-| GET | `/folders` | フォルダ一覧取得 |
-| PATCH | `/folders/{id}` | フォルダ更新 |
-| DELETE | `/folders/{id}` | フォルダ削除 |
-| POST | `/tags` | タグ作成 |
-| GET | `/tags` | タグ一覧取得 |
-| PATCH | `/tags/{id}` | タグ更新 |
-| DELETE | `/tags/{id}` | タグ削除 |
-| GET | `/health` | ヘルスチェック |
+| Method | Path                            | Purpose                          |
+| ------ | ------------------------------- | -------------------------------- |
+| POST   | `/bookmarks`                    | ブックマーク作成                 |
+| GET    | `/bookmarks`                    | ブックマーク一覧取得             |
+| GET    | `/bookmarks/{id}`               | ブックマーク詳細取得             |
+| PATCH  | `/bookmarks/{id}`               | ブックマーク部分更新             |
+| DELETE | `/bookmarks/{id}`               | ブックマーク削除                 |
+| PATCH  | `/bookmarks/favorite`           | ブックマークのお気に入り状態更新 |
+| POST   | `/bookmarks/{id}/tags`          | ブックマークへタグ付与           |
+| DELETE | `/bookmarks/{id}/tags/{tag_id}` | ブックマークからタグ解除         |
+| GET    | `/metrics/dashboard`            | ダッシュボード用集計取得         |
+| POST   | `/folders`                      | フォルダ作成                     |
+| GET    | `/folders`                      | フォルダ一覧取得                 |
+| PATCH  | `/folders/{id}`                 | フォルダ更新                     |
+| DELETE | `/folders/{id}`                 | フォルダ削除                     |
+| POST   | `/tags`                         | タグ作成                         |
+| GET    | `/tags`                         | タグ一覧取得                     |
+| PATCH  | `/tags/{id}`                    | タグ更新                         |
+| DELETE | `/tags/{id}`                    | タグ削除                         |
+| GET    | `/health`                       | ヘルスチェック                   |
 
 ## ユーザーフロー
 

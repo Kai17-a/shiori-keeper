@@ -21,17 +21,17 @@ docker run --rm -p 3000:3000 -p 8000:8000 \
 
 ```yaml
 services:
-    bookmark-manager:
-        container_name: bookmark-manager
-        image: ghcr.io/kai17-a/browser-bookmark-manager:latest
-        environment:
-            DATABASE_URL: /data/bookmark.db
-            API_BASE_URL: http://127.0.0.1:8000
-        ports:
-            - "3000:3000"
-            - "8000:8000"
-        volumes:
-            - ./data:/data
+  bookmark-manager:
+    container_name: bookmark-manager
+    image: ghcr.io/kai17-a/browser-bookmark-manager:latest
+    environment:
+      DATABASE_URL: /data/bookmark.db
+      API_BASE_URL: http://127.0.0.1:8000
+    ports:
+      - "3000:3000"
+      - "8000:8000"
+    volumes:
+      - ./data:/data
 ```
 
 `API_BASE_URL` は、API を別ホストや別ポートに公開するときだけ上書きする。

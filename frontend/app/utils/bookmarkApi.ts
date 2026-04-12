@@ -33,10 +33,7 @@ export const buildRequestHeaders = (options: RequestInit = {}) => {
   };
 };
 
-export const extractErrorMessage = (
-  status: number,
-  body: ApiErrorBody | null,
-) => {
+export const extractErrorMessage = (status: number, body: ApiErrorBody | null) => {
   if (Array.isArray(body?.detail)) {
     return body.detail.join(", ");
   }

@@ -1,7 +1,5 @@
 <template>
-  <article
-    class="rounded-2xl border border-default bg-elevated/40 p-4 space-y-4"
-  >
+  <article class="rounded-2xl border border-default bg-elevated/40 p-4 space-y-4">
     <div class="flex items-start justify-between gap-4">
       <div class="min-w-0">
         <div class="flex items-center gap-1.5">
@@ -14,7 +12,9 @@
             :icon="bookmark.is_favorite ? 'i-lucide-star' : 'i-lucide-star-off'"
             @click.stop="$emit('favorite', bookmark)"
           >
-            <span class="sr-only">{{ bookmark.is_favorite ? "Remove from favorites" : "Add to favorites" }}</span>
+            <span class="sr-only">
+              {{ bookmark.is_favorite ? "Remove from favorites" : "Add to favorites" }}
+            </span>
           </UButton>
           <NuxtLink
             :to="bookmark.url"
@@ -57,10 +57,7 @@
       {{ bookmark.description }}
     </p>
 
-    <div
-      v-if="showFolder || (showTags && bookmark.tags.length)"
-      class="space-y-3"
-    >
+    <div v-if="showFolder || (showTags && bookmark.tags.length)" class="space-y-3">
       <div v-if="showFolder && bookmark.folder_name" class="flex flex-wrap gap-2">
         <UBadge size="xs" color="success" variant="soft" icon="i-lucide-folder">
           {{ bookmark.folder_name }}

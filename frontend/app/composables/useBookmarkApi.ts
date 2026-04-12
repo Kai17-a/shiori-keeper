@@ -22,10 +22,7 @@ export const useBookmarkApi = () => {
     return apiBase.value;
   };
 
-  const request = async <T = unknown>(
-    path: string,
-    options: RequestInit = {},
-  ): Promise<T> => {
+  const request = async <T = unknown>(path: string, options: RequestInit = {}): Promise<T> => {
     const { headers: mergedHeaders, rest } = buildRequestHeaders(options);
 
     const res = await fetch(`${trimTrailingSlash(apiBase.value)}${path}`, {

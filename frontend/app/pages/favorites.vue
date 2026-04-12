@@ -99,15 +99,11 @@ const favoriteBookmarksWithFolderNames = computed(() =>
 );
 
 const loadAllBookmarks = async () => {
-  const firstPage = await request<BookmarkListResponse>(
-    "/bookmarks?per_page=100&page=1",
-  );
+  const firstPage = await request<BookmarkListResponse>("/bookmarks?per_page=100&page=1");
   const items = [...firstPage.items];
 
   for (let page = 2; page <= firstPage.total_pages; page += 1) {
-    const nextPage = await request<BookmarkListResponse>(
-      `/bookmarks?per_page=100&page=${page}`,
-    );
+    const nextPage = await request<BookmarkListResponse>(`/bookmarks?per_page=100&page=${page}`);
     items.push(...nextPage.items);
   }
 
@@ -121,8 +117,7 @@ const loadFavorites = async () => {
   try {
     await loadAllBookmarks();
   } catch (err) {
-    loadError.value =
-      err instanceof Error ? err.message : "Failed to load favorites.";
+    loadError.value = err instanceof Error ? err.message : "Failed to load favorites.";
     toast.show({
       title: "Failed to load favorites.",
       description: loadError.value,

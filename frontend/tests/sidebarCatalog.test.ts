@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  applySidebarCatalogResults,
-  createSidebarCatalogState,
-} from "~/utils/sidebarCatalog";
+import { applySidebarCatalogResults, createSidebarCatalogState } from "~/utils/sidebarCatalog";
 
 describe("sidebarCatalog helpers", () => {
   it("creates a predictable empty state", () => {

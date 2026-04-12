@@ -6,10 +6,7 @@ import {
 import type { FolderResponse, TagResponse } from "~/types";
 
 export const useSidebarCatalog = () => {
-  const state = useState<SidebarCatalogState>(
-    "sidebar-catalog",
-    createSidebarCatalogState,
-  );
+  const state = useState<SidebarCatalogState>("sidebar-catalog", createSidebarCatalogState);
 
   const { request } = useBookmarkApi();
   const loading = ref(false);

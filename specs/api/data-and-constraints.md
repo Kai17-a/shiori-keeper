@@ -49,13 +49,13 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 
 ## レスポンススキーマ
 
-| Schema | Fields |
-|---|---|
-| `BookmarkResponse` | `id`, `url`, `title`, `description`, `folder_id`, `tags`, `created_at`, `updated_at` |
-| `BookmarkListResponse` | `items`, `total`, `page`, `per_page`, `total_pages` |
-| `FolderResponse` | `id`, `name`, `created_at` |
-| `TagResponse` | `id`, `name` |
-| `ErrorResponse` | `detail` |
+| Schema                 | Fields                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------ |
+| `BookmarkResponse`     | `id`, `url`, `title`, `description`, `folder_id`, `tags`, `created_at`, `updated_at` |
+| `BookmarkListResponse` | `items`, `total`, `page`, `per_page`, `total_pages`                                  |
+| `FolderResponse`       | `id`, `name`, `created_at`                                                           |
+| `TagResponse`          | `id`, `name`                                                                         |
+| `ErrorResponse`        | `detail`                                                                             |
 
 ## 制約
 

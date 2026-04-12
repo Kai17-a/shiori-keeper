@@ -102,18 +102,12 @@ export const toBookmarkRouteQuery = (params: {
   },
 });
 
-export const parsePositiveInteger = (
-  value: unknown,
-  fallback = 1,
-) => {
+export const parsePositiveInteger = (value: unknown, fallback = 1) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
 };
 
-export const buildPaginationItems = (
-  currentPage: number,
-  totalPages: number,
-): PaginationItem[] => {
+export const buildPaginationItems = (currentPage: number, totalPages: number): PaginationItem[] => {
   const total = Math.max(totalPages, 1);
   const current = Math.min(Math.max(currentPage, 1), total);
   const items: PaginationItem[] = [];
@@ -153,6 +147,5 @@ export const mapBookmarksWithFolderNames = (
 ) =>
   bookmarks.map((bookmark) => ({
     ...bookmark,
-    folder_name:
-      folders.find((folder) => folder.id === bookmark.folder_id)?.name || null,
+    folder_name: folders.find((folder) => folder.id === bookmark.folder_id)?.name || null,
   }));

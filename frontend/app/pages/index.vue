@@ -25,10 +25,7 @@
           description="Latest bookmarks at a glance"
           :ui="{ body: 'space-y-4' }"
         >
-          <div
-            v-if="bookmarks.items.length"
-            class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
-          >
+          <div v-if="bookmarks.items.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <CardsBookmarkPreviewCard
               v-for="bookmark in bookmarks.items.slice(0, 6)"
               :key="bookmark.id"
@@ -47,18 +44,12 @@
             <p class="text-xs uppercase tracking-[0.08em] text-muted">
               {{ bookmarks.total }} items
             </p>
-            <UButton to="/bookmarks" icon="i-lucide-arrow-right">
-              More
-            </UButton>
+            <UButton to="/bookmarks" icon="i-lucide-arrow-right"> More </UButton>
           </div>
         </UPageCard>
 
         <UPageGrid class="grid gap-4 lg:grid-cols-2">
-          <UPageCard
-            title="Folders"
-            description="Saved folders"
-            :ui="{ body: 'space-y-3' }"
-          >
+          <UPageCard title="Folders" description="Saved folders" :ui="{ body: 'space-y-3' }">
             <div class="flex flex-wrap gap-2">
               <UButton
                 v-for="folder in folders.slice(0, 10)"
@@ -79,11 +70,7 @@
             </div>
           </UPageCard>
 
-          <UPageCard
-            title="Tags"
-            description="Saved tags"
-            :ui="{ body: 'space-y-3' }"
-          >
+          <UPageCard title="Tags" description="Saved tags" :ui="{ body: 'space-y-3' }">
             <div class="flex flex-wrap gap-2">
               <UButton
                 v-for="tag in tags.slice(0, 10)"
@@ -97,9 +84,7 @@
               />
             </div>
             <div class="flex items-center justify-between gap-3">
-              <p class="text-xs uppercase tracking-[0.08em] text-muted">
-                {{ tags.length }} tags
-              </p>
+              <p class="text-xs uppercase tracking-[0.08em] text-muted">{{ tags.length }} tags</p>
               <UButton to="/tags" variant="ghost" size="sm"> More </UButton>
             </div>
           </UPageCard>
@@ -168,8 +153,7 @@ onMounted(async () => {
           ? "API server is reachable."
           : "API server responded unexpectedly.",
       color: healthRes?.status === "ok" ? "success" : "warning",
-      icon:
-        healthRes?.status === "ok" ? "i-lucide-check" : "i-lucide-circle-alert",
+      icon: healthRes?.status === "ok" ? "i-lucide-check" : "i-lucide-circle-alert",
     });
   } catch (error) {
     toast.show({

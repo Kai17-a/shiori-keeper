@@ -57,19 +57,19 @@ GitHub Actions のワークフローをローカルで再現する場合は `mis
 
 ```yaml
 services:
-    bookmark-manager:
-        container_name: bookmark-manager
-        build:
-            context: .
-            dockerfile: Dockerfile
-        environment:
-            DATABASE_URL: /data/bookmark.db
-            API_BASE_URL: http://127.0.0.1:8005
-        ports:
-            - "3001:3000"
-            - "8005:8000"
-        volumes:
-            - ./data:/data
+  bookmark-manager:
+    container_name: bookmark-manager
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: /data/bookmark.db
+      API_BASE_URL: http://127.0.0.1:8005
+    ports:
+      - "3001:3000"
+      - "8005:8000"
+    volumes:
+      - ./data:/data
 ```
 
 Docker 起動時は API を `fastapi run api/main.py` で起動し、1 つのコンテナでフロントエンドと API を利用できる。`API_PORT` を変えない限り、コンテナ内ではフロントが `http://127.0.0.1:8000` の API を使う。

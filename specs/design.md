@@ -73,24 +73,24 @@ bookmark-manager/
 
 ### エンドポイント
 
-| Method | Path | 説明 |
-|---|---|---|
-| POST | `/bookmarks` | ブックマーク作成 |
-| GET | `/bookmarks` | ブックマーク一覧取得 |
-| GET | `/bookmarks/{id}` | ブックマーク詳細取得 |
-| PATCH | `/bookmarks/{id}` | ブックマーク部分更新 |
-| DELETE | `/bookmarks/{id}` | ブックマーク削除 |
-| POST | `/bookmarks/{id}/tags` | ブックマークへタグ付与 |
+| Method | Path                            | 説明                     |
+| ------ | ------------------------------- | ------------------------ |
+| POST   | `/bookmarks`                    | ブックマーク作成         |
+| GET    | `/bookmarks`                    | ブックマーク一覧取得     |
+| GET    | `/bookmarks/{id}`               | ブックマーク詳細取得     |
+| PATCH  | `/bookmarks/{id}`               | ブックマーク部分更新     |
+| DELETE | `/bookmarks/{id}`               | ブックマーク削除         |
+| POST   | `/bookmarks/{id}/tags`          | ブックマークへタグ付与   |
 | DELETE | `/bookmarks/{id}/tags/{tag_id}` | ブックマークからタグ解除 |
-| POST | `/folders` | フォルダ作成 |
-| GET | `/folders` | フォルダ一覧取得 |
-| PATCH | `/folders/{id}` | フォルダ更新 |
-| DELETE | `/folders/{id}` | フォルダ削除 |
-| POST | `/tags` | タグ作成 |
-| GET | `/tags` | タグ一覧取得 |
-| PATCH | `/tags/{id}` | タグ更新 |
-| DELETE | `/tags/{id}` | タグ削除 |
-| GET | `/health` | ヘルスチェック |
+| POST   | `/folders`                      | フォルダ作成             |
+| GET    | `/folders`                      | フォルダ一覧取得         |
+| PATCH  | `/folders/{id}`                 | フォルダ更新             |
+| DELETE | `/folders/{id}`                 | フォルダ削除             |
+| POST   | `/tags`                         | タグ作成                 |
+| GET    | `/tags`                         | タグ一覧取得             |
+| PATCH  | `/tags/{id}`                    | タグ更新                 |
+| DELETE | `/tags/{id}`                    | タグ削除                 |
+| GET    | `/health`                       | ヘルスチェック           |
 
 ### レスポンス方針
 

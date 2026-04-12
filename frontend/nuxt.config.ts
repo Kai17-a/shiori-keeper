@@ -1,54 +1,53 @@
 import tailwindcss from "@tailwindcss/vite";
 
 const env =
-    (globalThis as {
-        process?: { env?: Record<string, string | undefined> };
-    }).process?.env ?? {};
+  (
+    globalThis as {
+      process?: { env?: Record<string, string | undefined> };
+    }
+  ).process?.env ?? {};
 
 export default defineNuxtConfig({
-    modules: ["@nuxt/ui"],
+  modules: ["@nuxt/ui"],
 
-    devtools: { enabled: false },
-    css: ["~/assets/css/main.css"],
-    ssr: false,
-    sourcemap: {
-        client: true,
-        server: false,
+  devtools: { enabled: false },
+  css: ["~/assets/css/main.css"],
+  ssr: false,
+  sourcemap: {
+    client: true,
+    server: false,
+  },
+  vite: {
+    logLevel: "error",
+    build: {
+      sourcemap: true,
+      modulePreload: {
+        polyfill: false,
+      },
     },
-    vite: {
-        logLevel: "error",
-        build: {
-            sourcemap: true,
-            modulePreload: {
-                polyfill: false,
-            },
-        },
-        css: {
-            devSourcemap: true,
-        },
+    css: {
+      devSourcemap: true,
     },
-    app: {
-        head: {
-            title: "Bookmark Manager",
-            meta: [
-                {
-                    name: "viewport",
-                    content: "width=device-width, initial-scale=1",
-                },
-            ],
+  },
+  app: {
+    head: {
+      title: "Bookmark Manager",
+      meta: [
+        {
+          name: "viewport",
+          content: "width=device-width, initial-scale=1",
         },
+      ],
     },
+  },
 
-    compatibilityDate: "2025-04-07",
+  compatibilityDate: "2025-04-07",
 
-    runtimeConfig: {
-        public: {
-            apiPort: env.API_PORT || "8000",
-            apiBaseUrl:
-                env.API_BASE_URL ||
-                env.NUXT_PUBLIC_API_BASE_URL ||
-                env.NUXT_PUBLIC_API_BASE ||
-                "",
-        },
+  runtimeConfig: {
+    public: {
+      apiPort: env.API_PORT || "8000",
+      apiBaseUrl:
+        env.API_BASE_URL || env.NUXT_PUBLIC_API_BASE_URL || env.NUXT_PUBLIC_API_BASE || "",
     },
+  },
 });

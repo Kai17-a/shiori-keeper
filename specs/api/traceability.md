@@ -4,14 +4,14 @@
 
 ## 対応表
 
-| requirements | api |
-|---|---|
-| 要件1: ブックマーク管理 | `routes-and-flows.md` のブックマーク節、`data-and-constraints.md` の制約 |
-| 要件2: フォルダ管理 | `routes-and-flows.md` のフォルダ節、`data-and-constraints.md` の制約 |
-| 要件3: タグ管理 | `routes-and-flows.md` のタグ節、`data-and-constraints.md` の制約 |
-| 要件4: ブックマークへのタグ付与・解除 | `routes-and-flows.md` のタグ付与節 |
-| 要件5: 設定取得 | `routes-and-flows.md` の設定節 |
-| 要件6: 永続化とエラー処理 | `data-and-constraints.md` のデータモデル・制約 |
+| requirements                          | api                                                                      |
+| ------------------------------------- | ------------------------------------------------------------------------ |
+| 要件1: ブックマーク管理               | `routes-and-flows.md` のブックマーク節、`data-and-constraints.md` の制約 |
+| 要件2: フォルダ管理                   | `routes-and-flows.md` のフォルダ節、`data-and-constraints.md` の制約     |
+| 要件3: タグ管理                       | `routes-and-flows.md` のタグ節、`data-and-constraints.md` の制約         |
+| 要件4: ブックマークへのタグ付与・解除 | `routes-and-flows.md` のタグ付与節                                       |
+| 要件5: 設定取得                       | `routes-and-flows.md` の設定節                                           |
+| 要件6: 永続化とエラー処理             | `data-and-constraints.md` のデータモデル・制約                           |
 
 ## 補足
 

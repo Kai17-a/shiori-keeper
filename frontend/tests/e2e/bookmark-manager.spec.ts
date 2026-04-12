@@ -35,9 +35,7 @@ test.describe("bookmarks", () => {
     const lookupBody = (await lookup.json()) as {
       items: Array<{ id: number; url: string }>;
     };
-    const createdBookmark = lookupBody.items.find(
-      (item) => item.url === url,
-    );
+    const createdBookmark = lookupBody.items.find((item) => item.url === url);
     expect(createdBookmark?.id ?? createdBody.id).toBeTruthy();
 
     const deleted = await page.request.delete(
