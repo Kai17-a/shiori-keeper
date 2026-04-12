@@ -111,7 +111,7 @@
 </template>
 
 <script setup lang="ts">
-import type { SettingsWebhookResponse } from "~/types";
+import type { SettingsWebhookPingResponse, SettingsWebhookResponse } from "~/types";
 
 const { apiBase, defaultApiBase, request } = useBookmarkApi();
 const toast = useSingleToast();
@@ -221,6 +221,10 @@ const saveWebhook = async () => {
 
   webhookSaving.value = true;
   try {
+    await request<SettingsWebhookPingResponse>("/settings/webhook/ping", {
+      method: "POST",
+      body: JSON.stringify({ webhook_url: webhookUrl }),
+    });
     const response = await request<SettingsWebhookResponse>("/settings/webhook", {
       method: "PUT",
       body: JSON.stringify({ webhook_url: webhookUrl }),

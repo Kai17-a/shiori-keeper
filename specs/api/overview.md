@@ -13,6 +13,7 @@
 - RSS 実行 API と Discord webhook 通知
 - ブックマークへのタグ付与・解除
 - `/health` による疎通確認
+- webhook 疎通確認用の ping API
 - 例外ハンドリングと検証エラーの標準化
 
 ## 主要ファイル

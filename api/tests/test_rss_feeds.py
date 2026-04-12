@@ -50,6 +50,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(settings_module, "get_db", patched_get_db)
     monkeypatch.setattr(rss_module.httpx, "get", fake_get)
     monkeypatch.setattr(rss_module.httpx, "post", fake_post)
+    monkeypatch.setattr(settings_module.httpx, "post", fake_post)
 
     with TestClient(app) as c:
         yield c
@@ -75,6 +76,15 @@ def test_set_rss_webhook_accepts_discord_webhook_url(client):
     )
     assert resp.status_code == 200
     assert resp.json()["webhook_url"] == "https://discord.com/api/webhooks/1/token"
+
+
+def test_ping_webhook_returns_200(client):
+    resp = client.post(
+        "/settings/webhook/ping",
+        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["pong"] is True
 
 
 def test_list_rss_feeds_returns_200(client):
@@ -141,6 +151,11 @@ def test_create_rss_feed_with_invalid_url_returns_422(client):
 
 def test_create_rss_feed_with_non_discord_webhook_returns_422(client):
     resp = client.put("/settings/webhook", json={"webhook_url": "https://example.com/webhook"})
+    assert resp.status_code == 422
+
+
+def test_ping_webhook_with_non_discord_url_returns_422(client):
+    resp = client.post("/settings/webhook/ping", json={"webhook_url": "https://example.com/webhook"})
     assert resp.status_code == 422
 
 

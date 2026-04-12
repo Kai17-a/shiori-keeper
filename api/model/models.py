@@ -214,6 +214,14 @@ class SettingsWebhookResponse(BaseModel):
     webhook_url: str
 
 
+class SettingsWebhookPingRequest(BaseModel):
+    webhook_url: AnyHttpUrl
+
+
+class SettingsWebhookPingResponse(BaseModel):
+    pong: bool
+
+
 class DashboardMetricsResponse(BaseModel):
     bookmarks_total: int
     folders_total: int

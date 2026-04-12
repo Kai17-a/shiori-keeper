@@ -37,3 +37,7 @@ export interface RSSFeedExecuteResponse {
 export interface SettingsWebhookResponse {
   webhook_url: string;
 }
+
+export interface SettingsWebhookPingResponse {
+  pong: boolean;
+}

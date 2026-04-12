@@ -17,6 +17,7 @@ from api.model.models import (
     RSSFeedCreate,
     RSSFeedUpdate,
     SettingsWebhookUpdate,
+    SettingsWebhookPingRequest,
     TagAttach,
     TagCreate,
     TagUpdate,
@@ -146,6 +147,10 @@ class CompatTestClient:
             if method == "PUT" and path == "/settings/webhook":
                 body = SettingsWebhookUpdate(**(json or {}))
                 payload = SettingsService().set_webhook(body).model_dump()
+                return self._ok(payload, 200)
+            if method == "POST" and path == "/settings/webhook/ping":
+                body = SettingsWebhookPingRequest(**(json or {}))
+                payload = SettingsService().ping_webhook(body).model_dump()
                 return self._ok(payload, 200)
             if method == "GET" and path == "/settings/webhook":
                 payload = SettingsService().get_webhook().model_dump()
