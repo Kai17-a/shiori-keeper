@@ -88,6 +88,12 @@ Docker 起動時は API を `fastapi run api/main.py` で起動し、1 つのコ
 
 同じ設定で `.githooks/commit-msg` も有効になり、Conventional Commits 形式でない commit message は弾かれる。
 
+### Git 運用
+
+- ブランチの作成単位は `git flow` に基づく
+- 作業は `main` から直接ではなく、用途に応じたブランチを切って進める
+- 変更が完了したら、そのブランチ上でコミットしてから共有する
+
 push 前に API / frontend / E2E をまとめて手動実行したい場合は次を使う。
 
 ```bash
