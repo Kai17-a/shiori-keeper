@@ -37,6 +37,14 @@ def init_db(database_url: str = DATABASE_URL) -> None:
                 updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
             );
 
+            CREATE TABLE IF NOT EXISTS rss_feed_articles (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                feed_id     INTEGER NOT NULL REFERENCES rss_feeds(id) ON DELETE CASCADE,
+                url         TEXT    NOT NULL,
+                title       TEXT,
+                created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+            );
+
             CREATE TABLE IF NOT EXISTS app_settings (
                 key         TEXT    PRIMARY KEY,
                 value       TEXT    NOT NULL,
@@ -85,6 +93,12 @@ def init_db(database_url: str = DATABASE_URL) -> None:
             """
             CREATE UNIQUE INDEX IF NOT EXISTS idx_rss_feeds_url_unique
             ON rss_feeds(url)
+            """
+        )
+        conn.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_rss_feed_articles_feed_url_unique
+            ON rss_feed_articles(feed_id, url)
             """
         )
         conn.execute(

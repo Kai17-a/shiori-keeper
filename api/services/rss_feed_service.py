@@ -67,7 +67,29 @@ class RSSFeedService:
     def _chunk_embeds(
         self, embeds: list[dict[str, object]], chunk_size: int = 10
     ) -> list[list[dict[str, object]]]:
-        return [embeds[index : index + chunk_size] for index in range(0, len(embeds), chunk_size)]
+        return [
+            embeds[index : index + chunk_size]
+            for index in range(0, len(embeds), chunk_size)
+        ]
+
+    def _load_sent_article_urls(self, conn, feed_id: int) -> set[str]:
+        rows = conn.execute(
+            "SELECT url FROM rss_feed_articles WHERE feed_id = ?",
+            (feed_id,),
+        ).fetchall()
+        return {str(row["url"]) for row in rows}
+
+    def _record_sent_articles(
+        self, conn, feed_id: int, articles: list[dict[str, object]]
+    ) -> None:
+        for article in articles:
+            conn.execute(
+                """
+                INSERT OR IGNORE INTO rss_feed_articles (feed_id, url, title)
+                VALUES (?, ?, ?)
+                """,
+                (feed_id, article["url"], article.get("title")),
+            )
 
     def create(self, data: RSSFeedCreate) -> RSSFeedResponse:
         with get_db() as conn:
@@ -168,24 +190,41 @@ class RSSFeedService:
 
             parsed_feed = self._parse_rss_feed(response.content)
             feed_title = parsed_feed.feed.get("title") or row["title"]
+            sent_urls = self._load_sent_article_urls(conn, feed_id)
+            articles: list[dict[str, object]] = []
             embeds: list[dict[str, object]] = []
             for entry in parsed_feed.entries:
+                entry_link = entry.get("link")
+                if not entry_link or entry_link in sent_urls:
+                    continue
                 embed: dict[str, object] = {
                     "title": entry.get("title") or "(no title)",
                 }
-                entry_link = entry.get("link")
-                if entry_link:
-                    embed["url"] = entry_link
+                embed["url"] = entry_link
                 summary = entry.get("summary") or entry.get("description")
                 if summary:
                     embed["description"] = summary
                 embeds.append(embed)
+                articles.append(
+                    {
+                        "url": entry_link,
+                        "title": entry.get("title") or "(no title)",
+                    }
+                )
+
+            if not embeds:
+                return RSSFeedExecuteResponse(
+                    feed_id=feed_id,
+                    title=row["title"],
+                    webhook_url=webhook_url,
+                    delivered=True,
+                )
 
             try:
                 embed_chunks = self._chunk_embeds(embeds) or [[]]
                 for index, chunk in enumerate(embed_chunks, start=1):
                     content = f"*New articles* ({len(embeds)} items)"
-                    if len(embeds) > 10:
+                    if len(embed_chunks) > 1:
                         content = f"{content} [batch {index}]"
                     response = httpx.post(
                         webhook_url,
@@ -207,6 +246,8 @@ class RSSFeedService:
                 raise HTTPException(
                     status_code=502, detail="Failed to notify Discord webhook"
                 )
+
+            self._record_sent_articles(conn, feed_id, articles)
 
             return RSSFeedExecuteResponse(
                 feed_id=feed_id,
