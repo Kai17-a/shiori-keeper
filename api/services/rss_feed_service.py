@@ -163,23 +163,26 @@ class RSSFeedService:
 
             parsed_feed = self._parse_rss_feed(response.content)
             feed_title = parsed_feed.feed.get("title") or row["title"]
-            content_lines = [
-                f"RSS feed executed: {feed_title}",
-                row["url"],
-            ]
-            for index, entry in enumerate(parsed_feed.entries, start=1):
-                entry_title = entry.get("title")
+            embeds: list[dict[str, object]] = []
+            for entry in parsed_feed.entries:
+                embed: dict[str, object] = {
+                    "title": entry.get("title") or "(no title)",
+                }
                 entry_link = entry.get("link")
-                content_lines.append(f"Entry {index}: {entry_title or '(no title)'}")
                 if entry_link:
-                    content_lines.append(entry_link)
+                    embed["url"] = entry_link
+                summary = entry.get("summary") or entry.get("description")
+                if summary:
+                    embed["description"] = summary
+                embeds.append(embed)
 
             try:
                 response = httpx.post(
                     webhook_url,
                     json={
-                        "username": "Bookmark Manager",
-                        "content": "\n".join(content_lines),
+                        "username": feed_title,
+                        "content": f"*新着ニュース* ({len(embeds)}件)",
+                        "embeds": embeds,
                     },
                     timeout=5.0,
                 )
