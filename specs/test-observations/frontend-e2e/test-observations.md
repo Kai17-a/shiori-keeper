@@ -5,6 +5,8 @@
 | Bookmark lifecycle | Integrated bookmark flow | Create, search, edit, delete                           |
 | Folder lifecycle   | Integrated folder flow   | Create, rename, detail view, delete                    |
 | Tag lifecycle      | Integrated tag flow      | Create, rename, detail view, delete                    |
+| RSS lifecycle      | Integrated RSS flow      | Create, edit, execute, delete                          |
+| Settings flow      | App settings flow        | Load/save webhook setting, theme toggle, API health    |
 | API integration    | Frontend + API together  | Requests reach live API and reflect in UI              |
 | Routing            | Browser navigation       | Page transitions stay functional                       |
 | Delete behavior    | Cleanup after actions    | Items disappear and backend returns 404                |
@@ -25,3 +27,4 @@
 - Use dedicated test database files and explicit frontend/API base URLs.
 - Keep browser selectors stable and user-facing.
 - Separate run commands from result-viewing commands when possible.
+- RSS tests may start a local XML server for feed validation and webhook ping checks.

@@ -10,6 +10,11 @@
 | Bookmarks | Bookmark-folder relation | Set and clear folder                                          |
 | Bookmarks | Validation               | Required fields, invalid URL, duplicate tags                  |
 | Bookmarks | Error handling           | Missing resources, bad payloads                               |
+| RSS       | RSS feed CRUD            | Create, list, get by id, update, delete                       |
+| RSS       | RSS feed validation      | Invalid URL, non-feed URL, duplicate URL                      |
+| RSS       | RSS execution            | Execute feed with configured webhook                          |
+| Settings  | Webhook settings         | Get, save, ping, invalid Discord URL                          |
+| Settings  | Webhook behavior         | Save only after ping succeeds, missing config handling        |
 | Folders   | Folder CRUD              | Create, list, update, delete                                  |
 | Folders   | Folder limits            | Enforce maximum folder count                                  |
 | Folders   | Delete behavior          | Bookmarks fall back to `folder_id = null`                     |
@@ -35,3 +40,4 @@
 - Use isolated database state per test.
 - Verify both happy path and error path behavior.
 - Keep payload assertions aligned with frontend expectations.
+- Mock external HTTP calls for RSS feed validation and webhook ping/execute paths.
