@@ -8,7 +8,7 @@ from api.database import init_db
 
 
 def test_init_db_creates_all_tables():
-    """After calling init_db() on a fresh DB file, all 4 tables must exist."""
+    """After calling init_db() on a fresh DB file, all 5 tables must exist."""
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
         db_path = f.name
     try:
@@ -25,6 +25,7 @@ def test_init_db_creates_all_tables():
         assert "folders" in tables
         assert "tags" in tables
         assert "bookmark_tags" in tables
+        assert "rss_feeds" in tables
     finally:
         os.unlink(db_path)
 

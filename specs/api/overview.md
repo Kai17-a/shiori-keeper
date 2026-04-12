@@ -8,7 +8,7 @@
 ## 主な特徴
 
 - SQLite による永続化
-- ブックマーク、フォルダ、タグの CRUD
+- ブックマーク、RSS リンク、フォルダ、タグの CRUD
 - ブックマークへのタグ付与・解除
 - `/health` による疎通確認
 - 例外ハンドリングと検証エラーの標準化
@@ -18,6 +18,7 @@
 - [アプリケーション本体](../../api/main.py)
 - [DB 初期化](../../api/database.py)
 - [ブックマークルータ](../../api/routers/bookmarks.py)
+- [RSS ルータ](../../api/routers/rss_feeds.py)
 - [フォルダルータ](../../api/routers/folders.py)
 - [タグルータ](../../api/routers/tags.py)
 - [タグ付与ルータ](../../api/routers/bookmark_tags.py)

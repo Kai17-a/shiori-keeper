@@ -28,6 +28,15 @@ def init_db(database_url: str = DATABASE_URL) -> None:
                 updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
             );
 
+            CREATE TABLE IF NOT EXISTS rss_feeds (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                url         TEXT    NOT NULL,
+                title       TEXT    NOT NULL,
+                description TEXT,
+                created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+                updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+            );
+
             CREATE TABLE IF NOT EXISTS tags (
                 id   INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL UNIQUE,
@@ -68,6 +77,12 @@ def init_db(database_url: str = DATABASE_URL) -> None:
         )
         conn.execute(
             """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_rss_feeds_url_unique
+            ON rss_feeds(url)
+            """
+        )
+        conn.execute(
+            """
             CREATE UNIQUE INDEX IF NOT EXISTS idx_folders_name_unique
             ON folders(name)
             """
@@ -85,6 +100,12 @@ def init_db(database_url: str = DATABASE_URL) -> None:
         if "is_favorite" not in bookmark_columns:
             conn.execute("ALTER TABLE bookmarks ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0")
             conn.execute("UPDATE bookmarks SET is_favorite = 0 WHERE is_favorite IS NULL")
+        rss_feed_columns = {
+            row[1]
+            for row in conn.execute("PRAGMA table_info(rss_feeds)").fetchall()
+        }
+        if "description" not in rss_feed_columns:
+            conn.execute("ALTER TABLE rss_feeds ADD COLUMN description TEXT")
         tag_columns = {
             row[1]
             for row in conn.execute("PRAGMA table_info(tags)").fetchall()

@@ -117,6 +117,36 @@ class BookmarkFavoriteUpdate(BaseModel):
     is_favorite: bool
 
 
+class RSSFeedCreate(BaseModel):
+    url: AnyHttpUrl
+    title: str = Field(min_length=1)
+    description: str | None = None
+
+    @field_validator("title")
+    @classmethod
+    def normalize_title(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Title cannot be empty")
+        return value
+
+
+class RSSFeedUpdate(BaseModel):
+    url: AnyHttpUrl | None = None
+    title: str | None = Field(default=None, min_length=1)
+    description: str | None = None
+
+    @field_validator("title")
+    @classmethod
+    def normalize_title(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        value = value.strip()
+        if not value:
+            raise ValueError("Title cannot be empty")
+        return value
+
+
 # --- Response schemas ---
 
 class TagResponse(BaseModel):
@@ -146,6 +176,23 @@ class BookmarkResponse(BaseModel):
 
 class BookmarkListResponse(BaseModel):
     items: list[BookmarkResponse]
+    total: int
+    page: int
+    per_page: int
+    total_pages: int
+
+
+class RSSFeedResponse(BaseModel):
+    id: int
+    url: str
+    title: str
+    description: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class RSSFeedListResponse(BaseModel):
+    items: list[RSSFeedResponse]
     total: int
     page: int
     per_page: int

@@ -14,6 +14,8 @@ from api.model.models import (
     BookmarkUpdate,
     FolderCreate,
     FolderUpdate,
+    RSSFeedCreate,
+    RSSFeedUpdate,
     TagAttach,
     TagCreate,
     TagUpdate,
@@ -21,6 +23,7 @@ from api.model.models import (
 from api.services.bookmark_service import BookmarkService
 from api.services.dashboard_service import DashboardService
 from api.services.folder_service import FolderService
+from api.services.rss_feed_service import RSSFeedService
 from api.services.tag_service import TagService
 
 
@@ -132,6 +135,27 @@ class CompatTestClient:
                 return self._ok(payload, 200)
             if method == "DELETE" and path.startswith("/tags/"):
                 TagService().delete(int(path.rsplit("/", 1)[1]))
+                return self._ok(status_code=204)
+
+            if method == "POST" and path == "/rss-feeds":
+                body = RSSFeedCreate(**(json or {}))
+                payload = RSSFeedService().create(body).model_dump()
+                return self._ok(payload, 201)
+            if method == "GET" and path == "/rss-feeds":
+                q = query.get("q")
+                page = int(query.get("page", "1"))
+                per_page = int(query.get("per_page", "20"))
+                payload = RSSFeedService().list(q=q, page=page, per_page=per_page).model_dump()
+                return self._ok(payload, 200)
+            if method == "GET" and path.startswith("/rss-feeds/"):
+                payload = RSSFeedService().get(int(path.rsplit("/", 1)[1])).model_dump()
+                return self._ok(payload, 200)
+            if method == "PATCH" and path.startswith("/rss-feeds/"):
+                body = RSSFeedUpdate(**(json or {}))
+                payload = RSSFeedService().update(int(path.rsplit("/", 1)[1]), body).model_dump()
+                return self._ok(payload, 200)
+            if method == "DELETE" and path.startswith("/rss-feeds/"):
+                RSSFeedService().delete(int(path.rsplit("/", 1)[1]))
                 return self._ok(status_code=204)
 
             if method == "POST" and path == "/bookmarks":
