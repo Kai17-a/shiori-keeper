@@ -37,6 +37,18 @@ def list_bookmarks(
     return service.list(folder_id=folder_id, tag_id=tag_id, q=q, page=page, per_page=per_page)
 
 
+@router.patch(
+    "/favorite",
+    status_code=200,
+    response_model=BookmarkResponse,
+)
+def set_bookmark_favorite(
+    body: BookmarkFavoriteUpdate,
+    service: BookmarkService = Depends(get_bookmark_service),
+):
+    return service.set_favorite(body)
+
+
 @router.get("/{bookmark_id}", status_code=200, response_model=BookmarkResponse)
 def get_bookmark(bookmark_id: int, service: BookmarkService = Depends(get_bookmark_service)):
     return service.get(bookmark_id)
@@ -59,15 +71,3 @@ def update_bookmark(
 @router.delete("/{bookmark_id}", status_code=204)
 def delete_bookmark(bookmark_id: int, service: BookmarkService = Depends(get_bookmark_service)):
     service.delete(bookmark_id)
-
-
-@router.patch(
-    "/favorite",
-    status_code=200,
-    response_model=BookmarkResponse,
-)
-def set_bookmark_favorite(
-    body: BookmarkFavoriteUpdate,
-    service: BookmarkService = Depends(get_bookmark_service),
-):
-    return service.set_favorite(body)
