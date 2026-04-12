@@ -181,7 +181,7 @@ class RSSFeedService:
                     webhook_url,
                     json={
                         "username": feed_title,
-                        "content": f"*新着ニュース* ({len(embeds)}件)",
+                        "content": f"*New articles* ({len(embeds)} items)",
                         "embeds": embeds,
                     },
                     timeout=5.0,

@@ -204,7 +204,7 @@ def test_execute_rss_feed_uses_feedparser_content(client, monkeypatch):
     resp = client.post(f"/rss-feeds/{feed_id}/execute")
     assert resp.status_code == 200
     assert captured["json"]["content"] == (
-        "*新着ニュース* (2件)"
+        "*New articles* (2 items)"
     )
     assert captured["json"]["username"] == "Parsed Example"
     assert captured["json"]["embeds"] == [
