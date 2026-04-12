@@ -318,7 +318,7 @@ const executeFeed = async (feed: RSSFeedResponse) => {
     });
     toast.show({
       title: "RSS feed executed.",
-      description: `Delivered to ${result.webhook_url}`,
+      description: result.message ?? `Delivered to ${result.webhook_url}`,
       color: "success",
       icon: "i-lucide-check",
     });

@@ -32,6 +32,7 @@ export interface RSSFeedExecuteResponse {
   title: string;
   webhook_url: string;
   delivered: boolean;
+  message?: string | null;
 }
 
 export interface SettingsWebhookResponse {
