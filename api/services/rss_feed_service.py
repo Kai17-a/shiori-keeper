@@ -1,6 +1,5 @@
 import sqlite3
 import xml.etree.ElementTree as ET
-from typing import Any, cast
 
 import feedparser  # type: ignore
 import httpx
@@ -35,8 +34,14 @@ class RSSFeedService:
     def _get_feed_title(
         self, parsed_feed: feedparser.FeedParserDict, fallback_title: str
     ) -> str:
-        feed_data = cast(dict[str, Any], parsed_feed["feed"])
-        return str(feed_data.get("title") or fallback_title)
+        feed_data = getattr(parsed_feed, "feed", None)
+        if feed_data is None and isinstance(parsed_feed, dict):
+            feed_data = parsed_feed.get("feed")
+        if feed_data is None:
+            return fallback_title
+        if isinstance(feed_data, dict):
+            return str(feed_data.get("title") or fallback_title)
+        return str(getattr(feed_data, "title", None) or fallback_title)
 
     def _validate_rss_feed_url(self, url: str) -> None:
         try:
