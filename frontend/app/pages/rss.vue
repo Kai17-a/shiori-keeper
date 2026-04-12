@@ -120,15 +120,23 @@
           :description="
             feedForm.id ? 'Update the selected feed.' : 'Create a new feed link.'
           "
+          :ui="{
+            content:
+              'w-[calc(100vw-2rem)] max-w-lg max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-4rem)]',
+          }"
         >
           <template #content="{ close }">
             <form class="space-y-4 p-6" @submit.prevent="saveFeed">
               <UFormField label="URL" required class="w-full">
-                <UInput v-model="feedForm.url" placeholder="https://example.com/feed.xml" />
+                <UInput
+                  v-model="feedForm.url"
+                  placeholder="https://example.com/feed.xml"
+                  class="w-full"
+                />
               </UFormField>
 
               <UFormField label="Title" required class="w-full">
-                <UInput v-model="feedForm.title" placeholder="Feed title" />
+                <UInput v-model="feedForm.title" placeholder="Feed title" class="w-full" />
               </UFormField>
 
               <UFormField label="Description" class="w-full">
@@ -136,6 +144,7 @@
                   v-model="feedForm.description"
                   placeholder="Optional description"
                   :rows="4"
+                  class="w-full"
                 />
               </UFormField>
 
