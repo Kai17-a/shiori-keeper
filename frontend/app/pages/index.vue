@@ -98,6 +98,7 @@
 import type { BookmarkListResponse, DashboardMetricsResponse } from "~/types";
 
 const { request } = useBookmarkApi();
+const { folders, tags, refresh: refreshSidebarCatalog } = useSidebarCatalog();
 const toast = useSingleToast();
 const bookmarks = ref<BookmarkListResponse>({
   items: [],
@@ -147,6 +148,7 @@ onMounted(async () => {
 
     bookmarks.value = bookmarksRes;
     metrics.value = metricsRes;
+    await refreshSidebarCatalog();
     toast.show({
       title:
         healthRes?.status === "ok"
