@@ -12,15 +12,21 @@ COPY frontend/nuxt.config.ts ./nuxt.config.ts
 COPY frontend/tsconfig.json ./tsconfig.json
 COPY frontend/app ./app
 COPY frontend/public ./public
-RUN bun run build
+RUN bun run generate
 
 
 # Runtime stage
-FROM oven/bun:1.3.12-alpine
+FROM python:3.14-slim
 
 WORKDIR /app
 
-RUN apk add --no-cache python3 py3-pip
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends nginx \
+  && rm -rf /var/lib/apt/lists/*
+
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
@@ -28,9 +34,8 @@ COPY api/requirements.txt /app/api/requirements.txt
 RUN pip install --no-cache-dir -r /app/api/requirements.txt
 
 COPY api /app/api
-COPY --from=frontend-build /app/frontend/.output /app/frontend/.output
-COPY --from=frontend-build /app/frontend/node_modules /app/frontend/node_modules
-COPY --from=frontend-build /app/frontend/package.json /app/frontend/package.json
+COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=frontend-build /app/frontend/dist /usr/share/nginx/html
 COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 

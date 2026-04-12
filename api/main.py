@@ -72,12 +72,12 @@ app.include_router(tags_router)
 
 
 def dev() -> None:
-    import uvicorn
+    import subprocess
 
-    uvicorn.run("api.main:app", reload=True)
+    subprocess.run(["fastapi", "dev", "api/main.py"], check=True)
 
 
 def serve() -> None:
-    import uvicorn
+    import subprocess
 
-    uvicorn.run("api.main:app", host="0.0.0.0", port=8000)
+    subprocess.run(["fastapi", "run", "api/main.py", "--host", "0.0.0.0", "--port", "8000"], check=True)

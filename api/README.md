@@ -8,7 +8,7 @@
 api-dev
 ```
 
-`api-dev` は `uvicorn` を使って起動する。
+`api-dev` は `fastapi dev` を使って起動する。
 
 ## テスト
 
@@ -26,4 +26,3 @@ uv run ruff check .
 - [サービス層](./services/)
 - [リポジトリ層](./repositories/)
 - [テスト](./tests/)
-

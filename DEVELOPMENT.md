@@ -12,7 +12,7 @@ cd api
 api-dev
 ```
 
-`api-dev` は `uvicorn` を使って起動する。
+`api-dev` は `fastapi dev` を使って起動する。
 
 ### Frontend
 
