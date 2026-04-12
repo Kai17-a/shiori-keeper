@@ -84,9 +84,7 @@ Docker 起動時は API を `fastapi run api/main.py` で起動し、1 つのコ
 ```
 
 この設定を入れると、この workspace の `.git/config` にだけ `core.hooksPath` が記録される。
-`.githooks/pre-push` が実行され、API の `ruff check`、API テスト、frontend の unit test が push 前に走る。
-
-同じ設定で `.githooks/commit-msg` も有効になり、Conventional Commits 形式でない commit message は弾かれる。
+`.githooks/pre-push` が実行され、コミットメッセージの Conventional Commits 検査に加えて、API の `ruff check`、API テスト、frontend の unit test が push 前に走る。
 
 ### Git 運用
 

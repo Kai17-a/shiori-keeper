@@ -10,27 +10,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  commit-messages:
-    if: github.event_name == 'push' && github.actor != 'dependabot[bot]'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout pull request history
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Verify commit messages
-        run: |
-          base_ref="${{ github.event.pull_request.base.sha || github.event.before }}"
-          if [ -z "$base_ref" ] || [ "$base_ref" = "0000000000000000000000000000000000000000" ]; then
-            base_ref="$(git rev-list --max-parents=0 HEAD | tail -n 1)"
-          fi
-          merge_base="$(git merge-base "$base_ref" HEAD)"
-          git log --no-merges --format=%s "$merge_base..HEAD" | while IFS= read -r subject; do
-            printf '%s\n' "$subject" | grep -Eq '^(feat|fix|docs|test|refactor|chore|revert)(\([a-z0-9-]+\))?: .+'
-          done
-
   api:
     runs-on: ubuntu-latest
 
