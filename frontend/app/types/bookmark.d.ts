@@ -19,12 +19,18 @@ export interface BookmarkUpdateRequest {
     tag_ids?: number[] | null;
 }
 
+export interface BookmarkFavoriteUpdateRequest {
+    bookmark_id: number;
+    is_favorite: boolean;
+}
+
 export interface BookmarkResponse {
     id: number;
     url: string;
     title: string;
     description: string | null;
     folder_id: number | null;
+    is_favorite: boolean;
     tags: BookmarkTag[];
     created_at: string;
     updated_at: string;
