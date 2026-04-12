@@ -156,17 +156,19 @@ def test_update_bookmark_changes_updated_at(client):
     assert resp.json()["updated_at"] != old_updated
 
 
-def test_create_bookmark_accepts_is_favorite(client):
-    resp = create_bookmark(client, is_favorite=True)
-    assert resp.status_code == 201
-    assert resp.json()["is_favorite"] is True
-
-
-def test_update_bookmark_can_toggle_is_favorite(client):
+def test_set_bookmark_favorite_returns_200(client):
     bm_id = create_bookmark(client).json()["id"]
-    resp = client.patch(f"/bookmarks/{bm_id}", json={"is_favorite": True})
+    resp = client.patch("/bookmarks/favorite", json={"bookmark_id": bm_id, "is_favorite": True})
     assert resp.status_code == 200
     assert resp.json()["is_favorite"] is True
+
+
+def test_unset_bookmark_favorite_returns_200(client):
+    bm_id = create_bookmark(client).json()["id"]
+    client.patch("/bookmarks/favorite", json={"bookmark_id": bm_id, "is_favorite": True})
+    resp = client.patch("/bookmarks/favorite", json={"bookmark_id": bm_id, "is_favorite": False})
+    assert resp.status_code == 200
+    assert resp.json()["is_favorite"] is False
 
 
 def test_delete_bookmark_returns_204(client):

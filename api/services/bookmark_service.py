@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from api.database import get_db
 from api.model.models import (
     BookmarkCreate,
+    BookmarkFavoriteUpdate,
     BookmarkListResponse,
     BookmarkResponse,
     BookmarkUpdate,
@@ -46,7 +47,7 @@ class BookmarkService(BookmarkServiceBase):
                 title=data.title,
                 description=data.description,
                 folder_id=data.folder_id,
-                is_favorite=data.is_favorite,
+                is_favorite=False,
             )
             self._sync_tags(repo, row["id"], data.tag_ids)
             row = repo.find_by_id(row["id"])
@@ -102,8 +103,6 @@ class BookmarkService(BookmarkServiceBase):
                 fields["title"] = data.title
             if data.description is not None:
                 fields["description"] = data.description
-            if data.is_favorite is not None:
-                fields["is_favorite"] = data.is_favorite
             if data.folder_id is not None:
                 self._verify_folder(conn, data.folder_id)
                 fields["folder_id"] = data.folder_id
@@ -115,6 +114,17 @@ class BookmarkService(BookmarkServiceBase):
             row = repo.update(bookmark_id, fields)
             self._sync_tags(repo, bookmark_id, data.tag_ids)
             row = repo.find_by_id(bookmark_id)
+            assert row is not None
+            return self._build_bookmark_response(repo, repo.normalize_row(row))
+
+    def set_favorite(self, data: BookmarkFavoriteUpdate) -> BookmarkResponse:
+        with get_db() as conn:
+            repo = BookmarkRepository(conn)
+            row = repo.find_by_id(data.bookmark_id)
+            if row is None:
+                self._raise_not_found("Bookmark")
+
+            row = repo.update(data.bookmark_id, {"is_favorite": data.is_favorite})
             assert row is not None
             return self._build_bookmark_response(repo, repo.normalize_row(row))
 

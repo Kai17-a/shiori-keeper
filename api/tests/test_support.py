@@ -10,6 +10,7 @@ from starlette.requests import Request
 
 from api.model.models import (
     BookmarkCreate,
+    BookmarkFavoriteUpdate,
     BookmarkUpdate,
     FolderCreate,
     FolderUpdate,
@@ -143,6 +144,10 @@ class CompatTestClient:
                 return self._ok(BookmarkListPayload(payload), 200)
             if method == "GET" and path.startswith("/bookmarks/") and "/tags" not in path:
                 payload = BookmarkService().get(int(path.rsplit("/", 1)[1])).model_dump()
+                return self._ok(payload, 200)
+            if method == "PATCH" and path == "/bookmarks/favorite":
+                body = BookmarkFavoriteUpdate(**(json or {}))
+                payload = BookmarkService().set_favorite(body).model_dump()
                 return self._ok(payload, 200)
             if method == "PATCH" and path.startswith("/bookmarks/") and "/tags" not in path:
                 body = BookmarkUpdate(**(json or {}))

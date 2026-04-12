@@ -9,6 +9,7 @@
 | GET | `/bookmarks/{id}` | ブックマーク詳細取得 |
 | PATCH | `/bookmarks/{id}` | ブックマーク部分更新 |
 | DELETE | `/bookmarks/{id}` | ブックマーク削除 |
+| PATCH | `/bookmarks/favorite` | ブックマークのお気に入り状態更新 |
 | POST | `/bookmarks/{id}/tags` | ブックマークへタグ付与 |
 | DELETE | `/bookmarks/{id}/tags/{tag_id}` | ブックマークからタグ解除 |
 | POST | `/folders` | フォルダ作成 |
@@ -157,6 +158,21 @@ Response:
 - 未指定の項目は既存値を保持する
 - 存在しない ID は 404 を返す
 - URL 変更後に重複があれば 409 を返す
+
+### `PATCH /bookmarks/favorite`
+
+Request:
+
+```json
+{
+  "bookmark_id": 1,
+  "is_favorite": true
+}
+```
+
+- `bookmark_id` で対象ブックマークを特定する
+- `is_favorite` を指定値に更新する
+- 存在しない `bookmark_id` は 404 を返す
 
 ### `POST /bookmarks/{id}/tags`
 

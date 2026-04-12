@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends
 
 from api.model.models import (
     BookmarkCreate,
+    BookmarkFavoriteUpdate,
     BookmarkListResponse,
     BookmarkResponse,
     BookmarkUpdate,
@@ -58,3 +59,15 @@ def update_bookmark(
 @router.delete("/{bookmark_id}", status_code=204)
 def delete_bookmark(bookmark_id: int, service: BookmarkService = Depends(get_bookmark_service)):
     service.delete(bookmark_id)
+
+
+@router.patch(
+    "/favorite",
+    status_code=200,
+    response_model=BookmarkResponse,
+)
+def set_bookmark_favorite(
+    body: BookmarkFavoriteUpdate,
+    service: BookmarkService = Depends(get_bookmark_service),
+):
+    return service.set_favorite(body)
