@@ -57,23 +57,28 @@
       {{ bookmark.description }}
     </p>
 
-    <div v-if="showFolder && bookmark.folder_name" class="flex flex-wrap gap-2">
-      <UBadge size="xs" color="primary" variant="soft" icon="i-lucide-folder">
-        {{ bookmark.folder_name }}
-      </UBadge>
-    </div>
+    <div
+      v-if="showFolder || (showTags && bookmark.tags.length)"
+      class="space-y-3"
+    >
+      <div v-if="showFolder && bookmark.folder_name" class="flex flex-wrap gap-2">
+        <UBadge size="xs" color="success" variant="soft" icon="i-lucide-folder">
+          {{ bookmark.folder_name }}
+        </UBadge>
+      </div>
 
-    <div v-if="showTags && bookmark.tags.length" class="flex flex-wrap gap-2">
-      <UBadge
-        v-for="tag in bookmark.tags"
-        :key="tag.id"
-        size="xs"
-        color="neutral"
-        variant="subtle"
-        :ui="{ rounded: 'rounded-full' }"
-      >
-        {{ tag.name }}
-      </UBadge>
+      <div v-if="showTags && bookmark.tags.length" class="flex flex-wrap gap-2">
+        <UBadge
+          v-for="tag in bookmark.tags"
+          :key="tag.id"
+          size="xs"
+          color="neutral"
+          variant="subtle"
+          :ui="{ rounded: 'rounded-full' }"
+        >
+          {{ tag.name }}
+        </UBadge>
+      </div>
     </div>
 
     <div class="flex justify-end gap-2 sm:hidden">

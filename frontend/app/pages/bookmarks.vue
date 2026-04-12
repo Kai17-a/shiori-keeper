@@ -106,6 +106,8 @@
                             v-for="bookmark in bookmarkCards"
                             :key="bookmark.id"
                             :bookmark="bookmark"
+                            :show-folder="true"
+                            :show-tags="true"
                             @edit="loadBookmarkForm"
                             @remove="removeBookmark"
                             @favorite="toggleFavorite"
