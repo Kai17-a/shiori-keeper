@@ -252,6 +252,5 @@ const saveWebhook = async () => {
 
 onMounted(async () => {
   syncSettings();
-  await loadWebhook();
 });
 </script>
