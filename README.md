@@ -23,9 +23,7 @@ docker run --rm -p 3000:3000 -p 8000:8000 \
 services:
   bookmark-manager:
     container_name: bookmark-manager
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/kai17-a/bookmark-manager:latest
     environment:
       DATABASE_URL: /data/bookmark.db
     ports:
