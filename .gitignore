@@ -20,3 +20,4 @@ local-data/*
 */test-results/
 .actrc
 data/*
+api/*.egg-info
