@@ -366,7 +366,7 @@ class SettingsWebhookResponse(BaseModel):
 
 
 class SettingsWebhookPingRequest(BaseModel):
-    webhook_url: AnyHttpUrl
+    webhook_url: str
 
 
 class SettingsWebhookPingResponse(BaseModel):

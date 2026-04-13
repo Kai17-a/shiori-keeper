@@ -16,6 +16,11 @@ WEBHOOK_SETTING_KEY = "default_webhook_url"
 
 
 class SettingsService:
+    def _validate_webhook_url(self, webhook_url: str) -> None:
+        parsed = urlparse(webhook_url)
+        if not parsed.scheme or not parsed.netloc:
+            raise HTTPException(status_code=422, detail="Webhook URL must be a valid URL")
+
     def _validate_discord_webhook_url(self, webhook_url: str) -> None:
         parsed = urlparse(webhook_url)
         valid_hosts = {"discord.com", "www.discord.com", "discordapp.com", "www.discordapp.com"}
@@ -33,6 +38,7 @@ class SettingsService:
 
     def ping_webhook(self, data: SettingsWebhookPingRequest) -> SettingsWebhookPingResponse:
         webhook_url = str(data.webhook_url)
+        self._validate_webhook_url(webhook_url)
         self._validate_discord_webhook_url(webhook_url)
 
         try:

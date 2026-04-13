@@ -427,6 +427,11 @@ def test_ping_webhook_with_non_discord_url_returns_422(client):
     assert resp.status_code == 422
 
 
+def test_ping_webhook_with_invalid_url_returns_422(client):
+    resp = client.post("/settings/webhook/ping", json={"webhook_url": "not-a-url"})
+    assert resp.status_code == 422
+
+
 def test_ping_webhook_when_discord_returns_error_returns_502(client, monkeypatch):
     import api.services.settings_service as settings_module
 
