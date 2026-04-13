@@ -110,10 +110,11 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `/bookmarks/{id}` は詳細取得と更新対象を兼ねる
 - `/bookmarks/{id}/tags` はタグ付与、`DELETE /bookmarks/{id}/tags/{tag_id}` は解除を担当する
 - `/rss-feeds` は RSS リンクの CRUD を担当する
-- `POST /settings/webhook/ping` は登録前の webhook 疎通確認を担当する
+- `POST /settings/webhook/ping` は登録前の Discord webhook 疎通確認を担当する
 - `PUT /settings/webhook` はアプリ全体で使う Discord webhook URL を設定する
 - `GET /settings/webhook` は現在の Discord webhook URL を返す
 - `PUT /settings/webhook` は保存前に `POST /settings/webhook/ping` で疎通確認できた場合のみ実行する
+- フロントエンドの設定画面は起動時に `GET /settings/webhook` で既存設定を読み込み、`Test` では `POST /settings/webhook/ping` の疎通確認のみを行い、`Save` では疎通確認後に `PUT /settings/webhook` へ保存する
 - `POST /rss-feeds/{id}/execute` は RSS を実行し、登録済み Discord webhook に通知する
 - `POST /rss-feeds/{id}/execute` はグローバル `webhook_url` 未設定時に 400 を返す
 - フォルダとタグは最大件数制限を持ち、上限超過時は 400 を返す

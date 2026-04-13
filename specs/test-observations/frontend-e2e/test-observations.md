@@ -6,7 +6,7 @@
 | Folder lifecycle   | Integrated folder flow   | Create, rename, detail view, delete                    |
 | Tag lifecycle      | Integrated tag flow      | Create, rename, detail view, delete                    |
 | RSS lifecycle      | Integrated RSS flow      | Create, edit, execute, delete                          |
-| Settings flow      | App settings flow        | Load/save webhook setting, theme toggle, API health    |
+| Settings flow      | App settings flow        | Load webhook setting, test/save webhook, theme toggle, API health |
 | API integration    | Frontend + API together  | Requests reach live API and reflect in UI              |
 | Routing            | Browser navigation       | Page transitions stay functional                       |
 | Delete behavior    | Cleanup after actions    | Items disappear and backend returns 404                |
