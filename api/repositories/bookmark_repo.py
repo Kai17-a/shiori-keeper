@@ -22,7 +22,9 @@ class BookmarkRepository:
         ).fetchone()
         return dict(row)
 
-    def count_all(self, folder_id: int | None, tag_id: int | None, q: str | None) -> int:
+    def count_all(
+        self, folder_id: int | None, tag_id: int | None, q: str | None
+    ) -> int:
         query = "SELECT COUNT(DISTINCT b.id) AS total FROM bookmarks b"
         params: list = []
 
@@ -114,9 +116,7 @@ class BookmarkRepository:
 
     def delete(self, bookmark_id: int) -> bool:
         # bookmark_tags rows are removed automatically via ON DELETE CASCADE
-        cursor = self.conn.execute(
-            "DELETE FROM bookmarks WHERE id = ?", (bookmark_id,)
-        )
+        cursor = self.conn.execute("DELETE FROM bookmarks WHERE id = ?", (bookmark_id,))
         return cursor.rowcount > 0
 
     def add_tag(self, bookmark_id: int, tag_id: int) -> None:

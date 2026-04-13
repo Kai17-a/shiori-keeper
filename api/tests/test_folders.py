@@ -1,4 +1,5 @@
 """Unit tests for Folder API endpoints (Requirements 5.1, 5.2, 5.3, 5.5, 5.6)."""
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -13,10 +14,11 @@ def client(tmp_path, monkeypatch):
     build_test_db(db_path)
 
     # Patch get_db to use the temp DB
+    import sqlite3
+    from contextlib import contextmanager
+
     import api.database as db_module
     import api.services.folder_service as fs_module
-    from contextlib import contextmanager
-    import sqlite3
 
     @contextmanager
     def patched_get_db(database_url=db_path):
@@ -41,6 +43,7 @@ def client(tmp_path, monkeypatch):
 
 # --- Happy path ---
 
+
 def test_create_folder_returns_201(client):
     response = client.post("/folders", json={"name": "Work", "description": "Notes"})
     assert response.status_code == 201
@@ -58,7 +61,9 @@ def test_list_folders_returns_200(client):
     assert response.status_code == 200
     items = response.json()
     assert any(item["name"] == "A" and item["description"] == "First" for item in items)
-    assert any(item["name"] == "B" and item["description"] == "Second" for item in items)
+    assert any(
+        item["name"] == "B" and item["description"] == "Second" for item in items
+    )
 
 
 def test_delete_folder_returns_204(client):
@@ -77,6 +82,7 @@ def test_deleted_folder_not_in_list(client):
 
 
 # --- Error cases ---
+
 
 def test_create_folder_without_name_returns_422(client):
     response = client.post("/folders", json={})
@@ -104,7 +110,9 @@ def test_update_folder_to_duplicate_name_returns_409(client):
 
 
 def test_update_folder_can_change_description(client):
-    folder_id = client.post("/folders", json={"name": "A", "description": "Old"}).json()["id"]
+    folder_id = client.post(
+        "/folders", json={"name": "A", "description": "Old"}
+    ).json()["id"]
     response = client.patch(
         f"/folders/{folder_id}",
         json={"description": "New"},
@@ -114,7 +122,9 @@ def test_update_folder_can_change_description(client):
 
 
 def test_update_folder_can_change_name_without_description(client):
-    folder_id = client.post("/folders", json={"name": "A", "description": "Old"}).json()["id"]
+    folder_id = client.post(
+        "/folders", json={"name": "A", "description": "Old"}
+    ).json()["id"]
     response = client.patch(
         f"/folders/{folder_id}",
         json={"name": "Renamed"},

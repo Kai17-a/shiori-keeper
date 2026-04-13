@@ -10,7 +10,9 @@ class BookmarkServiceBase:
     def _raise_not_found(self, resource_name: str) -> None:
         raise HTTPException(status_code=404, detail=f"{resource_name} not found")
 
-    def _build_bookmark_response(self, repo, row: dict[str, object]) -> BookmarkResponse:
+    def _build_bookmark_response(
+        self, repo, row: dict[str, object]
+    ) -> BookmarkResponse:
         bookmark_id = cast(int, row["id"])
         tags = [TagResponse(**tag) for tag in repo.get_tags(bookmark_id)]
         return BookmarkResponse(

@@ -37,7 +37,9 @@ class FolderService(NamedResourceService):
             try:
                 row = repo.insert(data.name, data.description)
             except sqlite3.IntegrityError:
-                raise HTTPException(status_code=409, detail="Folder name already exists")
+                raise HTTPException(
+                    status_code=409, detail="Folder name already exists"
+                )
             return FolderResponse(**row)
 
     def list(self) -> list[FolderResponse]:
@@ -56,14 +58,18 @@ class FolderService(NamedResourceService):
             payload = data.model_dump(exclude_unset=True)
             name = payload.get("name", current["name"])
             if name is None:
-                raise HTTPException(status_code=422, detail="Folder name cannot be null")
+                raise HTTPException(
+                    status_code=422, detail="Folder name cannot be null"
+                )
             description = payload.get("description", current["description"])
 
             self._ensure_name_available(repo, str(name), folder_id=folder_id)
             try:
                 row = repo.update(folder_id, str(name), description)
             except sqlite3.IntegrityError:
-                raise HTTPException(status_code=409, detail="Folder name already exists")
+                raise HTTPException(
+                    status_code=409, detail="Folder name already exists"
+                )
             if not row:
                 raise HTTPException(status_code=404, detail="Folder not found")
             return FolderResponse(**row)

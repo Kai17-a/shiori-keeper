@@ -1,4 +1,5 @@
 """Unit tests for Bookmark API endpoints (Requirements 1.1-1.5, 2.1-2.6, 3.1-3.4, 4.1-4.3, 7.1-7.4)."""
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -12,12 +13,13 @@ def client(tmp_path, monkeypatch):
     db_path = str(tmp_path / "test.db")
     build_test_db(db_path)
 
+    import sqlite3
+    from contextlib import contextmanager
+
     import api.database as db_module
     import api.services.bookmark_service as bs_module
     import api.services.folder_service as fs_module
     import api.services.tag_service as ts_module
-    from contextlib import contextmanager
-    import sqlite3
 
     @contextmanager
     def patched_get_db(database_url=db_path):
@@ -44,6 +46,7 @@ def client(tmp_path, monkeypatch):
 
 # --- Helpers ---
 
+
 def create_bookmark(client, url="https://example.com", title="Example", **kwargs):
     payload = {"url": url, "title": title, **kwargs}
     return client.post("/bookmarks", json=payload)
@@ -58,6 +61,7 @@ def create_tag(client, name="mytag"):
 
 
 # --- Happy path ---
+
 
 def test_create_bookmark_returns_201(client):
     resp = create_bookmark(client)
@@ -158,15 +162,21 @@ def test_update_bookmark_changes_updated_at(client):
 
 def test_set_bookmark_favorite_returns_200(client):
     bm_id = create_bookmark(client).json()["id"]
-    resp = client.patch("/bookmarks/favorite", json={"bookmark_id": bm_id, "is_favorite": True})
+    resp = client.patch(
+        "/bookmarks/favorite", json={"bookmark_id": bm_id, "is_favorite": True}
+    )
     assert resp.status_code == 200
     assert resp.json()["is_favorite"] is True
 
 
 def test_unset_bookmark_favorite_returns_200(client):
     bm_id = create_bookmark(client).json()["id"]
-    client.patch("/bookmarks/favorite", json={"bookmark_id": bm_id, "is_favorite": True})
-    resp = client.patch("/bookmarks/favorite", json={"bookmark_id": bm_id, "is_favorite": False})
+    client.patch(
+        "/bookmarks/favorite", json={"bookmark_id": bm_id, "is_favorite": True}
+    )
+    resp = client.patch(
+        "/bookmarks/favorite", json={"bookmark_id": bm_id, "is_favorite": False}
+    )
     assert resp.status_code == 200
     assert resp.json()["is_favorite"] is False
 
@@ -192,6 +202,7 @@ def test_create_bookmark_with_folder(client):
 
 
 # --- Error cases ---
+
 
 def test_create_bookmark_without_title_returns_422(client):
     resp = client.post("/bookmarks", json={"url": "https://example.com"})
@@ -235,7 +246,9 @@ def test_update_bookmark_with_invalid_url_returns_422(client):
 
 
 def test_create_bookmark_with_empty_title_returns_422(client):
-    resp = client.post("/bookmarks", json={"url": "https://example.com", "title": "   "})
+    resp = client.post(
+        "/bookmarks", json={"url": "https://example.com", "title": "   "}
+    )
     assert resp.status_code == 422
 
 
@@ -264,7 +277,9 @@ def test_create_bookmark_with_duplicate_url_returns_409(client):
 
 
 def test_update_bookmark_with_duplicate_url_returns_409(client):
-    first_id = create_bookmark(client, url="https://first.example", title="First").json()["id"]
+    first_id = create_bookmark(
+        client, url="https://first.example", title="First"
+    ).json()["id"]
     create_bookmark(client, url="https://second.example", title="Second")
     resp = client.patch(
         f"/bookmarks/{first_id}",

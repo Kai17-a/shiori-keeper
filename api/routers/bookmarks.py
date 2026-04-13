@@ -19,9 +19,13 @@ router = APIRouter(prefix="/bookmarks", tags=["bookmarks"])
     "",
     status_code=201,
     response_model=BookmarkResponse,
-    responses={409: {"model": ErrorResponse, "description": "Bookmark URL already exists"}},
+    responses={
+        409: {"model": ErrorResponse, "description": "Bookmark URL already exists"}
+    },
 )
-def create_bookmark(body: BookmarkCreate, service: BookmarkService = Depends(get_bookmark_service)):
+def create_bookmark(
+    body: BookmarkCreate, service: BookmarkService = Depends(get_bookmark_service)
+):
     return service.create(body)
 
 
@@ -34,7 +38,9 @@ def list_bookmarks(
     per_page: int = Query(20, ge=1, le=100),
     service: BookmarkService = Depends(get_bookmark_service),
 ):
-    return service.list(folder_id=folder_id, tag_id=tag_id, q=q, page=page, per_page=per_page)
+    return service.list(
+        folder_id=folder_id, tag_id=tag_id, q=q, page=page, per_page=per_page
+    )
 
 
 @router.patch(
@@ -50,7 +56,9 @@ def set_bookmark_favorite(
 
 
 @router.get("/{bookmark_id}", status_code=200, response_model=BookmarkResponse)
-def get_bookmark(bookmark_id: int, service: BookmarkService = Depends(get_bookmark_service)):
+def get_bookmark(
+    bookmark_id: int, service: BookmarkService = Depends(get_bookmark_service)
+):
     return service.get(bookmark_id)
 
 
@@ -58,7 +66,9 @@ def get_bookmark(bookmark_id: int, service: BookmarkService = Depends(get_bookma
     "/{bookmark_id}",
     status_code=200,
     response_model=BookmarkResponse,
-    responses={409: {"model": ErrorResponse, "description": "Bookmark URL already exists"}},
+    responses={
+        409: {"model": ErrorResponse, "description": "Bookmark URL already exists"}
+    },
 )
 def update_bookmark(
     bookmark_id: int,
@@ -69,5 +79,7 @@ def update_bookmark(
 
 
 @router.delete("/{bookmark_id}", status_code=204)
-def delete_bookmark(bookmark_id: int, service: BookmarkService = Depends(get_bookmark_service)):
+def delete_bookmark(
+    bookmark_id: int, service: BookmarkService = Depends(get_bookmark_service)
+):
     service.delete(bookmark_id)

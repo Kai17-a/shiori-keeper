@@ -32,7 +32,9 @@ class FolderRepository:
         ).fetchone()
         return dict(row) if row else None
 
-    def update(self, folder_id: int, name: str, description: str | None = None) -> dict | None:
+    def update(
+        self, folder_id: int, name: str, description: str | None = None
+    ) -> dict | None:
         cursor = self.conn.execute(
             "UPDATE folders SET name = ?, description = ? WHERE id = ?",
             (name, description, folder_id),
@@ -45,7 +47,5 @@ class FolderRepository:
         return dict(row) if row else None
 
     def delete(self, folder_id: int) -> bool:
-        cursor = self.conn.execute(
-            "DELETE FROM folders WHERE id = ?", (folder_id,)
-        )
+        cursor = self.conn.execute("DELETE FROM folders WHERE id = ?", (folder_id,))
         return cursor.rowcount > 0

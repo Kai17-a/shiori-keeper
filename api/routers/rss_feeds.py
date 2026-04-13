@@ -15,7 +15,9 @@ router = APIRouter(prefix="/rss-feeds", tags=["rss-feeds"])
 
 
 @router.post("", status_code=201, response_model=RSSFeedResponse)
-def create_rss_feed(body: RSSFeedCreate, service: RSSFeedService = Depends(get_rss_feed_service)):
+def create_rss_feed(
+    body: RSSFeedCreate, service: RSSFeedService = Depends(get_rss_feed_service)
+):
     return service.create(body)
 
 
@@ -38,7 +40,9 @@ def get_rss_feed(feed_id: int, service: RSSFeedService = Depends(get_rss_feed_se
     "/{feed_id}",
     status_code=200,
     response_model=RSSFeedResponse,
-    responses={409: {"model": ErrorResponse, "description": "RSS feed URL already exists"}},
+    responses={
+        409: {"model": ErrorResponse, "description": "RSS feed URL already exists"}
+    },
 )
 def update_rss_feed(
     feed_id: int,
@@ -49,10 +53,16 @@ def update_rss_feed(
 
 
 @router.delete("/{feed_id}", status_code=204)
-def delete_rss_feed(feed_id: int, service: RSSFeedService = Depends(get_rss_feed_service)):
+def delete_rss_feed(
+    feed_id: int, service: RSSFeedService = Depends(get_rss_feed_service)
+):
     service.delete(feed_id)
 
 
-@router.post("/{feed_id}/execute", status_code=200, response_model=RSSFeedExecuteResponse)
-def execute_rss_feed(feed_id: int, service: RSSFeedService = Depends(get_rss_feed_service)):
+@router.post(
+    "/{feed_id}/execute", status_code=200, response_model=RSSFeedExecuteResponse
+)
+def execute_rss_feed(
+    feed_id: int, service: RSSFeedService = Depends(get_rss_feed_service)
+):
     return service.execute(feed_id)

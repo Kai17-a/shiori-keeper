@@ -1,4 +1,5 @@
 """Unit tests for RSS feed API endpoints."""
+
 import sqlite3
 from contextlib import contextmanager
 
@@ -176,7 +177,9 @@ def test_execute_rss_feed_uses_feedparser_content(client, monkeypatch):
         "/settings/webhook",
         json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
     )
-    feed_id = create_feed(client, url="https://example.com/feed.xml", title="Example").json()["id"]
+    feed_id = create_feed(
+        client, url="https://example.com/feed.xml", title="Example"
+    ).json()["id"]
 
     captured = {}
 
@@ -221,9 +224,7 @@ def test_execute_rss_feed_uses_feedparser_content(client, monkeypatch):
 
     resp = client.post(f"/rss-feeds/{feed_id}/execute")
     assert resp.status_code == 200
-    assert captured["json"]["content"] == (
-        "*New articles* (2 items)"
-    )
+    assert captured["json"]["content"] == ("*New articles* (2 items)")
     assert captured["json"]["username"] == "Parsed Example"
     assert captured["json"]["embeds"] == [
         {
@@ -244,7 +245,9 @@ def test_execute_rss_feed_splits_embeds_into_batches(client, monkeypatch):
         "/settings/webhook",
         json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
     )
-    feed_id = create_feed(client, url="https://example.com/feed.xml", title="Example").json()["id"]
+    feed_id = create_feed(
+        client, url="https://example.com/feed.xml", title="Example"
+    ).json()["id"]
 
     payloads = []
 
@@ -298,7 +301,9 @@ def test_execute_rss_feed_skips_already_sent_articles(client, monkeypatch):
         "/settings/webhook",
         json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
     )
-    feed_id = create_feed(client, url="https://example.com/feed.xml", title="Example").json()["id"]
+    feed_id = create_feed(
+        client, url="https://example.com/feed.xml", title="Example"
+    ).json()["id"]
 
     payloads = []
 
@@ -350,7 +355,9 @@ def test_execute_rss_feed_returns_message_when_no_new_articles(client, monkeypat
         "/settings/webhook",
         json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
     )
-    feed_id = create_feed(client, url="https://example.com/feed.xml", title="Example").json()["id"]
+    feed_id = create_feed(
+        client, url="https://example.com/feed.xml", title="Example"
+    ).json()["id"]
 
     payloads = []
 
@@ -369,7 +376,12 @@ def test_execute_rss_feed_returns_message_when_no_new_articles(client, monkeypat
             type(
                 "ParsedEntry",
                 (),
-                {"get": lambda self, key, default=None: {"title": "Item 1", "link": "https://example.com/item-1"}.get(key, default)},
+                {
+                    "get": lambda self, key, default=None: {
+                        "title": "Item 1",
+                        "link": "https://example.com/item-1",
+                    }.get(key, default)
+                },
             )()
         ]
 
@@ -418,12 +430,16 @@ def test_create_rss_feed_with_invalid_url_returns_422(client):
 
 
 def test_create_rss_feed_with_non_discord_webhook_returns_422(client):
-    resp = client.put("/settings/webhook", json={"webhook_url": "https://example.com/webhook"})
+    resp = client.put(
+        "/settings/webhook", json={"webhook_url": "https://example.com/webhook"}
+    )
     assert resp.status_code == 422
 
 
 def test_ping_webhook_with_non_discord_url_returns_422(client):
-    resp = client.post("/settings/webhook/ping", json={"webhook_url": "https://example.com/webhook"})
+    resp = client.post(
+        "/settings/webhook/ping", json={"webhook_url": "https://example.com/webhook"}
+    )
     assert resp.status_code == 422
 
 
@@ -456,7 +472,9 @@ def test_get_rss_webhook_returns_404_when_unconfigured(client):
 
 
 def test_create_rss_feed_with_empty_title_returns_422(client):
-    resp = client.post("/rss-feeds", json={"url": "https://example.com/feed", "title": "   "})
+    resp = client.post(
+        "/rss-feeds", json={"url": "https://example.com/feed", "title": "   "}
+    )
     assert resp.status_code == 422
 
 

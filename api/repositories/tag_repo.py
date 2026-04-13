@@ -28,25 +28,21 @@ class TagRepository:
         return dict(row) if row else None
 
     def find_by_id(self, tag_id: int) -> dict | None:
-        row = self.conn.execute(
-            "SELECT * FROM tags WHERE id = ?", (tag_id,)
-        ).fetchone()
+        row = self.conn.execute("SELECT * FROM tags WHERE id = ?", (tag_id,)).fetchone()
         return dict(row) if row else None
 
-    def update(self, tag_id: int, name: str, description: str | None = None) -> dict | None:
+    def update(
+        self, tag_id: int, name: str, description: str | None = None
+    ) -> dict | None:
         cursor = self.conn.execute(
             "UPDATE tags SET name = ?, description = ? WHERE id = ?",
             (name, description, tag_id),
         )
         if cursor.rowcount == 0:
             return None
-        row = self.conn.execute(
-            "SELECT * FROM tags WHERE id = ?", (tag_id,)
-        ).fetchone()
+        row = self.conn.execute("SELECT * FROM tags WHERE id = ?", (tag_id,)).fetchone()
         return dict(row) if row else None
 
     def delete(self, tag_id: int) -> bool:
-        cursor = self.conn.execute(
-            "DELETE FROM tags WHERE id = ?", (tag_id,)
-        )
+        cursor = self.conn.execute("DELETE FROM tags WHERE id = ?", (tag_id,))
         return cursor.rowcount > 0

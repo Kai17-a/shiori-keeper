@@ -27,7 +27,9 @@ def list_tags(service: TagService = Depends(get_tag_service)):
     response_model=TagResponse,
     responses={409: {"model": ErrorResponse, "description": "Tag name already exists"}},
 )
-def update_tag(tag_id: int, body: TagUpdate, service: TagService = Depends(get_tag_service)):
+def update_tag(
+    tag_id: int, body: TagUpdate, service: TagService = Depends(get_tag_service)
+):
     return service.update(tag_id, body)
 
 

@@ -28,7 +28,9 @@ class BookmarkService(BookmarkServiceBase):
         if missing:
             raise HTTPException(status_code=404, detail="Tag not found")
 
-    def _sync_tags(self, repo: BookmarkRepository, bookmark_id: int, tag_ids: list[int] | None) -> None:
+    def _sync_tags(
+        self, repo: BookmarkRepository, bookmark_id: int, tag_ids: list[int] | None
+    ) -> None:
         if tag_ids is None:
             return
         unique_tag_ids = list(dict.fromkeys(tag_ids))
@@ -41,7 +43,9 @@ class BookmarkService(BookmarkServiceBase):
                 self._verify_folder(conn, data.folder_id)
             repo = BookmarkRepository(conn)
             if repo.find_by_url(str(data.url)) is not None:
-                raise HTTPException(status_code=409, detail="Bookmark URL already exists")
+                raise HTTPException(
+                    status_code=409, detail="Bookmark URL already exists"
+                )
             row = repo.insert(
                 url=str(data.url),
                 title=data.title,
@@ -52,9 +56,7 @@ class BookmarkService(BookmarkServiceBase):
             self._sync_tags(repo, row["id"], data.tag_ids)
             saved_row = repo.find_by_id(row["id"])
             assert saved_row is not None
-            return self._build_bookmark_response(
-                repo, repo.normalize_row(saved_row)
-            )
+            return self._build_bookmark_response(repo, repo.normalize_row(saved_row))
 
     def list(
         self,
@@ -72,8 +74,13 @@ class BookmarkService(BookmarkServiceBase):
             if total_pages and page > total_pages:
                 page = total_pages
             offset = (page - 1) * per_page
-            rows = repo.find_all(folder_id=folder_id, tag_id=tag_id, q=q, limit=per_page, offset=offset)
-            items = [self._build_bookmark_response(repo, repo.normalize_row(row)) for row in rows]
+            rows = repo.find_all(
+                folder_id=folder_id, tag_id=tag_id, q=q, limit=per_page, offset=offset
+            )
+            items = [
+                self._build_bookmark_response(repo, repo.normalize_row(row))
+                for row in rows
+            ]
             return BookmarkListResponse(
                 items=items,
                 total=total,
@@ -112,7 +119,9 @@ class BookmarkService(BookmarkServiceBase):
             if data.url is not None:
                 existing = repo.find_by_url(str(data.url))
                 if existing is not None and existing["id"] != bookmark_id:
-                    raise HTTPException(status_code=409, detail="Bookmark URL already exists")
+                    raise HTTPException(
+                        status_code=409, detail="Bookmark URL already exists"
+                    )
 
             row = repo.update(bookmark_id, fields)
             self._sync_tags(repo, bookmark_id, data.tag_ids)

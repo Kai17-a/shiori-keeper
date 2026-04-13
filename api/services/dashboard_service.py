@@ -11,9 +11,9 @@ class DashboardService:
             folders_total = conn.execute(
                 "SELECT COUNT(*) AS total FROM folders"
             ).fetchone()["total"]
-            tags_total = conn.execute(
-                "SELECT COUNT(*) AS total FROM tags"
-            ).fetchone()["total"]
+            tags_total = conn.execute("SELECT COUNT(*) AS total FROM tags").fetchone()[
+                "total"
+            ]
             rss_feeds_total = conn.execute(
                 "SELECT COUNT(*) AS total FROM rss_feeds"
             ).fetchone()["total"]

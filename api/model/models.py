@@ -2,7 +2,17 @@ from datetime import datetime
 from typing import ClassVar
 
 from pydantic import AnyHttpUrl, BaseModel, Field as PydField, field_validator
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, String, Text, text
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    text,
+)
 from sqlmodel import Field, SQLModel
 
 

@@ -20,7 +20,9 @@ def set_webhook(
     return service.set_webhook(body)
 
 
-@router.post("/webhook/ping", status_code=200, response_model=SettingsWebhookPingResponse)
+@router.post(
+    "/webhook/ping", status_code=200, response_model=SettingsWebhookPingResponse
+)
 def ping_webhook(
     body: SettingsWebhookPingRequest,
     service: SettingsService = Depends(get_settings_service),

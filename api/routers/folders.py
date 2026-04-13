@@ -8,7 +8,9 @@ router = APIRouter(prefix="/folders", tags=["folders"])
 
 
 @router.post("", status_code=201, response_model=FolderResponse)
-def create_folder(body: FolderCreate, service: FolderService = Depends(get_folder_service)):
+def create_folder(
+    body: FolderCreate, service: FolderService = Depends(get_folder_service)
+):
     return service.create(body)
 
 
@@ -18,7 +20,11 @@ def list_folders(service: FolderService = Depends(get_folder_service)):
 
 
 @router.patch("/{folder_id}", response_model=FolderResponse)
-def update_folder(folder_id: int, body: FolderUpdate, service: FolderService = Depends(get_folder_service)):
+def update_folder(
+    folder_id: int,
+    body: FolderUpdate,
+    service: FolderService = Depends(get_folder_service),
+):
     return service.update(folder_id, body)
 
 
