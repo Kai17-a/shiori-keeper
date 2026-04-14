@@ -5,6 +5,7 @@ repo_root=$(cd "$(dirname "$0")/.." && pwd)
 
 frontend_port=${FRONTEND_PORT:-3001}
 api_port=${API_PORT:-8001}
+database_path=${DATABASE_URL:-/tmp/bookmark-manager-e2e/bookmarks.db}
 
 cleanup() {
     if [ -n "${api_pid:-}" ]; then
@@ -33,7 +34,11 @@ wait_for_url() {
 }
 
 start_api_server() {
-    uv run --directory "$repo_root/api" uvicorn api.main:app --app-dir "$repo_root" --host 127.0.0.1 --port "$api_port" > /tmp/bookmark-manager-api-e2e.log 2>&1 &
+    mkdir -p "$(dirname "$database_path")"
+    cd "$repo_root"
+    mise x -- dbmate -u "sqlite:$database_path" up
+    DATABASE_URL="$database_path" \
+        uv run --directory "$repo_root/api" uvicorn api.main:app --app-dir "$repo_root" --host 127.0.0.1 --port "$api_port" > /tmp/bookmark-manager-api-e2e.log 2>&1 &
     api_pid=$!
 }
 
