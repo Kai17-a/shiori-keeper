@@ -106,7 +106,7 @@
 </template>
 
 <script setup lang="ts">
-import type { BookmarkListResponse, BookmarkResponse, FolderResponse } from "~/types";
+import type { BookmarkListResponse, BookmarkResponse, FolderResponse, TagResponse } from "~/types";
 import { mapBookmarksWithFolderNames } from "~/utils/bookmarkList";
 
 const { request } = useBookmarkApi();
@@ -116,6 +116,7 @@ const loading = ref(false);
 const loadError = ref("");
 const allBookmarks = ref<BookmarkResponse[]>([]);
 const folders = ref<FolderResponse[]>([]);
+const tags = ref<TagResponse[]>([]);
 const bookmarkFolderOptions = computed(() => [
   { label: "No folder", value: "" },
   ...folders.value.map((folder) => ({ label: folder.name, value: String(folder.id) })),
@@ -130,9 +131,7 @@ const favoriteBookmarksWithFolderNames = computed(() =>
 );
 
 const bookmarkTagOptions = computed(() =>
-  favoriteBookmarks.value.flatMap((bookmark) =>
-    bookmark.tags.map((tag) => ({ label: tag.name, value: String(tag.id) })),
-  ),
+  tags.value.map((tag) => ({ label: tag.name, value: String(tag.id) })),
 );
 
 const loadAllBookmarks = async () => {
@@ -145,7 +144,12 @@ const loadAllBookmarks = async () => {
   }
 
   allBookmarks.value = items;
-  folders.value = await request<FolderResponse[]>("/folders");
+  const [foldersRes, tagsRes] = await Promise.all([
+    request<FolderResponse[]>("/folders"),
+    request<TagResponse[]>("/tags"),
+  ]);
+  folders.value = foldersRes;
+  tags.value = tagsRes;
 };
 
 type LoadToastKind = "loaded" | "refreshed";
