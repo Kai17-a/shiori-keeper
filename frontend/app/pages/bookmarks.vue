@@ -43,7 +43,7 @@
                 variant="ghost"
                 size="sm"
                 :loading="loading"
-                @click="loadData"
+                @click="refreshBookmarks"
               >
                 Refresh
               </UButton>
@@ -274,7 +274,9 @@ const paginationItems = computed<PaginationItem[]>(() =>
   buildPaginationItems(page.value, pageCount.value),
 );
 
-async function loadData() {
+type LoadToastKind = "loaded" | "refreshed";
+
+async function loadData(showToast = true, toastKind: LoadToastKind = "loaded") {
   loading.value = true;
   loadError.value = "";
   try {
@@ -295,11 +297,13 @@ async function loadData() {
     folders.value = folderRes;
     tags.value = tagRes;
 
-    toast.show({
-      title: "Bookmarks loaded.",
-      color: "success",
-      icon: "i-lucide-check",
-    });
+    if (showToast) {
+      toast.show({
+        title: toastKind === "loaded" ? "Bookmarks loaded." : "Bookmarks refreshed.",
+        color: "success",
+        icon: "i-lucide-check",
+      });
+    }
   } catch (err) {
     loadError.value = err instanceof Error ? err.message : "Failed to load bookmarks.";
     toast.show({
@@ -312,6 +316,10 @@ async function loadData() {
     loading.value = false;
   }
 }
+
+const refreshBookmarks = async () => {
+  await loadData(true, "refreshed");
+};
 
 const toggleFavorite = async (bookmark: BookmarkResponse) => {
   try {

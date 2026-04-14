@@ -219,11 +219,20 @@ const closeModal = () => {
   modalOpen.value = false;
 };
 
-const loadFeeds = async () => {
+type LoadToastKind = "loaded" | "refreshed";
+
+const loadFeeds = async (showToast = true, toastKind: LoadToastKind = "loaded") => {
   loading.value = true;
   loadError.value = "";
   try {
     feedList.value = await request<RSSFeedListResponse>(`/rss-feeds?page=${page.value}`);
+    if (showToast) {
+      toast.show({
+        title: toastKind === "loaded" ? "RSS feeds loaded." : "RSS feeds refreshed.",
+        color: "success",
+        icon: "i-lucide-check",
+      });
+    }
   } catch (err) {
     loadError.value = err instanceof Error ? err.message : "Failed to load RSS feeds.";
     toast.show({
@@ -238,14 +247,7 @@ const loadFeeds = async () => {
 };
 
 const refreshFeeds = async () => {
-  await loadFeeds();
-  if (!loadError.value) {
-    toast.show({
-      title: "RSS feeds refreshed.",
-      color: "success",
-      icon: "i-lucide-check",
-    });
-  }
+  await loadFeeds(true, "refreshed");
 };
 
 const setPage = async (nextPage: number) => {
@@ -281,14 +283,14 @@ const saveFeed = async () => {
       });
     } else {
       await request("/rss-feeds", { method: "POST", body: JSON.stringify(body) });
-      toast.show({
-        title: "RSS feed created.",
-        color: "success",
-        icon: "i-lucide-check",
-      });
     }
     closeModal();
-    await loadFeeds();
+    await loadFeeds(false);
+    toast.show({
+      title: feedForm.id ? "RSS feed updated." : "RSS feed created.",
+      color: "success",
+      icon: "i-lucide-check",
+    });
   } catch (err) {
     toast.show({
       title: feedForm.id ? "Failed to update RSS feed." : "Failed to create RSS feed.",
@@ -335,14 +337,14 @@ const confirmDelete = async () => {
   deleting.value = true;
   try {
     await request(`/rss-feeds/${pendingFeed.value.id}`, { method: "DELETE" });
+    deleteOpen.value = false;
+    pendingFeed.value = null;
+    await loadFeeds(false);
     toast.show({
       title: "RSS feed deleted.",
       color: "success",
       icon: "i-lucide-check",
     });
-    deleteOpen.value = false;
-    pendingFeed.value = null;
-    await loadFeeds();
   } catch (err) {
     toast.show({
       title: "Failed to delete RSS feed.",

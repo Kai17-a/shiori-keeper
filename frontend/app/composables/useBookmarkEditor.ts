@@ -3,7 +3,7 @@ import type { BookmarkResponse } from "~/types";
 
 type UseBookmarkEditorOptions = {
   request: ReturnType<typeof useBookmarkApi>["request"];
-  refresh: () => Promise<void>;
+  refresh: (showToast?: boolean) => Promise<void>;
   findBookmarkById: (id: number) => BookmarkResponse | null;
 };
 
@@ -57,7 +57,12 @@ export const useBookmarkEditor = (options: UseBookmarkEditorOptions) => {
       });
       modalOpen.value = false;
       resetBookmarkForm();
-      await options.refresh();
+      await options.refresh(false);
+      toast.show({
+        title: isEditing ? "Bookmark updated." : "Bookmark created.",
+        color: "success",
+        icon: "i-lucide-check",
+      });
     } catch (err) {
       toast.show({
         title: "Failed to save bookmark.",
@@ -82,7 +87,12 @@ export const useBookmarkEditor = (options: UseBookmarkEditorOptions) => {
       await options.request(`/bookmarks/${pendingDeleteBookmark.value.id}`, { method: "DELETE" });
       deleteOpen.value = false;
       pendingDeleteBookmark.value = null;
-      await options.refresh();
+      await options.refresh(false);
+      toast.show({
+        title: "Bookmark deleted.",
+        color: "success",
+        icon: "i-lucide-check",
+      });
     } catch (err) {
       toast.show({
         title: "Failed to delete bookmark.",
