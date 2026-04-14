@@ -144,6 +144,7 @@ jobs:
         run: bunx playwright install --with-deps chromium
 
       - name: Run E2E tests
+        uses: jdx/mise-action@v4
         run: ./scripts/run-e2e-tests.sh
 
       - name: Upload logs on failure
