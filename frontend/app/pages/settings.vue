@@ -220,4 +220,6 @@ const saveWebhook = async () => {
     webhookSaving.value = false;
   }
 };
+
+onMounted(loadWebhook);
 </script>
