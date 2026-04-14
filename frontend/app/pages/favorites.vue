@@ -20,7 +20,7 @@
               variant="ghost"
               size="sm"
               :loading="loading"
-              @click="refreshFavorites"
+              @click="loadFavorites"
             >
               Refresh
             </UButton>
@@ -153,6 +153,11 @@ async function loadFavorites() {
   loadError.value = "";
   try {
     await loadAllBookmarks();
+    toast.show({
+      title: "Favorites loaded.",
+      color: "success",
+      icon: "i-lucide-check",
+    });
   } catch (err) {
     loadError.value = err instanceof Error ? err.message : "Failed to load favorites.";
     toast.show({
@@ -165,17 +170,6 @@ async function loadFavorites() {
     loading.value = false;
   }
 }
-
-const refreshFavorites = async () => {
-  await loadFavorites();
-  if (!loadError.value) {
-    toast.show({
-      title: "Favorites refreshed.",
-      color: "success",
-      icon: "i-lucide-check",
-    });
-  }
-};
 
 const {
   bookmarkForm,

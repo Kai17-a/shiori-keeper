@@ -43,7 +43,7 @@
                 variant="ghost"
                 size="sm"
                 :loading="loading"
-                @click="refreshBookmarks"
+                @click="loadData"
               >
                 Refresh
               </UButton>
@@ -294,6 +294,12 @@ async function loadData() {
     bookmarkList.value = bookmarkRes;
     folders.value = folderRes;
     tags.value = tagRes;
+
+    toast.show({
+      title: "Bookmarks loaded.",
+      color: "success",
+      icon: "i-lucide-check",
+    });
   } catch (err) {
     loadError.value = err instanceof Error ? err.message : "Failed to load bookmarks.";
     toast.show({
@@ -306,17 +312,6 @@ async function loadData() {
     loading.value = false;
   }
 }
-
-const refreshBookmarks = async () => {
-  await loadData();
-  if (!loadError.value) {
-    toast.show({
-      title: "Bookmarks refreshed.",
-      color: "success",
-      icon: "i-lucide-check",
-    });
-  }
-};
 
 const toggleFavorite = async (bookmark: BookmarkResponse) => {
   try {
