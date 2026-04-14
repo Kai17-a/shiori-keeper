@@ -1,8 +1,6 @@
 [tools]
 act = "latest"
 bun = "1.1.38"
-codex = "latest"
 dbmate = "latest"
 git-cliff = "2.12.0"
-opencode = "latest"
 uv = "latest"
