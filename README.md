@@ -2,8 +2,10 @@
 
 ## Overview
 
-Shiori Keeper is a web app for listing, finding, and organizing bookmarks collected in your browser.  
+Shiori Keeper is a very simple web app for listing, finding, and organizing bookmarks collected in your browser.  
 It is designed to make it easier to revisit links later.
+
+*Shiori(栞)*　means “bookmark” in Japanese.
 
 ## How to Install
 
