@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
 logger = logging.getLogger(__name__)
 
 
-app = FastAPI(title="Bookmark Manager API", lifespan=lifespan)
+app = FastAPI(title="Shiori Keeper API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

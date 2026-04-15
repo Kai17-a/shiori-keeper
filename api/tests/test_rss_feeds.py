@@ -227,7 +227,7 @@ def test_execute_rss_feed_uses_feedparser_content(client, monkeypatch):
     assert captured["json"]["content"] == (
         "**Parsed Example** - **New articles** (2 items)"
     )
-    assert captured["json"]["username"] == "Borwser Bookmark Manager"
+    assert captured["json"]["username"] == "Shiori Keeper"
     assert captured["json"]["embeds"] == [
         {
             "title": "Item 1",

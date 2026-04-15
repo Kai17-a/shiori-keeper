@@ -1,4 +1,4 @@
-"""Property-based tests for Bookmark Manager API using Hypothesis."""
+"""Property-based tests for Shiori Keeper API using Hypothesis."""
 
 import sqlite3
 from contextlib import contextmanager
@@ -81,7 +81,7 @@ def _reset_database():
         conn.execute("DELETE FROM tags")
 
 
-# Feature: bookmark-manager-api, Property 1: ブックマーク作成のラウンドトリップ
+# Feature: shiori-keeper-api, Property 1: ブックマーク作成のラウンドトリップ
 @given(
     url=st.from_regex(r"https?://[a-z]{3,10}\.[a-z]{2,4}(/[a-z]*)?", fullmatch=True),
     title=st.text(
@@ -103,7 +103,7 @@ def test_property_1_bookmark_create_roundtrip(client, url, title):
     assert get_resp.json()["title"] == title
 
 
-# Feature: bookmark-manager-api, Property 2: 無効URLのバリデーション拒否
+# Feature: shiori-keeper-api, Property 2: 無効URLのバリデーション拒否
 @given(
     url=st.text(min_size=1).filter(lambda s: not s.startswith(("http://", "https://"))),
 )
@@ -115,7 +115,7 @@ def test_property_2_invalid_url_returns_422(client, url):
     assert resp.status_code == 422
 
 
-# Feature: bookmark-manager-api, Property 3: 存在しないリソースへのアクセスは404
+# Feature: shiori-keeper-api, Property 3: 存在しないリソースへのアクセスは404
 @given(
     nonexistent_id=st.integers(min_value=10000, max_value=99999),
 )
@@ -133,7 +133,7 @@ def test_property_3_nonexistent_resource_returns_404(client, nonexistent_id):
     assert client.delete(f"/tags/{nonexistent_id}").status_code == 404
 
 
-# Feature: bookmark-manager-api, Property 4: フォルダフィルタの正確性
+# Feature: shiori-keeper-api, Property 4: フォルダフィルタの正確性
 @given(
     folder_count=st.integers(min_value=1, max_value=3),
     bookmark_count=st.integers(min_value=1, max_value=5),
@@ -173,7 +173,7 @@ def test_property_4_folder_filter_accuracy(client, folder_count, bookmark_count)
             assert bm["folder_id"] == folder_id
 
 
-# Feature: bookmark-manager-api, Property 5: タグフィルタの正確性
+# Feature: shiori-keeper-api, Property 5: タグフィルタの正確性
 @given(
     tag_count=st.integers(min_value=1, max_value=3),
     bookmark_count=st.integers(min_value=1, max_value=5),
@@ -216,7 +216,7 @@ def test_property_5_tag_filter_accuracy(client, tag_count, bookmark_count):
             assert tag_id in tag_ids_in_bm
 
 
-# Feature: bookmark-manager-api, Property 6: キーワード検索の正確性
+# Feature: shiori-keeper-api, Property 6: キーワード検索の正確性
 @given(
     q=st.text(min_size=2, max_size=5, alphabet="abcdefghijklmnopqrstuvwxyz"),
 )
@@ -239,7 +239,7 @@ def test_property_6_keyword_search_accuracy(client, q):
         assert q in bm["title"] or q in bm["url"]
 
 
-# Feature: bookmark-manager-api, Property 7: 部分更新の不変性
+# Feature: shiori-keeper-api, Property 7: 部分更新の不変性
 @given(
     new_title=st.text(
         min_size=1,
@@ -274,7 +274,7 @@ def test_property_7_partial_update_immutability(client, new_title):
     assert updated["id"] == original["id"]
 
 
-# Feature: bookmark-manager-api, Property 8: ブックマーク削除とカスケード
+# Feature: shiori-keeper-api, Property 8: ブックマーク削除とカスケード
 @given(
     tag_count=st.integers(min_value=1, max_value=3),
 )
@@ -305,7 +305,7 @@ def test_property_8_bookmark_delete_cascade(client, tag_count):
     assert get_resp.status_code == 404
 
 
-# Feature: bookmark-manager-api, Property 9: フォルダ削除後のブックマーク参照解除
+# Feature: shiori-keeper-api, Property 9: フォルダ削除後のブックマーク参照解除
 @given(
     bookmark_count=st.integers(min_value=1, max_value=5),
 )
@@ -341,7 +341,7 @@ def test_property_9_folder_delete_nullifies_bookmark_folder(client, bookmark_cou
         assert get_resp.json()["folder_id"] is None
 
 
-# Feature: bookmark-manager-api, Property 10: タグ名の一意性
+# Feature: shiori-keeper-api, Property 10: タグ名の一意性
 @given(
     tag_name=st.text(min_size=1, max_size=30, alphabet="abcdefghijklmnopqrstuvwxyz"),
 )
@@ -356,7 +356,7 @@ def test_property_10_tag_name_uniqueness(client, tag_name):
     assert second.status_code == 409
 
 
-# Feature: bookmark-manager-api, Property 11: タグ付与・解除のラウンドトリップ
+# Feature: shiori-keeper-api, Property 11: タグ付与・解除のラウンドトリップ
 @given(
     tag_count=st.integers(min_value=1, max_value=3),
 )
@@ -393,7 +393,7 @@ def test_property_11_tag_attach_detach_roundtrip(client, tag_count):
     assert get_resp.json()["tags"] == []
 
 
-# Feature: bookmark-manager-api, Property 12: タグの重複付与は409
+# Feature: shiori-keeper-api, Property 12: タグの重複付与は409
 @given(
     dummy=st.integers(min_value=0, max_value=0),  # force Hypothesis to run 100 examples
 )

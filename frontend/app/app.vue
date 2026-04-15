@@ -28,7 +28,7 @@ useHead({
   },
 });
 
-const title = "Bookmark Manager";
+const title = "Shiori Keeper";
 const description = "At-a-glance view of your bookmark system.";
 
 useSeoMeta({

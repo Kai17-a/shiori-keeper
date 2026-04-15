@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "Browser Bookmark Manager",
+  "name": "Shiori Keeper",
   "version": "0.1.0",
-  "description": "A compact popup for quick bookmark capture and organization.",
+  "description": "An extension for Shiori Keeper.",
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Bookmark"
+    "default_title": "Shiori Keeper"
   },
   "permissions": ["tabs", "storage", "bookmarks"],
   "host_permissions": ["<all_urls>"]

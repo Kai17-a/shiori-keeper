@@ -4,7 +4,7 @@
       <UDashboardSidebarCollapse />
     </template>
 
-    <template #right>
+    <!-- <template #right>
       <UButton
         to="https://github.com/Kai17-a/browser-bookmark-manager"
         target="_blank"
@@ -16,7 +16,7 @@
         size="sm"
       />
       <slot name="actions" />
-    </template>
+    </template> -->
   </UDashboardNavbar>
 </template>
 

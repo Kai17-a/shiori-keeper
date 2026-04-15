@@ -21,3 +21,4 @@ local-data/*
 .actrc
 data/*
 api/*.egg-info
+*.egg-info/

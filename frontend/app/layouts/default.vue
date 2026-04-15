@@ -16,6 +16,33 @@
           @navigate="closeSidebar"
         />
       </template>
+
+      <template #footer="{ collapsed }">
+        <div class="flex flex-col gap-2 w-full">
+          <UButton
+            :label="collapsed ? undefined : 'GitHub'"
+            icon="i-simple-icons-github"
+            color="neutral"
+            variant="ghost"
+            :block="collapsed"
+            to="https://github.com/Kai17-a/browser-bookmark-manager"
+            target="_blank"
+          />
+
+          <UTooltip :delay-duration="0" text="Preparing...">
+            <UButton
+              :label="collapsed ? undefined : 'Extension'"
+              icon="i-lucide-puzzle"
+              color="neutral"
+              variant="ghost"
+              :block="collapsed"
+              to=""
+              target="_blank"
+              disabled
+            />
+          </UTooltip>
+        </div>
+      </template>
     </UDashboardSidebar>
 
     <slot />

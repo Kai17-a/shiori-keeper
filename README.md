@@ -1,4 +1,4 @@
-# Bookmark Manager
+# Shiori Keeper
 
 ブラウザのブックマークを一覧・整理するためのアプリケーションです。
 この `README.md` はインストール方法だけをまとめ、開発手順や設計資料は [DEVELOPMENT.md](DEVELOPMENT.md) と `specs/` に分離しています。
@@ -21,8 +21,8 @@ docker run --rm -p 3000:3000 -p 8000:8000 \
 
 ```yaml
 services:
-  bookmark-manager:
-    container_name: bookmark-manager
+  shiori-keeper:
+    container_name: shiori-keeper
     image: ghcr.io/kai17-a/browser-bookmark-manager:latest
     environment:
       DATABASE_URL: /data/bookmarks.db

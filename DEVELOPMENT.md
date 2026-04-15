@@ -57,8 +57,8 @@ GitHub Actions のワークフローをローカルで再現する場合は `mis
 
 ```yaml
 services:
-  bookmark-manager:
-    container_name: bookmark-manager
+  shiori-keeper:
+    container_name: shiori-keeper
     build:
       context: .
       dockerfile: Dockerfile

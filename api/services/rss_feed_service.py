@@ -279,7 +279,7 @@ class RSSFeedService:
                     response = httpx.post(
                         webhook_url,
                         json={
-                            "username": "Borwser Bookmark Manager",
+                            "username": "Shiori Keeper",
                             "content": content,
                             "embeds": chunk,
                         },

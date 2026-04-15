@@ -33,7 +33,7 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      title: "Bookmark Manager",
+      title: "Shiori Keeper",
       meta: [
         {
           name: "viewport",

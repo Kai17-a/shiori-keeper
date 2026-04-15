@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "bookmark-manager-frontend",
+      "name": "shiori-keeper-frontend",
       "dependencies": {
         "@iconify-json/lucide": "^1.2.100",
         "@iconify-json/simple-icons": "^1.2.75",

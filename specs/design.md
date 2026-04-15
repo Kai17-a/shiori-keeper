@@ -50,7 +50,7 @@ Client (HTTP)
 ### ディレクトリ構成
 
 ```
-bookmark-manager/
+shiori-keeper/
 ├── api/
 │   ├── main.py
 │   ├── database.py
