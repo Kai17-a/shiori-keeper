@@ -16,11 +16,11 @@ It is designed to make it easier to revisit links later.
 If you use the published image, pull it from GitHub Container Registry and run it locally:
 
 ```bash
-docker pull ghcr.io/kai17-a/browser-bookmark-manager:latest
+docker pull ghcr.io/kai17-a/shiori-keeper:latest
 docker run --rm -p 3000:3000 -p 8000:8000 \
   -e DATABASE_URL=/data/data.db \
   -v "$(pwd)/data:/data" \
-  ghcr.io/kai17-a/browser-bookmark-manager:latest
+  ghcr.io/kai17-a/shiori-keeper:latest
 ```
 
 After startup, open the frontend at `http://127.0.0.1:3000` and the API at `http://127.0.0.1:8000`.
@@ -31,7 +31,7 @@ If you prefer `docker compose`, use a setup like this:
 services:
   shiori-keeper:
     container_name: shiori-keeper
-    image: ghcr.io/kai17-a/browser-bookmark-manager:latest
+    image: ghcr.io/kai17-a/shiori-keeper:latest
     environment:
       DATABASE_URL: /data/data.db
     ports:
