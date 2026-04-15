@@ -91,6 +91,17 @@ jobs:
       - name: Set up Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Restore Cargo cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            batch/target
+          key: batch-cargo-${{ runner.os }}-${{ hashFiles('batch/Cargo.lock', 'batch/Cargo.toml') }}
+          restore-keys: |
+            batch-cargo-${{ runner.os }}-
+
       - name: Run cargo check
         working-directory: batch
         run: cargo check
