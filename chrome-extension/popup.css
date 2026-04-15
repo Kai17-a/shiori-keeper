@@ -181,8 +181,7 @@ select option {
 }
 
 .button--primary {
-  background: 00dc82;
-  background: linear-gradient(135deg, #00dc82, #00b8ff);
+  background: #00dc82;
   color: #06111d;
 }
 
