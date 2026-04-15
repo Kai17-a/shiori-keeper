@@ -118,5 +118,8 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - フロントエンドの設定画面は起動時に `GET /settings/webhook` で既存設定を読み込み、`Test` では `POST /settings/webhook/ping` の疎通確認のみを行い、`Save` では疎通確認後に `PUT /settings/webhook` へ保存する
 - `POST /rss-feeds/{id}/execute` は RSS を実行し、登録済み Discord webhook に通知する
 - `POST /rss-feeds/{id}/execute` はグローバル `webhook_url` 未設定時に 400 を返す
+- RSS 実行の通知送信と `rss_feed_articles` への送信済み記録は Rust の `batch` が担当する
+- `batch` は `rss_feed_articles` の `url` を参照して、既に送信済みの記事を webhook 対象から除外する
+- `batch` は webhook 送信成功後に `rss_feed_articles` へ記事を追記する
 - フォルダとタグは最大件数制限を持ち、上限超過時は 400 を返す
 - `BookmarkListResponse.total_pages` はクライアントのページング UI が使えるように返す

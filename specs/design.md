@@ -2,8 +2,9 @@
 
 ## 概要
 
-本ドキュメントは、ブックマーク管理 REST API の技術設計を定義する。
+本ドキュメントは、ブックマーク管理システムの技術設計を定義する。
 PythonでAPIサーバーを実装し、SQLiteをデータストアとして使用する。
+加えて、Rust の `batch` で RSS 実行と Discord webhook 通知を担当する。
 ブックマーク・RSS フィード・フォルダ・タグ・設定の CRUD と、ブックマークへのタグ付与・解除、RSS 実行による Discord webhook 通知を提供する。
 
 ### 技術スタック
@@ -47,6 +48,28 @@ Client (HTTP)
 └─────────────────────────────┘
 ```
 
+### バッチ処理
+
+```
+SQLite Database
+    │
+    ▼
+┌─────────────────────────────┐
+│  Batch Job (Rust)           │
+│  batch/                     │
+└─────────────┬───────────────┘
+              │
+              ▼
+┌─────────────────────────────┐
+│  Discord Webhook            │
+└─────────────────────────────┘
+```
+
+- `batch` は RSS フィードを読み込み、未送信の記事だけを webhook に通知する
+- `batch` は送信済み記事を `rss_feed_articles` に記録し、重複通知を避ける
+- `batch` は webhook 送信失敗時にリトライし、最終失敗時は処理を中断する
+- `batch` は API サーバーとは別プロセスとして動作し、HTTP ルートは持たない
+
 ### ディレクトリ構成
 
 ```
@@ -65,6 +88,13 @@ shiori-keeper/
     ├── design.md
     ├── tasks.md
     └── test-observations/
+├── batch/
+│   ├── Cargo.toml
+│   └── src/
+│       ├── db.rs
+│       ├── lib.rs
+│       ├── main.rs
+│       └── webhook.rs
 ```
 
 ---
@@ -163,6 +193,8 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `app_settings` はアプリ全体設定のキーバリューストアとして扱う
 - `default_webhook_url` は Discord webhook URL だけを許可する
 - RSS 実行 API は `default_webhook_url` 未設定時に 400 を返す
+- RSS 実行の送信本体は `batch` が担当し、API サーバーは RSS 実行の要求受付と永続化結果の参照を担当する
+- `batch` は `rss_feed_articles` を参照して既送信記事を除外し、送信成功後に同テーブルへ記録する
 
 ### Pydanticスキーマ
 

@@ -11,6 +11,7 @@
 - ブックマーク、RSS リンク、フォルダ、タグの CRUD
 - `settings` によるアプリ全体設定の管理
 - RSS 実行 API と Discord webhook 通知
+- RSS 実行の実処理は Rust の `batch` が担当し、API は実行要求の入口と結果の参照を担う
 - ブックマークへのタグ付与・解除
 - `/health` による疎通確認
 - webhook 疎通確認用の ping API

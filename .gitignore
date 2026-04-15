@@ -4,7 +4,6 @@
 .ruff_cache/
 __pycache__/
 *.pyc
-data.db
 .codex/
 frontend/.nuxt/
 frontend/.output/
@@ -19,6 +18,7 @@ api/__pycache__/
 local-data/*
 */test-results/
 .actrc
-data/*
+*/data/*
+data.db
 api/*.egg-info
 *.egg-info/
