@@ -1,3 +1,4 @@
+import logging
 import sqlite3
 import xml.etree.ElementTree as ET
 
@@ -17,8 +18,42 @@ from api.repositories.rss_feed_repo import RSSFeedRepository
 from api.repositories.settings_repo import SettingsRepository
 from api.services.settings_service import WEBHOOK_SETTING_KEY
 
+logger = logging.getLogger(__name__)
+
 
 class RSSFeedService:
+    def _extract_discord_error_detail(self, response: httpx.Response) -> str | None:
+        content_type = response.headers.get("content-type", "")
+        if "application/json" in content_type:
+            try:
+                data = response.json()
+            except ValueError:
+                return None
+
+            if isinstance(data, dict):
+                for key in ("detail", "message", "error"):
+                    value = data.get(key)
+                    if value:
+                        return str(value)
+                return str(data)
+            return str(data)
+
+        try:
+            text = response.text.strip()
+        except Exception:
+            return None
+
+        return text or None
+
+    def _raise_discord_webhook_error(
+        self, response: httpx.Response | None = None
+    ) -> None:
+        if response is not None:
+            response_detail = self._extract_discord_error_detail(response)
+            if response_detail:
+                logger.error("Discord webhook notification failed: %s", response_detail)
+        raise HTTPException(status_code=502, detail="Failed to notify Discord webhook")
+
     def _parse_rss_feed(self, content: bytes) -> feedparser.FeedParserDict:
         parsed = feedparser.parse(content)
         if parsed.bozo:
@@ -236,13 +271,15 @@ class RSSFeedService:
             try:
                 embed_chunks = self._chunk_embeds(embeds) or [[]]
                 for index, chunk in enumerate(embed_chunks, start=1):
-                    content = f"*New articles* ({len(embeds)} items)"
+                    content = (
+                        f"**{feed_title}** - **New articles** ({len(embeds)} items)"
+                    )
                     if len(embed_chunks) > 1:
-                        content = f"{content} [batch {index}]"
+                        content = f"{content} [{index}]"
                     response = httpx.post(
                         webhook_url,
                         json={
-                            "username": feed_title,
+                            "username": "Borwser Bookmark Manager",
                             "content": content,
                             "embeds": chunk,
                         },
@@ -250,15 +287,11 @@ class RSSFeedService:
                     )
                     if response.status_code >= 400:
                         break
-            except httpx.HTTPError as exc:
-                raise HTTPException(
-                    status_code=502, detail="Failed to notify Discord webhook"
-                ) from exc
+            except httpx.HTTPError:
+                self._raise_discord_webhook_error()
 
             if response.status_code >= 400:
-                raise HTTPException(
-                    status_code=502, detail="Failed to notify Discord webhook"
-                )
+                self._raise_discord_webhook_error(response)
 
             self._record_sent_articles(conn, feed_id, articles)
 
