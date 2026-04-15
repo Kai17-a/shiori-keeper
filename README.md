@@ -5,7 +5,7 @@
 Shiori Keeper is a very simple web app for listing, finding, and organizing bookmarks collected in your browser.  
 It is designed to make it easier to revisit links later.
 
-*Shiori(栞)*　means “bookmark” in Japanese.
+_Shiori(栞)_ means “bookmark” in Japanese.
 
 > [!WARNING]
 > This project is still in alpha, so destructive changes to the database may happen.
