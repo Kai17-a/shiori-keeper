@@ -13,7 +13,7 @@ API_PID=$!
 nginx -g 'daemon off;' &
 FRONTEND_PID=$!
 
-echo "* * 1 * * * * shiori-keeper-batch" >> scheduler
+echo "0 * * * * shiori-keeper-batch" >> scheduler
 supercronic ./scheduler
 
 trap 'kill "$API_PID" "$FRONTEND_PID" 2>/dev/null || true' INT TERM
