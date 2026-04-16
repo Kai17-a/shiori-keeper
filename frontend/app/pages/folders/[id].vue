@@ -180,7 +180,6 @@
           :subject="pendingBookmark?.title"
           confirm-label="Delete bookmark"
           :loading="deletingBookmark"
-          prompt="?"
           @cancel="pendingBookmark = null"
           @confirm="confirmDeleteBookmark"
         />
@@ -191,7 +190,6 @@
           :subject="folder?.name"
           confirm-label="Delete folder"
           :loading="deleting"
-          prompt="?"
           @cancel="confirmOpen = false"
           @confirm="deleteFolder"
         />

@@ -48,7 +48,7 @@
           variant="soft"
           color="error"
           icon="i-lucide-trash-2"
-          @click.stop="$emit('remove', bookmark.id)"
+          @click.stop="$emit('remove', bookmark)"
         />
       </div>
     </div>
@@ -95,7 +95,7 @@
         variant="soft"
         color="error"
         icon="i-lucide-trash-2"
-        @click.stop="$emit('remove', bookmark.id)"
+        @click.stop="$emit('remove', bookmark)"
       />
     </div>
   </article>

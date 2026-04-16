@@ -17,15 +17,11 @@
               v-model="selectedFilterFolder"
               :items="filterFolderOptions"
               placeholder="All folders"
-              value-attribute="value"
-              option-attribute="label"
             />
             <USelectMenu
               v-model="selectedFilterTag"
               :items="filterTagOptions"
               placeholder="All tags"
-              value-attribute="value"
-              option-attribute="label"
             />
           </form>
         </UPageCard>
@@ -183,6 +179,10 @@ const searchQ = ref(String(route.query.q || ""));
 const filterFolder = ref(String(route.query.folder_id || ""));
 const filterTag = ref(String(route.query.tag_id || ""));
 const page = ref(parsePositiveInteger(route.query.page, 1));
+type SelectOption = {
+  label: string;
+  value: string;
+};
 const filterFolderOptions = computed(() => [
   { label: "All folders", value: "" },
   ...createSelectOptions(
@@ -201,20 +201,20 @@ const filterTagOptions = computed(() => [
   ),
 ]);
 
-const selectedFilterFolder = computed({
-  get: () => filterFolder.value,
+const selectedFilterFolder = computed<SelectOption | null>({
+  get: () =>
+    filterFolderOptions.value.find((option) => option.value === filterFolder.value) || null,
   set: (value) => {
     filterFolder.value = normalizeSelectValue(value);
   },
 });
 
-const selectedFilterTag = computed({
-  get: () => filterTag.value,
+const selectedFilterTag = computed<SelectOption | null>({
+  get: () => filterTagOptions.value.find((option) => option.value === filterTag.value) || null,
   set: (value) => {
     filterTag.value = normalizeSelectValue(value);
   },
 });
-
 const bookmarkFolderOptions = computed(() => [
   { label: "No folder", value: "" },
   ...createSelectOptions(
@@ -231,11 +231,6 @@ const bookmarkTagOptions = computed(() => [
     (tag) => tag.id,
   ),
 ]);
-
-type SelectOption = {
-  label: string;
-  value: string;
-};
 
 const {
   bookmarkForm,

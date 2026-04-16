@@ -177,7 +177,6 @@
           :subject="pendingBookmark?.title"
           confirm-label="Delete bookmark"
           :loading="deletingBookmark"
-          prompt="?"
           @cancel="pendingBookmark = null"
           @confirm="confirmDeleteBookmark"
         />
@@ -188,7 +187,6 @@
           :subject="tag?.name"
           confirm-label="Delete tag"
           :loading="deleting"
-          prompt="?"
           @cancel="confirmOpen = false"
           @confirm="deleteTag"
         />
