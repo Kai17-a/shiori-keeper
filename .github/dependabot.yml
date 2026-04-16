@@ -25,6 +25,14 @@ updates:
       prefix: "chore"
       include: "scope"
 
+  - package-ecosystem: "cargo"
+    directory: "/batch"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
