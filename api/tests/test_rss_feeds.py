@@ -131,6 +131,22 @@ def test_ping_webhook_returns_200(client, monkeypatch):
     }
 
 
+def test_get_rss_execution_setting_returns_200(client):
+    resp = client.get("/settings/rss-execution")
+    assert resp.status_code == 200
+    assert resp.json()["enabled"] is False
+
+
+def test_set_rss_execution_setting_returns_200(client):
+    resp = client.put("/settings/rss-execution", json={"enabled": True})
+    assert resp.status_code == 200
+    assert resp.json()["enabled"] is True
+
+    resp = client.get("/settings/rss-execution")
+    assert resp.status_code == 200
+    assert resp.json()["enabled"] is True
+
+
 def test_list_rss_feeds_returns_200(client):
     create_feed(client, url="https://a.example.com/feed", title="A")
     create_feed(client, url="https://b.example.com/feed", title="B")

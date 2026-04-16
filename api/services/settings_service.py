@@ -5,6 +5,8 @@ from fastapi import HTTPException
 
 from api.database import get_db
 from api.model.models import (
+    SettingsRssExecutionResponse,
+    SettingsRssExecutionUpdate,
     SettingsWebhookPingRequest,
     SettingsWebhookPingResponse,
     SettingsWebhookResponse,
@@ -13,6 +15,7 @@ from api.model.models import (
 from api.repositories.settings_repo import SettingsRepository
 
 WEBHOOK_SETTING_KEY = "default_webhook_url"
+RSS_EXECUTION_SETTING_KEY = "rss_periodic_execution_enabled"
 
 
 class SettingsService:
@@ -83,3 +86,19 @@ class SettingsService:
                     status_code=404, detail="Webhook URL is not configured"
                 )
             return SettingsWebhookResponse(webhook_url=webhook_url)
+
+    def get_rss_execution(self) -> SettingsRssExecutionResponse:
+        with get_db() as conn:
+            repo = SettingsRepository(conn)
+            return SettingsRssExecutionResponse(
+                enabled=repo.get_bool(RSS_EXECUTION_SETTING_KEY)
+            )
+
+    def set_rss_execution(
+        self, data: SettingsRssExecutionUpdate
+    ) -> SettingsRssExecutionResponse:
+        with get_db() as conn:
+            repo = SettingsRepository(conn)
+            return SettingsRssExecutionResponse(
+                enabled=repo.set_bool(RSS_EXECUTION_SETTING_KEY, data.enabled)
+            )

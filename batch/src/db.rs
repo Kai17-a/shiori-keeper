@@ -28,6 +28,14 @@ pub fn fetch_app_settings(conn: &Connection) -> Result<Vec<AppSetting>> {
     app_settings_iter.collect()
 }
 
+pub fn rss_periodic_execution_enabled(conn: &Connection) -> Result<bool> {
+    let mut stmt = conn.prepare(
+        "SELECT rss_periodic_execution_enabled FROM app_settings WHERE key = 'rss_periodic_execution_enabled'",
+    )?;
+    let value = stmt.query_row([], |row| row.get::<_, i64>(0)).unwrap_or(0);
+    Ok(value != 0)
+}
+
 pub fn fetch_rss_feeds(conn: &Connection) -> Result<Vec<RSSFeed>> {
     let mut stmt = conn.prepare("SELECT * FROM rss_feeds")?;
     let rss_feed_iter = stmt.query_map([], |row| {

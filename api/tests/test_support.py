@@ -38,22 +38,22 @@ def build_test_db(db_path: str) -> None:
     conn.execute("PRAGMA foreign_keys = ON")
     try:
         migrations_dir = Path(__file__).resolve().parents[2] / "db" / "migrations"
-        schema = sorted(migrations_dir.glob("*_initial_schema.sql"))[0]
-        up_sql = []
-        current_up = False
-        for raw_line in schema.read_text().splitlines():
-            line = raw_line.strip()
-            if line.startswith("-- migrate:up"):
-                current_up = True
-                continue
-            if line.startswith("-- migrate:down"):
-                break
-            if current_up:
-                up_sql.append(raw_line)
-        for statement in "\n".join(up_sql).split(";"):
-            statement = statement.strip()
-            if statement:
-                conn.execute(statement)
+        for migration in sorted(migrations_dir.glob("*.sql")):
+            up_sql = []
+            current_up = False
+            for raw_line in migration.read_text().splitlines():
+                line = raw_line.strip()
+                if line.startswith("-- migrate:up"):
+                    current_up = True
+                    continue
+                if line.startswith("-- migrate:down"):
+                    break
+                if current_up:
+                    up_sql.append(raw_line)
+            for statement in "\n".join(up_sql).split(";"):
+                statement = statement.strip()
+                if statement:
+                    conn.execute(statement)
         conn.commit()
     finally:
         conn.close()

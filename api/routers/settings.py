@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends
 
 from api.dependencies import get_settings_service
 from api.model.models import (
+    SettingsRssExecutionResponse,
+    SettingsRssExecutionUpdate,
     SettingsWebhookPingRequest,
     SettingsWebhookPingResponse,
     SettingsWebhookResponse,
@@ -33,3 +35,20 @@ def ping_webhook(
 @router.get("/webhook", status_code=200, response_model=SettingsWebhookResponse)
 def get_webhook(service: SettingsService = Depends(get_settings_service)):
     return service.get_webhook()
+
+
+@router.get(
+    "/rss-execution", status_code=200, response_model=SettingsRssExecutionResponse
+)
+def get_rss_execution(service: SettingsService = Depends(get_settings_service)):
+    return service.get_rss_execution()
+
+
+@router.put(
+    "/rss-execution", status_code=200, response_model=SettingsRssExecutionResponse
+)
+def set_rss_execution(
+    body: SettingsRssExecutionUpdate,
+    service: SettingsService = Depends(get_settings_service),
+):
+    return service.set_rss_execution(body)

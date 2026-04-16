@@ -35,47 +35,6 @@
             />
           </div>
         </UPageCard>
-
-        <UPageCard
-          title="Webhook"
-          description="Configure the global Discord webhook used by RSS execution"
-          :ui="{ body: 'space-y-5' }"
-        >
-          <form class="space-y-4" @submit.prevent="saveWebhook">
-            <UFormField
-              label="Discord webhook URL"
-              description="This single webhook setting is shared across app integrations."
-              class="w-full"
-            >
-              <UInput
-                v-model="webhookForm.webhookUrl"
-                class="w-full"
-                placeholder="https://discord.com/api/webhooks/..."
-              />
-            </UFormField>
-
-            <div class="flex flex-wrap items-center gap-3">
-              <UButton
-                type="button"
-                color="neutral"
-                variant="ghost"
-                icon="i-lucide-bell-ring"
-                :loading="webhookChecking"
-                @click="pingWebhook()"
-              >
-                Test
-              </UButton>
-              <UButton type="submit" icon="i-lucide-save" :loading="webhookSaving">
-                Save webhook
-              </UButton>
-            </div>
-
-            <p class="text-sm text-muted">
-              <span v-if="webhookConfigured">Webhook is configured.</span>
-              <span v-else>No webhook is configured yet.</span>
-            </p>
-          </form>
-        </UPageCard>
       </div>
     </template>
   </UDashboardPanel>

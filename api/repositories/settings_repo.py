@@ -29,3 +29,36 @@ class SettingsRepository:
         ).fetchone()
         assert stored is not None
         return str(stored["value"])
+
+    def get_bool(self, key: str) -> bool:
+        row = self.conn.execute(
+            "SELECT rss_periodic_execution_enabled FROM app_settings WHERE key = ?",
+            (key,),
+        ).fetchone()
+        return bool(row["rss_periodic_execution_enabled"]) if row else False
+
+    def set_bool(self, key: str, enabled: bool) -> bool:
+        value = "1" if enabled else "0"
+        flag = 1 if enabled else 0
+        self.conn.execute(
+            """
+            INSERT INTO app_settings (
+                key,
+                value,
+                rss_periodic_execution_enabled,
+                updated_at
+            )
+            VALUES (?, ?, ?, strftime('%Y-%m-%d %H:%M:%f', 'now'))
+            ON CONFLICT(key) DO UPDATE SET
+                value = excluded.value,
+                rss_periodic_execution_enabled = excluded.rss_periodic_execution_enabled,
+                updated_at = excluded.updated_at
+            """,
+            (key, value, flag),
+        )
+        stored = self.conn.execute(
+            "SELECT rss_periodic_execution_enabled FROM app_settings WHERE key = ?",
+            (key,),
+        ).fetchone()
+        assert stored is not None
+        return bool(stored["rss_periodic_execution_enabled"])

@@ -6,6 +6,66 @@
 
     <template #body>
       <div class="space-y-6">
+        <div class="grid gap-6 lg:grid-cols-[2fr_1fr]">
+          <UPageCard
+            title="Webhook"
+            description="Configure the global Discord webhook used by RSS execution"
+            :ui="{ body: 'space-y-5' }"
+          >
+            <form class="space-y-4" @submit.prevent="saveWebhook">
+              <UFormField
+                label="Discord webhook URL"
+                description="This single webhook setting is shared across app integrations."
+                class="w-full"
+              >
+                <UInput
+                  v-model="webhookForm.webhookUrl"
+                  class="w-full"
+                  placeholder="https://discord.com/api/webhooks/..."
+                />
+              </UFormField>
+
+              <div class="flex flex-wrap items-center gap-3">
+                <UButton
+                  type="button"
+                  color="neutral"
+                  variant="ghost"
+                  icon="i-lucide-bell-ring"
+                  :loading="webhookChecking"
+                  @click="pingWebhook()"
+                >
+                  Test
+                </UButton>
+                <UButton type="submit" icon="i-lucide-save" :loading="webhookSaving">
+                  Save webhook
+                </UButton>
+              </div>
+
+              <p class="text-sm text-muted">
+                <span v-if="webhookConfigured">Webhook is configured.</span>
+                <span v-else>No webhook is configured yet.</span>
+              </p>
+            </form>
+          </UPageCard>
+
+          <UPageCard
+            title="RSS periodic execution"
+            description="Enable or disable the scheduled RSS batch process"
+            :ui="{ body: 'space-y-4' }"
+          >
+            <div class="space-y-3">
+              <div class="space-y-1">
+                <p class="text-sm font-medium text-default">Run on schedule</p>
+                <p class="text-sm text-muted">
+                  When enabled, the batch process is allowed to run RSS delivery jobs once
+                  every hour.
+                </p>
+              </div>
+              <USwitch v-model="rssExecutionEnabled" :loading="rssExecutionLoading" />
+            </div>
+          </UPageCard>
+        </div>
+
         <UPageCard :ui="{ body: 'space-y-4' }">
           <div class="flex items-center justify-between gap-3">
             <div>
@@ -124,7 +184,14 @@
 </template>
 
 <script setup lang="ts">
-import type { RSSFeedExecuteResponse, RSSFeedListResponse, RSSFeedResponse } from "~/types";
+import type {
+  RSSFeedExecuteResponse,
+  RSSFeedListResponse,
+  RSSFeedResponse,
+  SettingsRssExecutionResponse,
+  SettingsWebhookPingResponse,
+  SettingsWebhookResponse,
+} from "~/types";
 
 type PaginationItem = { type: "page"; label: string; value: number } | { type: "ellipsis" };
 
@@ -135,6 +202,12 @@ const { refresh: refreshSidebarCatalog } = useSidebarCatalog();
 const loading = ref(false);
 const saving = ref(false);
 const deleting = ref(false);
+const webhookLoading = ref(false);
+const webhookChecking = ref(false);
+const webhookSaving = ref(false);
+const webhookConfigured = ref(false);
+const rssExecutionLoading = ref(false);
+const rssExecutionSaving = ref(false);
 const executingFeedId = ref<number | null>(null);
 const loadError = ref("");
 const modalOpen = ref(false);
@@ -149,6 +222,10 @@ const feedList = ref<RSSFeedListResponse>({
 });
 const page = ref(1);
 const feedForm = reactive({ id: "", title: "", url: "", description: "" });
+const webhookForm = reactive({
+  webhookUrl: "",
+});
+const rssExecutionEnabled = ref(false);
 
 const pageCount = computed(() => Math.max(feedList.value.total_pages, 1));
 const paginationItems = computed<PaginationItem[]>(() => {
@@ -193,6 +270,135 @@ const openEditModal = (feed: RSSFeedResponse) => {
 const closeModal = () => {
   modalOpen.value = false;
 };
+
+const pingWebhook = async (webhookUrl = webhookForm.webhookUrl.trim()) => {
+  webhookChecking.value = true;
+  try {
+    await request<SettingsWebhookPingResponse>("/settings/webhook/ping", {
+      method: "POST",
+      body: JSON.stringify({ webhook_url: webhookUrl }),
+    });
+    toast.show({
+      title: "Webhook endpoint is reachable.",
+      color: "success",
+      icon: "i-lucide-check",
+    });
+  } catch (err) {
+    toast.show({
+      title: "Failed to ping webhook setting.",
+      description: err instanceof Error ? err.message : undefined,
+      color: "error",
+      icon: "i-lucide-circle-alert",
+    });
+  } finally {
+    webhookChecking.value = false;
+  }
+};
+
+const loadWebhook = async () => {
+  webhookLoading.value = true;
+  try {
+    const response = await request<SettingsWebhookResponse>("/settings/webhook");
+    webhookForm.webhookUrl = response.webhook_url;
+    webhookConfigured.value = true;
+  } catch (err) {
+    webhookForm.webhookUrl = "";
+    webhookConfigured.value = false;
+    if (err instanceof Error && err.message.includes("404")) {
+      return;
+    }
+    toast.show({
+      title: "Failed to load webhook setting.",
+      description: err instanceof Error ? err.message : undefined,
+      color: "error",
+      icon: "i-lucide-circle-alert",
+    });
+  } finally {
+    webhookLoading.value = false;
+  }
+};
+
+const saveWebhook = async () => {
+  const webhookUrl = webhookForm.webhookUrl.trim();
+  if (!webhookUrl) {
+    toast.show({
+      title: "Webhook URL is required.",
+      color: "error",
+      icon: "i-lucide-circle-alert",
+    });
+    return;
+  }
+
+  webhookSaving.value = true;
+  try {
+    const response = await request<SettingsWebhookResponse>("/settings/webhook", {
+      method: "PUT",
+      body: JSON.stringify({ webhook_url: webhookUrl }),
+    });
+    webhookForm.webhookUrl = response.webhook_url;
+    webhookConfigured.value = true;
+    toast.show({
+      title: "Webhook setting saved.",
+      color: "success",
+      icon: "i-lucide-check",
+    });
+  } catch (err) {
+    toast.show({
+      title: "Failed to save webhook setting.",
+      description: err instanceof Error ? err.message : undefined,
+      color: "error",
+      icon: "i-lucide-circle-alert",
+    });
+  } finally {
+    webhookSaving.value = false;
+  }
+};
+
+const loadRssExecution = async () => {
+  rssExecutionLoading.value = true;
+  try {
+    const response = await request<SettingsRssExecutionResponse>("/settings/rss-execution");
+    rssExecutionEnabled.value = response.enabled;
+  } catch (err) {
+    toast.show({
+      title: "Failed to load RSS execution setting.",
+      description: err instanceof Error ? err.message : undefined,
+      color: "error",
+      icon: "i-lucide-circle-alert",
+    });
+  } finally {
+    rssExecutionLoading.value = false;
+  }
+};
+
+watch(rssExecutionEnabled, async (enabled, previous) => {
+  if (rssExecutionLoading.value || enabled === previous) return;
+  rssExecutionSaving.value = true;
+  try {
+    const response = await request<SettingsRssExecutionResponse>("/settings/rss-execution", {
+      method: "PUT",
+      body: JSON.stringify({ enabled }),
+    });
+    rssExecutionEnabled.value = response.enabled;
+    toast.show({
+      title: response.enabled
+        ? "RSS periodic execution enabled."
+        : "RSS periodic execution disabled.",
+      color: "success",
+      icon: "i-lucide-check",
+    });
+  } catch (err) {
+    rssExecutionEnabled.value = previous;
+    toast.show({
+      title: "Failed to update RSS execution setting.",
+      description: err instanceof Error ? err.message : undefined,
+      color: "error",
+      icon: "i-lucide-circle-alert",
+    });
+  } finally {
+    rssExecutionSaving.value = false;
+  }
+});
 
 type LoadToastKind = "loaded" | "refreshed";
 
@@ -335,5 +541,7 @@ const confirmDelete = async () => {
   }
 };
 
-onMounted(loadFeeds);
+onMounted(async () => {
+  await Promise.all([loadFeeds(), loadWebhook(), loadRssExecution()]);
+});
 </script>

@@ -401,6 +401,14 @@ class SettingsWebhookPingResponse(BaseModel):
     pong: bool
 
 
+class SettingsRssExecutionResponse(BaseModel):
+    enabled: bool
+
+
+class SettingsRssExecutionUpdate(BaseModel):
+    enabled: bool
+
+
 class DashboardMetricsResponse(BaseModel):
     bookmarks_total: int
     folders_total: int

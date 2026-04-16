@@ -59,3 +59,7 @@ export interface SettingsWebhookResponse {
 export interface SettingsWebhookPingResponse {
   pong: boolean;
 }
+
+export interface SettingsRssExecutionResponse {
+  enabled: boolean;
+}

@@ -38,7 +38,7 @@ CREATE TABLE app_settings (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL,
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
+, rss_periodic_execution_enabled INTEGER NOT NULL DEFAULT 0);
 CREATE TABLE tags (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL UNIQUE,
@@ -52,4 +52,5 @@ CREATE TABLE bookmark_tags (
 -- Dbmate schema migrations
 INSERT INTO "schema_migrations" (version) VALUES
   ('010'),
-  ('011');
+  ('011'),
+  ('012');
