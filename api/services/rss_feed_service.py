@@ -1,6 +1,7 @@
 import logging
 import sqlite3
 from datetime import datetime
+from email.utils import parsedate_to_datetime
 import xml.etree.ElementTree as ET
 from typing import cast
 from time import mktime
@@ -27,6 +28,23 @@ logger = logging.getLogger(__name__)
 
 
 class RSSFeedService:
+    def _parse_article_published(
+        self, value: object | None
+    ) -> datetime | None:
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value
+        if isinstance(value, str):
+            try:
+                return datetime.fromisoformat(value)
+            except ValueError:
+                try:
+                    return parsedate_to_datetime(value)
+                except (TypeError, ValueError):
+                    return None
+        return None
+
     def _extract_discord_error_detail(self, response: httpx.Response) -> str | None:
         content_type = response.headers.get("content-type", "")
         if "application/json" in content_type:
@@ -217,7 +235,15 @@ class RSSFeedService:
                 page = total_pages
             offset = (page - 1) * per_page
             rows = repo.find_articles_by_feed_id_paginated(feed_id, per_page, offset)
-            items = [RSSFeedArticleResponse(**row) for row in rows]
+            items = [
+                RSSFeedArticleResponse(
+                    **{
+                        **row,
+                        "published": self._parse_article_published(row.get("published")),
+                    }
+                )
+                for row in rows
+            ]
             return RSSFeedArticleListResponse(
                 items=items,
                 total=total,

@@ -17,6 +17,7 @@ from api.model.models import (
     FolderUpdate,
     RSSFeedCreate,
     RSSFeedUpdate,
+    SettingsRssExecutionUpdate,
     SettingsWebhookUpdate,
     SettingsWebhookPingRequest,
     TagAttach,
@@ -297,6 +298,13 @@ class CompatTestClient:
                 return self._ok(payload, 200)
             if method == "GET" and path == "/settings/webhook":
                 payload = SettingsService().get_webhook().model_dump()
+                return self._ok(payload, 200)
+            if method == "GET" and path == "/settings/rss-execution":
+                payload = SettingsService().get_rss_execution().model_dump()
+                return self._ok(payload, 200)
+            if method == "PUT" and path == "/settings/rss-execution":
+                body = SettingsRssExecutionUpdate(**(json or {}))
+                payload = SettingsService().set_rss_execution(body).model_dump()
                 return self._ok(payload, 200)
             bookmarks_response = self._handle_bookmarks(method, path, query, json)
             if bookmarks_response is not None:

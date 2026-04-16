@@ -26,3 +26,5 @@ batch/tests
 
 local-data
 data
+
+db/schema.sql
