@@ -3,15 +3,15 @@ name: PR Tests
 on:
   push:
     branches:
-      - "**"
+      - main
   pull_request:
     branches:
       - main
-  workflow_dispatch:
 
 jobs:
   api:
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.head_ref != 'main') }}
 
     defaults:
       run:
@@ -43,6 +43,7 @@ jobs:
 
   frontend-unit:
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.head_ref != 'main') }}
 
     defaults:
       run:
@@ -79,6 +80,7 @@ jobs:
 
   batch:
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.head_ref != 'main') }}
 
     defaults:
       run:
@@ -115,6 +117,7 @@ jobs:
     needs:
       - api
       - frontend-unit
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.head_ref != 'main') }}
 
     defaults:
       run:
