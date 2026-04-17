@@ -59,7 +59,7 @@
 
     <div v-if="showFolder || (showTags && bookmark.tags.length)" class="space-y-3">
       <div v-if="showFolder && bookmark.folder_name" class="flex flex-wrap gap-2">
-        <UBadge size="xs" color="success" variant="soft" icon="i-lucide-folder">
+        <UBadge size="sm" color="success" variant="soft" icon="i-lucide-folder">
           {{ bookmark.folder_name }}
         </UBadge>
       </div>
@@ -68,7 +68,7 @@
         <UBadge
           v-for="tag in bookmark.tags"
           :key="tag.id"
-          size="xs"
+          size="sm"
           color="neutral"
           variant="subtle"
           :ui="{ rounded: 'rounded-full' }"
