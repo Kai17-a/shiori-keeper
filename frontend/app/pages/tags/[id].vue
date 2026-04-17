@@ -92,7 +92,7 @@
               :key="bookmark.id"
               :bookmark="bookmark"
               :show-folder="true"
-              :show-tags="true"
+              :show-tags="false"
               @edit="loadBookmarkForm"
               @remove="askDeleteBookmark"
               @favorite="toggleFavorite"
