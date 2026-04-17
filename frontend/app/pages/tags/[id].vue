@@ -88,11 +88,11 @@
 
           <div v-if="bookmarks.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <BookmarkCard
-              v-for="bookmark in bookmarksWithFolderNames"
+              v-for="bookmark in bookmarksWithRelations"
               :key="bookmark.id"
               :bookmark="bookmark"
               :show-folder="true"
-              :show-tags="false"
+              :show-tags="true"
               @edit="loadBookmarkForm"
               @remove="askDeleteBookmark"
               @favorite="toggleFavorite"
@@ -264,10 +264,11 @@ const loadTag = async (showToast = false) => {
   }
 };
 
-const bookmarksWithFolderNames = computed(() =>
+const bookmarksWithRelations = computed(() =>
   bookmarks.value.map((bookmark) => ({
     ...bookmark,
     folder_name: folders.value.find((folder) => folder.id === bookmark.folder_id)?.name || null,
+    tags: bookmark.tags.filter((item) => item.id === Number(route.params.id)),
   })),
 );
 

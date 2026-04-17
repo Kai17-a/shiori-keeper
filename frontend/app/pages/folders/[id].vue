@@ -94,7 +94,7 @@
               v-for="bookmark in bookmarks"
               :key="bookmark.id"
               :bookmark="bookmark"
-              :show-folder="false"
+              :show-folder="true"
               :show-tags="true"
               @edit="loadBookmarkForm"
               @remove="askDeleteBookmark"
