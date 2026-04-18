@@ -202,6 +202,59 @@ def test_list_rss_feed_articles_returns_200(client):
     assert body["items"][0]["url"].startswith("https://example.com/item-")
 
 
+def test_list_rss_feed_articles_accepts_page_and_per_page(client, monkeypatch):
+    import api.services.rss_feed_service as rss_module
+
+    client.put(
+        "/settings/webhook",
+        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+    )
+    feed_id = create_feed(client).json()["id"]
+
+    class ParsedEntry:
+        def __init__(self, index):
+            self._index = index
+
+        def get(self, key, default=None):
+            data = {
+                "title": f"Item {self._index}",
+                "link": f"https://example.com/item-{self._index}",
+            }
+            return data.get(key, default)
+
+    class ParsedFeed:
+        bozo = False
+        feed = {"title": "Parsed Example"}
+        entries = [ParsedEntry(index) for index in range(1, 6)]
+
+    def fake_get(url, timeout=5.0, follow_redirects=True):
+        class Response:
+            status_code = 200
+            content = b"feed"
+
+        return Response()
+
+    monkeypatch.setattr(rss_module.httpx, "get", fake_get)
+    monkeypatch.setattr(rss_module.feedparser, "parse", lambda content: ParsedFeed())
+
+    execute = client.post(f"/rss-feeds/{feed_id}/execute")
+    assert execute.status_code == 200
+
+    resp = client.get(f"/rss-feeds/{feed_id}/articles?page=2&per_page=2")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["page"] == 2
+    assert body["per_page"] == 2
+    assert body["total"] == 5
+    assert body["total_pages"] == 3
+    assert len(body["items"]) == 2
+
+
+def test_list_rss_feed_articles_returns_404_for_missing_feed(client):
+    resp = client.get("/rss-feeds/99999/articles")
+    assert resp.status_code == 404
+
+
 def test_execute_rss_feed_uses_feedparser_content(client, monkeypatch):
     import api.services.rss_feed_service as rss_module
 

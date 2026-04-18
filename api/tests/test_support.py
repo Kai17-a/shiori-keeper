@@ -223,15 +223,15 @@ class CompatTestClient:
             body = BookmarkFavoriteUpdate(**(json or {}))
             payload = BookmarkService().set_favorite(body).model_dump()
             return self._ok(payload, 200)
+        if method == "PATCH" and path == "/bookmarks/by-url" and "url" in query:
+            body = BookmarkUpdate(**(json or {}))
+            payload = BookmarkService().update_by_url(query["url"], body).model_dump()
+            return self._ok(payload, 200)
         if method == "PATCH" and path.startswith("/bookmarks/") and "/tags" not in path:
             body = BookmarkUpdate(**(json or {}))
             payload = (
                 BookmarkService().update(int(path.rsplit("/", 1)[1]), body).model_dump()
             )
-            return self._ok(payload, 200)
-        if method == "PATCH" and path == "/bookmarks/by-url" and "url" in query:
-            body = BookmarkUpdate(**(json or {}))
-            payload = BookmarkService().update_by_url(query["url"], body).model_dump()
             return self._ok(payload, 200)
         if (
             method == "DELETE"

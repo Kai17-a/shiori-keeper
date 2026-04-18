@@ -145,6 +145,28 @@ def test_update_bookmark_by_url_returns_200(client):
     assert resp.json()["title"] == "New"
 
 
+def test_update_bookmark_by_url_returns_404_for_missing_url(client):
+    resp = client.patch(
+        "/bookmarks/by-url",
+        params={"url": "https://missing.example.com"},
+        json={"title": "New"},
+    )
+    assert resp.status_code == 404
+
+
+def test_update_bookmark_by_url_returns_409_for_duplicate_url(client):
+    create_bookmark(client, url="https://first.example.com", title="First")
+    second_url = create_bookmark(
+        client, url="https://second.example.com", title="Second"
+    ).json()["url"]
+    resp = client.patch(
+        "/bookmarks/by-url",
+        params={"url": second_url},
+        json={"url": "https://first.example.com"},
+    )
+    assert resp.status_code == 409
+
+
 def test_update_bookmark_can_replace_tags(client):
     tag_a = create_tag(client, name="a").json()["id"]
     tag_b = create_tag(client, name="b").json()["id"]
