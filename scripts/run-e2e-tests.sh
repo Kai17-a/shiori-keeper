@@ -44,7 +44,8 @@ start_api_server() {
 
 start_frontend_server() {
     cd "$repo_root/frontend"
-    bunx nuxt dev --host 0.0.0.0 --port "$frontend_port" --strictPort > /tmp/bookmark-manager-frontend-e2e.log 2>&1 &
+    PLAYWRIGHT_API_BASE_URL="http://127.0.0.1:$api_port" \
+        bunx nuxt dev --host 0.0.0.0 --port "$frontend_port" --strictPort > /tmp/bookmark-manager-frontend-e2e.log 2>&1 &
     frontend_pid=$!
 }
 

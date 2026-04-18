@@ -1,8 +1,48 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { createServer } from "node:http";
 import process from "node:process";
 
 const apiBaseUrl = process.env.PLAYWRIGHT_API_BASE_URL ?? "http://127.0.0.1:8000";
+const discordWebhookUrl = "https://discord.com/api/webhooks/1234567890/test-token";
+const buttonByText = (page: Page, label: string) => page.locator(`button:has-text("${label}")`).first();
+const headingByText = (page: Page, text: string) => page.locator("h1").filter({ hasText: text }).last();
+
+const createBookmark = async (
+  page: Page,
+  suffix: string,
+  overrides: Partial<{
+    url: string;
+    title: string;
+    description: string;
+    folder_id: number | null;
+    tag_ids: number[];
+    is_favorite: boolean;
+  }> = {},
+) => {
+  const created = await page.request.post(`${apiBaseUrl}/bookmarks`, {
+    data: {
+      url: overrides.url ?? `https://example.com/${suffix}`,
+      title: overrides.title ?? `Example Bookmark ${suffix}`,
+      description: overrides.description ?? "Original description",
+      folder_id: overrides.folder_id ?? null,
+      tag_ids: overrides.tag_ids ?? [],
+    },
+  });
+  expect(created.status()).toBe(201);
+  const createdBody = (await created.json()) as { id: number };
+
+  if (overrides.is_favorite) {
+    const favorited = await page.request.patch(`${apiBaseUrl}/bookmarks/favorite`, {
+      data: {
+        bookmark_id: createdBody.id,
+        is_favorite: true,
+      },
+    });
+    expect(favorited.status()).toBe(200);
+  }
+
+  return createdBody;
+};
 
 const startRssServer = async (suffix: string) => {
   const server = createServer((_, res) => {
@@ -43,45 +83,47 @@ const startRssServer = async (suffix: string) => {
 test.describe.configure({ mode: "serial" });
 
 test.describe("bookmarks", () => {
-  test("creates, edits, searches, and deletes bookmarks", async ({ page }) => {
+  test("loads, edits, searches, and deletes bookmarks", async ({ page }) => {
     const suffix = `${Date.now()}-${test.info().workerIndex}`;
     const url = `https://example.com/${suffix}`;
     const title = `Example Bookmark ${suffix}`;
-
-    const created = await page.request.post(`${apiBaseUrl}/bookmarks`, {
-      data: {
-        url,
-        title,
-        description: "Original description",
-        folder_id: null,
-        tag_ids: [],
-      },
-    });
-    expect(created.status()).toBe(201);
-    const createdBody = (await created.json()) as { id: number };
+    const updatedTitle = `${title} Updated`;
+    const updatedDescription = "Updated description";
+    await createBookmark(page, suffix, { title, url });
 
     await page.goto("/bookmarks");
     await expect(page).toHaveURL(/\/bookmarks\/?$/);
+    await buttonByText(page, "Refresh").click({ force: true });
+    await expect(page.getByText(title, { exact: true })).toBeVisible();
 
-    const lookup = await page.request.get(`${apiBaseUrl}/bookmarks?q=${encodeURIComponent(url)}`);
-    expect(lookup.status()).toBe(200);
-    const lookupBody = (await lookup.json()) as {
-      items: Array<{ id: number; url: string }>;
-    };
-    const createdBookmark = lookupBody.items.find((item) => item.url === url);
-    expect(createdBookmark?.id ?? createdBody.id).toBeTruthy();
+    const bookmarkCard = page.locator("article").filter({ has: page.getByText(title, { exact: true }) });
+    await bookmarkCard.getByRole("button", { name: "Edit" }).click({ force: true });
+    await page.getByRole("textbox", { name: "Title" }).fill(updatedTitle);
+    await page.getByRole("textbox", { name: "Description" }).fill(updatedDescription);
+    await buttonByText(page, "Save bookmark").click();
+    await expect(page.getByText(updatedTitle, { exact: true })).toBeVisible();
 
-    const deleted = await page.request.delete(
-      `${apiBaseUrl}/bookmarks/${createdBookmark?.id ?? createdBody.id}`,
-    );
-    expect(deleted.status()).toBe(204);
-    await page.reload();
-    await expect(page).toHaveURL(/\/bookmarks\/?$/);
+    const searchInput = page.getByPlaceholder("Search by title or URL");
+    await searchInput.fill(updatedTitle);
+    await expect(page.getByText(updatedTitle, { exact: true })).toBeVisible();
+    await searchInput.fill("does-not-exist");
+    await expect(page.getByText("No bookmarks yet.")).toBeVisible();
+    await searchInput.fill(updatedTitle);
+    await expect(page.getByText(updatedTitle, { exact: true })).toBeVisible();
+
+    await page
+      .locator("article")
+      .filter({ has: page.getByText(updatedTitle, { exact: true }) })
+      .getByRole("button")
+      .last()
+      .click({ force: true });
+    await buttonByText(page, "Delete bookmark").click();
+    await expect(page.getByText(updatedTitle, { exact: true })).toHaveCount(0);
   });
 });
 
 test.describe("folders", () => {
-  test("creates, renames, opens, and deletes folders", async ({ page }) => {
+  test("opens folder detail pages and shows related bookmarks", async ({ page }) => {
     const suffix = `${Date.now()}-${test.info().workerIndex}`;
     const created = await page.request.post(`${apiBaseUrl}/folders`, {
       data: { name: `Folder ${suffix}`, description: "Folder description" },
@@ -102,16 +144,13 @@ test.describe("folders", () => {
 
     await page.goto(`/folders/${createdBody.id}`);
     await expect(page).toHaveURL(new RegExp(`/folders/${createdBody.id}/?$`));
-
-    const deleted = await page.request.delete(`${apiBaseUrl}/folders/${createdBody.id}`);
-    expect(deleted.status()).toBe(204);
-    await page.goto("/folders");
-    await expect(page).toHaveURL(/\/folders\/?$/);
+    await expect(headingByText(page, `Folder ${suffix}`)).toBeVisible();
+    await expect(page.getByText(`Folder Bookmark ${suffix}`, { exact: true })).toBeVisible();
   });
 });
 
 test.describe("tags", () => {
-  test("creates, renames, opens, and deletes tags", async ({ page }) => {
+  test("opens tag detail pages and shows related bookmarks", async ({ page }) => {
     const suffix = `${Date.now()}-${test.info().workerIndex}`;
     const created = await page.request.post(`${apiBaseUrl}/tags`, {
       data: { name: `Tag ${suffix}`, description: "Tag description" },
@@ -132,23 +171,21 @@ test.describe("tags", () => {
 
     await page.goto(`/tags/${createdBody.id}`);
     await expect(page).toHaveURL(new RegExp(`/tags/${createdBody.id}/?$`));
-
-    const deleted = await page.request.delete(`${apiBaseUrl}/tags/${createdBody.id}`);
-    expect(deleted.status()).toBe(204);
-    await page.goto("/tags");
-    await expect(page).toHaveURL(/\/tags\/?$/);
+    await expect(headingByText(page, `Tag ${suffix}`)).toBeVisible();
+    await expect(page.getByText(`Tag Bookmark ${suffix}`, { exact: true })).toBeVisible();
   });
 });
 
 test.describe("rss feeds", () => {
-  test("creates, edits, opens, and deletes rss feeds", async ({ page }) => {
+  test("loads, opens, and deletes rss feeds from the UI", async ({ page }) => {
     const suffix = `${Date.now()}-${test.info().workerIndex}`;
     const rssServer = await startRssServer(suffix);
     try {
+      const title = `RSS Feed ${suffix}`;
       const created = await page.request.post(`${apiBaseUrl}/rss-feeds`, {
         data: {
           url: rssServer.url,
-          title: `RSS Feed ${suffix}`,
+          title,
           description: "RSS description",
         },
       });
@@ -157,31 +194,88 @@ test.describe("rss feeds", () => {
 
       await page.goto("/rss");
       await expect(page).toHaveURL(/\/rss\/?$/);
-
-      const updated = await page.request.patch(`${apiBaseUrl}/rss-feeds/${createdBody.id}`, {
-        data: {
-          title: `RSS Feed ${suffix} Updated`,
-        },
-      });
-      expect(updated.status()).toBe(200);
-
-      await page.reload();
+      await buttonByText(page, "Refresh").click({ force: true });
+      await expect(page.getByRole("link", { name: title }).first()).toBeVisible();
+      await page.getByRole("link", { name: title }).first().click();
+      await expect(page).toHaveURL(/\/rss\/\d+\/?$/);
+      await expect(page.getByText("RSS feed details")).toBeVisible();
+      await expect(headingByText(page, title)).toBeVisible();
+      await page.getByRole("link", { name: "Back to RSS" }).click();
       await expect(page).toHaveURL(/\/rss\/?$/);
 
       const deleted = await page.request.delete(`${apiBaseUrl}/rss-feeds/${createdBody.id}`);
       expect(deleted.status()).toBe(204);
-      await page.reload();
-      await expect(page).toHaveURL(/\/rss\/?$/);
     } finally {
       await rssServer.close();
     }
   });
+
+  test("loads, saves webhook settings and toggles rss execution", async ({ page }) => {
+    await page.request.put(`${apiBaseUrl}/settings/webhook`, {
+      data: { webhook_url: discordWebhookUrl },
+    });
+    await page.request.put(`${apiBaseUrl}/settings/rss-execution`, {
+      data: { enabled: false },
+    });
+
+    await page.goto("/rss");
+    await buttonByText(page, "Refresh").click({ force: true });
+    await expect(page.getByText("Webhook is configured.")).toBeVisible();
+
+    const webhookInput = page.getByPlaceholder("https://discord.com/api/webhooks/...");
+    await expect(webhookInput).toHaveValue(discordWebhookUrl);
+    await webhookInput.fill(`${discordWebhookUrl}-updated`);
+    await buttonByText(page, "Save webhook").click();
+    await expect(webhookInput).toHaveValue(`${discordWebhookUrl}-updated`);
+
+    const rssExecutionSwitch = page.getByRole("switch");
+    await expect(rssExecutionSwitch).toHaveAttribute("aria-checked", "false");
+    await rssExecutionSwitch.click({ force: true });
+    await expect(rssExecutionSwitch).toHaveAttribute("aria-checked", "true");
+  });
+
+});
+
+test.describe("favorites", () => {
+  test("loads favorite bookmarks and removes them through the favorite toggle", async ({ page }) => {
+    const suffix = `${Date.now()}-${test.info().workerIndex}`;
+    await createBookmark(page, `${suffix}-regular`, {
+      title: `Regular Bookmark ${suffix}`,
+      is_favorite: false,
+    });
+    await createBookmark(page, `${suffix}-favorite`, {
+      title: `Favorite Bookmark ${suffix}`,
+      is_favorite: true,
+    });
+
+    await page.goto("/favorites");
+    await expect(page).toHaveURL(/\/favorites\/?$/);
+    await buttonByText(page, "Refresh").click({ force: true });
+    await expect(page.getByText(`Favorite Bookmark ${suffix}`, { exact: true })).toBeVisible();
+    await expect(page.getByText(`Regular Bookmark ${suffix}`, { exact: true })).toHaveCount(0);
+
+    const favoriteCard = page
+      .locator("article")
+      .filter({ has: page.getByText(`Favorite Bookmark ${suffix}`, { exact: true }) });
+    await favoriteCard.getByRole("button", { name: "Remove from favorites" }).click({ force: true });
+    await expect(page.getByText(`Favorite Bookmark ${suffix}`, { exact: true })).toHaveCount(0);
+  });
 });
 
 test.describe("settings", () => {
-  test("loads webhook settings and toggles theme", async ({ page }) => {
+  test("toggles theme and persists the selection", async ({ page }) => {
     await page.goto("/settings");
     await expect(page).toHaveURL(/\/settings\/?$/);
     await expect(page.getByText("Theme", { exact: true })).toBeVisible();
+    const darkTab = page.locator('[role="tab"]').filter({ hasText: "Dark" });
+    const systemTab = page.locator('[role="tab"]').filter({ hasText: "System" });
+
+    await darkTab.focus();
+    await page.keyboard.press("Enter");
+    await expect(darkTab).toHaveAttribute("aria-selected", "true");
+    await page.reload();
+    await expect(darkTab).toHaveAttribute("aria-selected", "true");
+    await systemTab.focus();
+    await page.keyboard.press("Enter");
   });
 });

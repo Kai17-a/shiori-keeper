@@ -1,4 +1,7 @@
 import tailwindcss from "@tailwindcss/vite";
+import process from "node:process";
+
+const apiProxyTarget = process.env.PLAYWRIGHT_API_BASE_URL ?? "http://127.0.0.1:8000";
 
 export default defineNuxtConfig({
   modules: ["@nuxt/ui"],
@@ -15,7 +18,7 @@ export default defineNuxtConfig({
     server: {
       proxy: {
         "/api": {
-          target: "http://127.0.0.1:8000",
+          target: apiProxyTarget,
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ""),
         },
