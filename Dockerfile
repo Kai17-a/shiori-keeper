@@ -6,7 +6,8 @@ WORKDIR /app/frontend
 RUN apk add --no-cache bash
 
 COPY frontend/package.json frontend/bun.lock ./
-RUN bun install
+RUN --mount=type=cache,target=/root/.bun \
+    bun install
 
 COPY frontend/nuxt.config.ts ./nuxt.config.ts
 COPY frontend/tsconfig.json ./tsconfig.json
@@ -19,11 +20,19 @@ FROM rust:1-slim AS batch-build
 
 WORKDIR /app/batch
 
-COPY batch/Cargo.toml ./Cargo.toml
-COPY batch/Cargo.lock ./Cargo.lock
+COPY batch/Cargo.toml batch/Cargo.lock ./
+RUN mkdir src && echo "fn main(){}" > src/main.rs
+
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/app/batch/target \
+    cargo build --release
+
 COPY batch/src ./src
 
-RUN cargo build --release
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/app/batch/target \
+    cargo build --release \
+    && cp target/release/shiori-keeper-batch /bin/
 
 # Runtime stage
 FROM python:3.14-slim
@@ -60,7 +69,7 @@ COPY api /app/api
 COPY db /app/db
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=frontend-build /app/frontend/dist /usr/share/nginx/html
-COPY --from=batch-build /app/batch/target/release/shiori-keeper-batch /usr/local/bin/shiori-keeper-batch
+COPY --from=batch-build /bin/shiori-keeper-batch /usr/local/bin/shiori-keeper-batch
 
 COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh
