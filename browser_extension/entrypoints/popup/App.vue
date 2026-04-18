@@ -119,6 +119,17 @@ const state = reactive({
 const folderItems = ref<SelectItem[]>([]);
 const tagItems = ref<SelectItem[]>([]);
 
+const formatApiError = (body: unknown, status: number) => {
+  if (typeof body === "string") return body;
+  if (body && typeof body === "object") {
+    const detail = (body as { detail?: unknown }).detail;
+    if (typeof detail === "string") return detail;
+    if (detail != null) return JSON.stringify(detail);
+    return JSON.stringify(body);
+  }
+  return `HTTP ${status}`;
+};
+
 const connectApiServer = async () => {
   if (isHealthChecking.value) return;
 
@@ -141,6 +152,42 @@ const connectApiServer = async () => {
   }
 };
 
+const register = async () => {
+  if (pending.value) {
+    return;
+  }
+
+  pending.value = true;
+
+  try {
+    const response = await fetch(new URL("/bookmarks", apiUrl.value), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url: state.url,
+        title: state.title,
+        description: state.description,
+        folder_id: state.folder ?? null,
+        tag_ids: state.tag ?? [],
+      }),
+    });
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      throw new Error(formatApiError(body, response.status));
+    }
+
+    responseMessageColor.value = "text-success";
+    responseMessage.value = "Registered";
+  } catch (error) {
+    responseMessageColor.value = "text-error";
+    responseMessage.value = error instanceof Error ? error.message : String(error);
+  } finally {
+    pending.value = false;
+  }
+};
 const save = async () => {
   if (pending.value) {
     return;
@@ -149,23 +196,32 @@ const save = async () => {
   pending.value = true;
 
   try {
-    // 登録処理
-    const response = await fetch(new URL("/health", apiUrl.value));
+    const url = new URL("/bookmarks/by-url", apiUrl.value);
+    url.searchParams.set("url", state.url);
+
+    const response = await fetch(url, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: state.title,
+        description: state.description,
+        folder_id: state.folder ?? null,
+        tag_ids: state.tag ?? [],
+      }),
+    });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    // 409エラーの場合更新
-    if (response.status == 409) {
-      console.log("edit");
+      const body = await response.json().catch(() => null);
+      throw new Error(formatApiError(body, response.status));
     }
 
     responseMessageColor.value = "text-success";
-    responseMessage.value = "Registerd";
+    responseMessage.value = "Updated";
   } catch (error) {
     responseMessageColor.value = "text-error";
-    responseMessage.value = error.message;
+    responseMessage.value = error instanceof Error ? error.message : String(error);
   } finally {
     pending.value = false;
   }
@@ -176,17 +232,22 @@ const remove = async () => {
   pending.value = true;
 
   try {
-    const response = await fetch(new URL("/health", apiUrl.value));
+    const url = new URL("/bookmarks", apiUrl.value);
+    url.searchParams.set("url", state.url);
+    const response = await fetch(url, {
+      method: "DELETE",
+    });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+      const body = await response.json().catch(() => null);
+      throw new Error(formatApiError(body, response.status));
     }
 
     responseMessageColor.value = "text-success";
     responseMessage.value = "Removed";
   } catch (error) {
     responseMessageColor.value = "text-error";
-    responseMessage.value = error.message;
+    responseMessage.value = error instanceof Error ? error.message : String(error);
   } finally {
     pending.value = false;
   }
@@ -252,7 +313,7 @@ onMounted(async () => {
   await connectApiServer();
 
   if (isApiServerConnect.value) {
-    await save();
+    await register();
     await Promise.all([getFolders(), getTags()]);
   }
 });
