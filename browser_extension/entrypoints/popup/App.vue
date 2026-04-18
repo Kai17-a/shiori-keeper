@@ -102,14 +102,14 @@ const apiUrl = ref("http://localhost:8000");
 
 // api
 const pending = ref(false);
-// const isRemoving = ref(false);
+const isRemoving = ref(false);
 const responseMessage = ref("");
 const responseMessageColor = ref("text-warning");
 
 // form value
 const state = reactive({
-  title: document.title,
-  url: location.href,
+  title: "",
+  url: "",
   description: "",
   folder: null,
   tag: [],
@@ -118,6 +118,11 @@ const state = reactive({
 // select
 const folderItems = ref<SelectItem[]>([]);
 const tagItems = ref<SelectItem[]>([]);
+
+const getActiveTab = async () => {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  return tab;
+};
 
 const formatApiError = (body: unknown, status: number) => {
   if (typeof body === "string") return body;
@@ -310,6 +315,16 @@ const getTags = async () => {
 };
 
 onMounted(async () => {
+  const tab = await getActiveTab();
+
+  if (tab?.title) {
+    state.title = tab.title;
+  }
+
+  if (tab?.url) {
+    state.url = tab.url;
+  }
+
   await connectApiServer();
 
   if (isApiServerConnect.value) {
