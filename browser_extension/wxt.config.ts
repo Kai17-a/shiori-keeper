@@ -19,7 +19,7 @@ export default defineConfig({
     permissions: ["tabs", "storage", "bookmarks"],
     host_permissions: ["<all_urls>"],
     content_security_policy: {
-      extension_pages: "script-src 'self'; style-src 'self' 'unsafe-inline';",
+      extension_pages: "script-src 'self'; style-src 'self';",
     },
   },
 });
