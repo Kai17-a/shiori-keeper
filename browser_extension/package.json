@@ -16,15 +16,18 @@
     "start": "bun run build && bunx serve .output/chrome-mv3 -p 3333"
   },
   "dependencies": {
-    "@nuxt/ui": "^4.6.1",
+    "@lucide/vue": "^1.8.0",
+    "@primeuix/themes": "^2.0.3",
+    "@tailwindcss/vite": "^4.2.2",
+    "primeicons": "^7.0.0",
+    "primevue": "^4.5.5",
     "tailwindcss": "^4.2.2",
-    "vue": "^3.5.29",
-    "vue-router": "^5.0.4"
+    "vue": "^3.5.29"
   },
   "devDependencies": {
     "@wxt-dev/module-vue": "^1.0.3",
     "typescript": "^5.9.3",
     "vue-tsc": "^3.2.5",
-    "wxt": "^0.20.24"
+    "wxt": "^0.20.25"
   }
 }

@@ -1,102 +1,127 @@
 <template>
-  <UApp>
-    <div class="min-h-screen px-2 py-3 text-slate-100">
-      <div class="mx-auto flex w-full max-w-[340px] flex-col gap-2">
-        <div class="flex items-center justify-between px-1">
-          <h1 class="text-lg font-semibold tracking-tight text-slate-100">Shiori Keeper</h1>
-          <UButton color="neutral" variant="ghost" icon="i-lucide-x" size="sm" />
-        </div>
+  <div class="min-h-screen px-2 py-3">
+    <div class="mx-auto w-full flex-col max-w-85 min-w-85 gap-2">
+      <div class="flex items-center justify-between px-1">
+        <h1>Shiori Keeper</h1>
+        <Button
+          icon="pi pi-times"
+          severity="contrast"
+          variant="text"
+          raised
+          rounded
+          aria-label="Cancel"
+        />
+      </div>
 
-        <UCard>
-          <div class="space-y-2">
-            <label class="text-xs font-semibold text-slate-300">API Server URL</label>
-            <div class="flex items-center gap-2 w-full">
-              <UInput
+      <Card>
+        <template #content>
+          <div class="flex flex-col gap-2">
+            <label for="api-server-url">API Server URL</label>
+            <div class="flex items-center gap-2">
+              <InputText
+                id="api-server-url"
                 v-model="apiUrl"
-                size="md"
-                placeholder="http://localhost:8000"
-                type="url"
+                type="text"
+                size="small"
                 class="w-full"
               />
-              <UButton
-                icon="i-lucide-cable"
+              <Button
+                icon="pi pi-refresh"
+                severity="success"
+                aria-label="Reload"
+                size="small"
                 :loading="isHealthChecking"
-                size="md"
                 @click="connectApiServer"
               />
             </div>
-
-            <div
-              class="items-center gap-2 text-xs font-medium text-slate-400"
-              :class="apiStatusMessageColor"
-            >
+            <Message size="small" :severity="apiStatusMessageColor" variant="simple">
               {{ apiStatusMessage }}
-            </div>
+            </Message>
           </div>
-        </UCard>
+        </template>
+      </Card>
 
-        <UCard>
-          <UForm :schema="schema" :state="state" class="space-y-4">
-            <UFormField label="Title" class="w-72">
-              <UInput v-model="state.title" placeholder="example.com" class="w-full" />
-            </UFormField>
-            <UFormField label="URL" class="w-72">
-              <UInput v-model="state.url" placeholder="https://example.com" class="w-full" />
-            </UFormField>
-            <UFormField label="Description" class="w-72">
-              <UTextarea v-model="state.description" :rows="2" class="w-full" />
-            </UFormField>
-            <div class="flex items-center gap-2">
-              <UFormField label="Folder" class="w-full">
-                <USelect
+      <Card class="mt-2">
+        <template #content>
+          <div class="flex flex-col gap-2">
+            <label for="title">Title</label>
+            <InputText id="title" v-model="state.title" type="text" size="small" />
+          </div>
+
+          <div class="flex flex-col gap-2 mt-2">
+            <label for="url">URL</label>
+            <InputText id="url" v-model="state.url" type="text" size="small" />
+          </div>
+
+          <div class="flex flex-col gap-2 mt-2">
+            <label for="description">Description</label>
+            <Textarea
+              id="description"
+              v-model="state.description"
+              rows="2"
+              cols="30"
+              size="small"
+            />
+          </div>
+
+          <div class="mt-2">
+            <div class="flex items-center justify px-1 gap-3">
+              <div class="flex flex-col gap-2 w-full">
+                <label for="folder">Folder</label>
+                <Select
+                  id="folder"
                   v-model="state.folder"
-                  placeholder="folder"
-                  :items="folderItems"
-                  class="w-full"
+                  :options="folderItems"
+                  optionLabel="label"
+                  placeholder="Select a Folder"
+                  size="small"
+                  class="md:w-56"
                 />
-              </UFormField>
-              <UFormField label="Tag" class="w-full">
-                <USelect
-                  v-model="state.tag"
-                  placeholder="tag"
-                  multiple
-                  :items="tagItems"
-                  class="w-35"
-                />
-              </UFormField>
-            </div>
+              </div>
 
-            <div class="flex items-center justify-between gap-3 px-1 pt-1">
-              <span class="text-xs font-medium text-slate-400" :class="responseMessageColor">
-                {{ responseMessage }}
-              </span>
-              <div class="ml-auto flex items-center gap-3">
-                <UButton
-                  :loading="isRemoving"
-                  color="error"
-                  variant="ghost"
-                  icon="i-lucide-trash-2"
-                  size="md"
-                  @click="remove"
+              <div class="flex flex-col gap-2 w-full">
+                <label for="tags">Tags</label>
+                <MultiSelect
+                  id="tags"
+                  v-model="state.tag"
+                  :options="tagItems"
+                  optionLabel="name"
+                  placeholder="Select Tags"
+                  :maxSelectedLabels="2"
+                  size="small"
+                  class="md:w-80"
                 />
-                <UButton :loading="isPending" size="md" @click="save"> Save </UButton>
               </div>
             </div>
-          </UForm>
-        </UCard>
+          </div>
+        </template>
+      </Card>
+
+      <div class="flex items-center justify-between gap-3 px-1 pt-1 mt-2">
+        <Message
+          size="small"
+          :severity="responseMessageColor"
+          variant="simple"
+          class="text-xs font-medium"
+        >
+          {{ responseMessage }}
+        </Message>
+        <div class="ml-auto flex items-center gap-3">
+          <Button label="Remove" severity="danger" size="small" @click="remove" />
+          <Button label="Save" size="small" @click="save" />
+        </div>
       </div>
     </div>
-  </UApp>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import type { SelectItem } from "@nuxt/ui";
+import { onMounted, reactive, ref } from "vue";
 
 // health check
 const isHealthChecking = ref(false);
 const isApiServerConnect = ref(false);
-const apiStatusMessageColor = ref("text-warning");
+const apiStatusMessageColor = ref("warn");
 const apiStatusMessage = ref("Connecting to API...");
 const apiUrl = ref("http://localhost:8000");
 
@@ -104,20 +129,20 @@ const apiUrl = ref("http://localhost:8000");
 const pending = ref(false);
 const isRemoving = ref(false);
 const responseMessage = ref("");
-const responseMessageColor = ref("text-warning");
+const responseMessageColor = ref("warn");
 
 // form value
 const state = reactive({
   title: "",
   url: "",
   description: "",
-  folder: null,
-  tag: [],
+  folder: null as number | null,
+  tag: [] as number[],
 });
 
 // select
-const folderItems = ref<SelectItem[]>([]);
-const tagItems = ref<SelectItem[]>([]);
+const folderItems = ref<{ label: string; value: number }[]>([]);
+const tagItems = ref<{ label: string; value: number }[]>([]);
 
 const getActiveTab = async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -128,7 +153,15 @@ const formatApiError = (body: unknown, status: number) => {
   if (typeof body === "string") return body;
   if (body && typeof body === "object") {
     const detail = (body as { detail?: unknown }).detail;
-    if (typeof detail === "string") return detail;
+    if (
+      Array.isArray(detail) &&
+      detail.every((item) => item && typeof item === "object" && "msg" in item)
+    ) {
+      return detail
+        .map((item) => String((item as { msg?: unknown }).msg ?? ""))
+        .filter(Boolean)
+        .join("\n");
+    }
     if (detail != null) return JSON.stringify(detail);
     return JSON.stringify(body);
   }
@@ -146,12 +179,12 @@ const connectApiServer = async () => {
       throw new Error(`HTTP ${response.status}`);
     } else {
       apiStatusMessage.value = "Connected to API";
-      apiStatusMessageColor.value = "text-success";
+      apiStatusMessageColor.value = "success";
     }
     isApiServerConnect.value = true;
   } catch (error) {
     apiStatusMessage.value = "Failed to Connect to API";
-    apiStatusMessageColor.value = "text-error";
+    apiStatusMessageColor.value = "error";
   } finally {
     isHealthChecking.value = false;
   }
@@ -184,15 +217,16 @@ const register = async () => {
       throw new Error(formatApiError(body, response.status));
     }
 
-    responseMessageColor.value = "text-success";
+    responseMessageColor.value = "success";
     responseMessage.value = "Registered";
   } catch (error) {
-    responseMessageColor.value = "text-error";
+    responseMessageColor.value = "error";
     responseMessage.value = error instanceof Error ? error.message : String(error);
   } finally {
     pending.value = false;
   }
 };
+
 const save = async () => {
   if (pending.value) {
     return;
@@ -201,36 +235,60 @@ const save = async () => {
   pending.value = true;
 
   try {
+    const requestBody = {
+      title: state.title,
+      description: state.description,
+      folder_id: state.folder ?? null,
+      tag_ids: state.tag ?? [],
+    };
     const url = new URL("/bookmarks/by-url", apiUrl.value);
     url.searchParams.set("url", state.url);
 
-    const response = await fetch(url, {
+    const updateResponse = await fetch(url, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
       },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (updateResponse.ok) {
+      responseMessageColor.value = "success";
+      responseMessage.value = "Updated";
+      return;
+    }
+
+    if (updateResponse.status !== 404) {
+      const body = await updateResponse.json().catch(() => null);
+      throw new Error(formatApiError(body, updateResponse.status));
+    }
+
+    const createResponse = await fetch(new URL("/bookmarks", apiUrl.value), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
-        title: state.title,
-        description: state.description,
-        folder_id: state.folder ?? null,
-        tag_ids: state.tag ?? [],
+        url: state.url,
+        ...requestBody,
       }),
     });
 
-    if (!response.ok) {
-      const body = await response.json().catch(() => null);
-      throw new Error(formatApiError(body, response.status));
+    if (!createResponse.ok) {
+      const body = await createResponse.json().catch(() => null);
+      throw new Error(formatApiError(body, createResponse.status));
     }
 
-    responseMessageColor.value = "text-success";
-    responseMessage.value = "Updated";
+    responseMessageColor.value = "success";
+    responseMessage.value = "Registered";
   } catch (error) {
-    responseMessageColor.value = "text-error";
+    responseMessageColor.value = "error";
     responseMessage.value = error instanceof Error ? error.message : String(error);
   } finally {
     pending.value = false;
   }
 };
+
 const remove = async () => {
   if (pending.value) return;
 
@@ -248,10 +306,10 @@ const remove = async () => {
       throw new Error(formatApiError(body, response.status));
     }
 
-    responseMessageColor.value = "text-success";
+    responseMessageColor.value = "success";
     responseMessage.value = "Removed";
   } catch (error) {
-    responseMessageColor.value = "text-error";
+    responseMessageColor.value = "error";
     responseMessage.value = error instanceof Error ? error.message : String(error);
   } finally {
     pending.value = false;
@@ -268,19 +326,17 @@ const getFolders = async () => {
     const response = await fetch(new URL("/folders", apiUrl.value));
 
     if (!response.ok) {
-      throw new Error(await response.json());
+      throw new Error(String(await response.text()));
     }
-    const tags = await response.json();
 
-    tags.forEach((e) => {
-      folderItems.value.push({
-        label: e.name,
-        value: e.id,
-      });
-    });
+    const folders = await response.json();
+    folderItems.value = folders.map((e: { id: number; name: string }) => ({
+      label: e.name,
+      value: e.id,
+    }));
   } catch (error) {
-    responseMessageColor.value = "text-error";
-    responseMessage.value = error.message;
+    responseMessageColor.value = "error";
+    responseMessage.value = error instanceof Error ? error.message : String(error);
   } finally {
     isGetFolderPending.value = false;
   }
@@ -296,19 +352,17 @@ const getTags = async () => {
     const response = await fetch(new URL("/tags", apiUrl.value));
 
     if (!response.ok) {
-      throw new Error(await response.json());
+      throw new Error(String(await response.text()));
     }
-    const tags = await response.json();
 
-    tags.forEach((e) => {
-      tagItems.value.push({
-        label: e.name,
-        value: e.id,
-      });
-    });
+    const tags = await response.json();
+    tagItems.value = tags.map((e: { id: number; name: string }) => ({
+      label: e.name,
+      value: e.id,
+    }));
   } catch (error) {
-    responseMessageColor.value = "text-error";
-    responseMessage.value = error.message;
+    responseMessageColor.value = "error";
+    responseMessage.value = error instanceof Error ? error.message : String(error);
   } finally {
     isGetTags.value = false;
   }
