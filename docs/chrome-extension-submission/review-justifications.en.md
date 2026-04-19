@@ -53,6 +53,6 @@ It does not use them for advertising, tracking, or collecting browsing history u
 
 Shiori Keeper requests host permissions so the extension can communicate with the Shiori Keeper API server selected by the user.
 
-The extension sends bookmark data, checks whether the API server is reachable, loads folders and tags for organization, and updates or deletes bookmarks through the configured server. Because the server URL is user-configurable and may point to a locally hosted or self-hosted environment, the extension needs host access that can reach the user's chosen API endpoint.
+The extension sends bookmark data, checks whether the API server is reachable, loads folders and tags for organization, and updates or deletes bookmarks through the configured server. Because the server URL is user-configurable and the extension is intended to work with a self-hosted environment, it needs host access that can reach the API endpoint the user has set up themselves.
 
 The permission is used only for these API requests and not for unrelated browsing or background network access.
