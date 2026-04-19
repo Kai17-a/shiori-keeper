@@ -120,6 +120,11 @@ services:
 - Duplicate bookmark URLs, tag names, and RSS feed URLs are not allowed
 - The webhook is designed around Discord webhooks
 
+## Development Notes
+
+- Workflow and commit rules are in [DEVELOPMENT.md](./DEVELOPMENT.md)
+- Changelogs stay focused on user-facing changes
+
 ## Screenshots
 
 ### Light

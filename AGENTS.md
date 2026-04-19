@@ -24,6 +24,8 @@ If you work in `batch/`, read the `learning` skill note for `rusqlite` before ch
 
 If you work in `browser_extension/`, read `browser_extension/README.md` and keep the Chrome extension specs in sync with behavior changes.
 
+For changelog work, keep feature and fix commits aligned with Conventional Commits, prefer feature-sized commits and squash merges, and keep internal-only commits out of `git-cliff` changelog output.
+
 If you change Python code, run `ruff` and `pyright` for the affected package or project before finishing.
 
 If you change Rust code, run the following commands before finishing:
