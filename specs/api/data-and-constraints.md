@@ -139,6 +139,8 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 
 - `/bookmarks` の一覧は `folder_id`、`tag_id`、`q`、`page`、`per_page` を受け付ける
 - `/bookmarks/{id}` は詳細取得と更新対象を兼ねる
+- `GET /folders/{id}` は単一フォルダを ID で取得する
+- `GET /tags/{id}` は単一タグを ID で取得する
 - `PATCH /bookmarks/by-url` は URL で対象ブックマークを特定する
 - `PATCH /folders/{id}` と `PATCH /tags/{id}` は partial update として `name` の省略を許可する
 - `/bookmarks/{id}/tags` はタグ付与、`DELETE /bookmarks/{id}/tags/{tag_id}` は解除を担当する
