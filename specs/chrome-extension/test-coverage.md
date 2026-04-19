@@ -1,6 +1,7 @@
 # テスト観点
 
 - API URL の初期値が表示され、手動で変更できること
+- API URL の保存と復元ができること
 - 現在タブのタイトルと URL が入力欄に反映されること
 - `/health` の結果に応じて接続状態が更新されること
 - API 接続成功時に URL から既存ブックマークを取得して初期値へ反映すること
@@ -15,6 +16,7 @@
 
 - popup 初期化テスト
   - `chrome.tabs.query`
+  - `chrome.storage.local.get` と `chrome.storage.local.set`
   - `/health` 成功時の既存ブックマーク取得試行
   - `/folders` と `/tags` の取得
   - `/bookmarks/by-url?url=...` の取得と初期値反映
