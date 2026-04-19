@@ -55,23 +55,30 @@ def test_set_and_get_webhook_round_trip(client):
     assert get_resp.json()["webhook_url"] == webhook_url
 
 
+def test_set_webhook_accepts_teams_webhook_url(client):
+    webhook_url = "https://contoso.webhook.office.com/webhookb2/abc/IncomingWebhook/def/ghi"
+    resp = client.put("/settings/webhook", json={"webhook_url": webhook_url})
+    assert resp.status_code == 200
+    assert resp.json()["webhook_url"] == webhook_url
+
+
 def test_set_webhook_rejects_discord_host_with_wrong_path(client):
     resp = client.put(
         "/settings/webhook",
         json={"webhook_url": "https://discord.com/channels/1/2"},
     )
     assert resp.status_code == 422
-    assert resp.json()["detail"] == "Webhook URL must be a Discord webhook URL"
+    assert resp.json()["detail"] == "Webhook URL must be a Discord or Microsoft Teams webhook URL"
 
 
 def test_ping_webhook_maps_httpx_error_to_502(client, monkeypatch):
     import httpx
-    import api.services.settings_service as settings_module
+    import api.services.webhook_service as webhook_module
 
     def fake_post(url, json, timeout=5.0):
         raise httpx.ConnectError("boom")
 
-    monkeypatch.setattr(settings_module.httpx, "post", fake_post)
+    monkeypatch.setattr(webhook_module.httpx, "post", fake_post)
 
     resp = client.post(
         "/settings/webhook/ping",

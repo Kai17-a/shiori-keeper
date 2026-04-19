@@ -23,6 +23,11 @@ from api.model.models import (
 from api.repositories.rss_feed_repo import RSSFeedRepository
 from api.repositories.settings_repo import SettingsRepository
 from api.services.settings_service import WEBHOOK_SETTING_KEY
+from api.services.webhook_service import (
+    build_rss_notification_payload,
+    detect_webhook_service,
+    send_webhook,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +50,7 @@ class RSSFeedService:
                     return None
         return None
 
-    def _extract_discord_error_detail(self, response: httpx.Response) -> str | None:
+    def _extract_webhook_error_detail(self, response: httpx.Response) -> str | None:
         content_type = response.headers.get("content-type", "")
         if "application/json" in content_type:
             try:
@@ -68,14 +73,25 @@ class RSSFeedService:
 
         return text or None
 
-    def _raise_discord_webhook_error(
-        self, response: httpx.Response | None = None
+    def _raise_webhook_error(
+        self, webhook_service: str, response: httpx.Response | None = None
     ) -> None:
         if response is not None:
-            response_detail = self._extract_discord_error_detail(response)
+            response_detail = self._extract_webhook_error_detail(response)
             if response_detail:
-                logger.error("Discord webhook notification failed: %s", response_detail)
-        raise HTTPException(status_code=502, detail="Failed to notify Discord webhook")
+                logger.error(
+                    "%s webhook notification failed: %s",
+                    "Microsoft Teams" if webhook_service == "teams" else "Discord",
+                    response_detail,
+                )
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                "Failed to notify Microsoft Teams webhook"
+                if webhook_service == "teams"
+                else "Failed to notify Discord webhook"
+            ),
+        )
 
     def _parse_rss_feed(self, content: bytes) -> feedparser.FeedParserDict:
         parsed = feedparser.parse(content)
@@ -291,6 +307,7 @@ class RSSFeedService:
                 raise HTTPException(
                     status_code=400, detail="Webhook URL is not configured"
                 )
+            webhook_service = detect_webhook_service(webhook_url)
 
             try:
                 response = httpx.get(row["url"], timeout=5.0, follow_redirects=True)
@@ -308,34 +325,27 @@ class RSSFeedService:
             feed_title = self._get_feed_title(parsed_feed, str(row["title"]))
             sent_urls = self._load_sent_article_urls(conn, feed_id)
             articles: list[dict[str, object]] = []
-            embeds: list[dict[str, object]] = []
             for entry in parsed_feed.entries:
                 entry_link = entry.get("link")
                 if not entry_link or entry_link in sent_urls:
                     continue
-                embed: dict[str, object] = {
-                    "title": entry.get("title") or "(no title)",
-                }
-                embed["url"] = entry_link
                 summary = entry.get("summary") or entry.get("description")
-                if summary:
-                    embed["description"] = summary
                 published = entry.get("published_parsed")
                 published_dt = (
                     datetime.fromtimestamp(mktime(cast(tuple, published)))
                     if published is not None
                     else None
                 )
-                embeds.append(embed)
                 articles.append(
                     {
                         "url": entry_link,
                         "title": entry.get("title") or "(no title)",
+                        "summary": summary,
                         "published": published_dt,
                     }
                 )
 
-            if not embeds:
+            if not articles:
                 return RSSFeedExecuteResponse(
                     feed_id=feed_id,
                     title=row["title"],
@@ -345,29 +355,24 @@ class RSSFeedService:
                 )
 
             try:
-                embed_chunks = self._chunk_embeds(embeds) or [[]]
-                for index, chunk in enumerate(embed_chunks, start=1):
-                    content = (
-                        f"**{feed_title}** - **New articles** ({len(embeds)} items)"
+                article_chunks = self._chunk_embeds(articles) or [[]]
+                for index, chunk in enumerate(article_chunks, start=1):
+                    payload = build_rss_notification_payload(
+                        webhook_service,
+                        feed_title=feed_title,
+                        articles=chunk,
+                        total_articles=len(articles),
+                        chunk_index=index,
+                        chunk_count=len(article_chunks),
                     )
-                    if len(embed_chunks) > 1:
-                        content = f"{content} [{index}]"
-                    response = httpx.post(
-                        webhook_url,
-                        json={
-                            "username": "Shiori Keeper",
-                            "content": content,
-                            "embeds": chunk,
-                        },
-                        timeout=5.0,
-                    )
+                    response = send_webhook(webhook_url, payload)
                     if response.status_code >= 400:
                         break
             except httpx.HTTPError:
-                self._raise_discord_webhook_error()
+                self._raise_webhook_error(webhook_service)
 
             if response.status_code >= 400:
-                self._raise_discord_webhook_error(response)
+                self._raise_webhook_error(webhook_service, response)
 
             self._record_sent_articles(conn, feed_id, articles)
 

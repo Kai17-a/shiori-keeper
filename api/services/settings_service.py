@@ -1,5 +1,3 @@
-from urllib.parse import urlparse
-
 import httpx
 from fastapi import HTTPException
 
@@ -13,6 +11,11 @@ from api.model.models import (
     SettingsWebhookUpdate,
 )
 from api.repositories.settings_repo import SettingsRepository
+from api.services.webhook_service import (
+    build_webhook_payload,
+    detect_webhook_service,
+    send_webhook,
+)
 
 WEBHOOK_SETTING_KEY = "default_webhook_url"
 RSS_EXECUTION_SETTING_KEY = "rss_periodic_execution_enabled"
@@ -20,34 +23,20 @@ RSS_EXECUTION_SETTING_KEY = "rss_periodic_execution_enabled"
 
 class SettingsService:
     def _validate_webhook_url(self, webhook_url: str) -> None:
+        from urllib.parse import urlparse
+
         parsed = urlparse(webhook_url)
         if not parsed.scheme or not parsed.netloc:
             raise HTTPException(
                 status_code=422, detail="Webhook URL must be a valid URL"
             )
 
-    def _validate_discord_webhook_url(self, webhook_url: str) -> None:
-        parsed = urlparse(webhook_url)
-        valid_hosts = {
-            "discord.com",
-            "www.discord.com",
-            "discordapp.com",
-            "www.discordapp.com",
-        }
-        if parsed.scheme not in {"http", "https"} or parsed.hostname not in valid_hosts:
-            raise HTTPException(
-                status_code=422, detail="Webhook URL must be a Discord webhook URL"
-            )
-        if not parsed.path.startswith("/api/webhooks/"):
-            raise HTTPException(
-                status_code=422, detail="Webhook URL must be a Discord webhook URL"
-            )
-
     def set_webhook(self, data: SettingsWebhookUpdate) -> SettingsWebhookResponse:
         with get_db() as conn:
             repo = SettingsRepository(conn)
             webhook_url = str(data.webhook_url)
-            self._validate_discord_webhook_url(webhook_url)
+            self._validate_webhook_url(webhook_url)
+            detect_webhook_service(webhook_url)
             return SettingsWebhookResponse(
                 webhook_url=repo.set(WEBHOOK_SETTING_KEY, webhook_url)
             )
@@ -57,22 +46,31 @@ class SettingsService:
     ) -> SettingsWebhookPingResponse:
         webhook_url = str(data.webhook_url)
         self._validate_webhook_url(webhook_url)
-        self._validate_discord_webhook_url(webhook_url)
+        webhook_service = detect_webhook_service(webhook_url)
 
         try:
-            response = httpx.post(
+            response = send_webhook(
                 webhook_url,
-                json={"content": "ping"},
-                timeout=5.0,
+                build_webhook_payload(webhook_service, content="ping"),
             )
         except httpx.HTTPError as exc:
             raise HTTPException(
-                status_code=502, detail="Failed to reach Discord webhook"
+                status_code=502,
+                detail=(
+                    "Failed to reach Microsoft Teams webhook"
+                    if webhook_service == "teams"
+                    else "Failed to reach Discord webhook"
+                ),
             ) from exc
 
         if response.status_code >= 400:
             raise HTTPException(
-                status_code=502, detail="Failed to reach Discord webhook"
+                status_code=502,
+                detail=(
+                    "Failed to reach Microsoft Teams webhook"
+                    if webhook_service == "teams"
+                    else "Failed to reach Discord webhook"
+                ),
             )
 
         return SettingsWebhookPingResponse(pong=True)

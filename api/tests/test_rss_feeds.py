@@ -18,6 +18,7 @@ def client(tmp_path, monkeypatch):
     import api.database as db_module
     import api.services.rss_feed_service as rss_module
     import api.services.settings_service as settings_module
+    import api.services.webhook_service as webhook_module
 
     def fake_get(url, timeout=5.0, follow_redirects=True):
         class Response:
@@ -74,9 +75,8 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(rss_module, "get_db", patched_get_db)
     monkeypatch.setattr(settings_module, "get_db", patched_get_db)
     monkeypatch.setattr(rss_module.httpx, "get", fake_get)
-    monkeypatch.setattr(rss_module.httpx, "post", fake_post)
     monkeypatch.setattr(rss_module.feedparser, "parse", fake_parse)
-    monkeypatch.setattr(settings_module.httpx, "post", fake_post)
+    monkeypatch.setattr(webhook_module.httpx, "post", fake_post)
 
     with TestClient(app) as c:
         yield c
@@ -104,8 +104,22 @@ def test_set_rss_webhook_accepts_discord_webhook_url(client):
     assert resp.json()["webhook_url"] == "https://discord.com/api/webhooks/1/token"
 
 
+def test_set_rss_webhook_accepts_teams_webhook_url(client):
+    resp = client.put(
+        "/settings/webhook",
+        json={
+            "webhook_url": "https://contoso.webhook.office.com/webhookb2/abc/IncomingWebhook/def/ghi"
+        },
+    )
+    assert resp.status_code == 200
+    assert (
+        resp.json()["webhook_url"]
+        == "https://contoso.webhook.office.com/webhookb2/abc/IncomingWebhook/def/ghi"
+    )
+
+
 def test_ping_webhook_returns_200(client, monkeypatch):
-    import api.services.settings_service as settings_module
+    import api.services.webhook_service as webhook_module
 
     captured = {}
 
@@ -118,7 +132,7 @@ def test_ping_webhook_returns_200(client, monkeypatch):
 
         return Response()
 
-    monkeypatch.setattr(settings_module.httpx, "post", fake_post)
+    monkeypatch.setattr(webhook_module.httpx, "post", fake_post)
     resp = client.post(
         "/settings/webhook/ping",
         json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
@@ -127,7 +141,7 @@ def test_ping_webhook_returns_200(client, monkeypatch):
     assert resp.json()["pong"] is True
     assert captured == {
         "url": "https://discord.com/api/webhooks/1/token",
-        "json": {"content": "ping"},
+        "json": {"username": "Shiori Keeper", "content": "ping"},
     }
 
 
@@ -384,7 +398,7 @@ def test_execute_rss_feed_splits_embeds_into_batches(client, monkeypatch):
 
 
 def test_execute_rss_feed_returns_discord_error_detail(client, monkeypatch):
-    import api.services.rss_feed_service as rss_module
+    import api.services.webhook_service as webhook_module
 
     client.put(
         "/settings/webhook",
@@ -408,7 +422,7 @@ def test_execute_rss_feed_returns_discord_error_detail(client, monkeypatch):
 
         return Response()
 
-    monkeypatch.setattr(rss_module.httpx, "post", fake_post)
+    monkeypatch.setattr(webhook_module.httpx, "post", fake_post)
 
     resp = client.post(f"/rss-feeds/{feed_id}/execute")
     assert resp.status_code == 502
@@ -417,6 +431,7 @@ def test_execute_rss_feed_returns_discord_error_detail(client, monkeypatch):
 
 def test_execute_rss_feed_skips_already_sent_articles(client, monkeypatch):
     import api.services.rss_feed_service as rss_module
+    import api.services.webhook_service as webhook_module
 
     client.put(
         "/settings/webhook",
@@ -458,7 +473,7 @@ def test_execute_rss_feed_skips_already_sent_articles(client, monkeypatch):
         return Response()
 
     monkeypatch.setattr(rss_module.httpx, "get", fake_get)
-    monkeypatch.setattr(rss_module.httpx, "post", fake_post)
+    monkeypatch.setattr(webhook_module.httpx, "post", fake_post)
     monkeypatch.setattr(rss_module.feedparser, "parse", lambda content: ParsedFeed())
 
     first = client.post(f"/rss-feeds/{feed_id}/execute")
@@ -467,6 +482,36 @@ def test_execute_rss_feed_skips_already_sent_articles(client, monkeypatch):
     assert first.status_code == 200
     assert second.status_code == 200
     assert len(payloads) == 1
+
+
+def test_execute_rss_feed_uses_teams_payload_when_configured(client, monkeypatch):
+    import api.services.webhook_service as webhook_module
+
+    client.put(
+        "/settings/webhook",
+        json={
+            "webhook_url": "https://contoso.webhook.office.com/webhookb2/abc/IncomingWebhook/def/ghi"
+        },
+    )
+    feed_id = create_feed(client, url="https://example.com/feed.xml", title="Example").json()[
+        "id"
+    ]
+
+    payloads = []
+
+    def fake_post(url, json, timeout=5.0):
+        payloads.append(json)
+
+        class Response:
+            status_code = 204
+
+        return Response()
+
+    monkeypatch.setattr(webhook_module.httpx, "post", fake_post)
+
+    resp = client.post(f"/rss-feeds/{feed_id}/execute")
+    assert resp.status_code == 200
+    assert payloads[0]["attachments"][0]["content"]["body"][0]["text"] == "Parsed Example - 新着ニュース"
 
 
 def test_execute_rss_feed_returns_message_when_no_new_articles(client, monkeypatch):
