@@ -2,7 +2,7 @@
   <div class="min-h-screen px-2 py-3">
     <div class="mx-auto w-full flex-col max-w-85 min-w-85 gap-2">
       <div class="flex items-center justify-between px-1">
-        <h1>Shiori Keeper</h1>
+        <h1 class="text-xl font-bold mb-2">Shiori Keeper</h1>
         <Button
           icon="pi pi-times"
           severity="contrast"
@@ -10,6 +10,7 @@
           raised
           rounded
           aria-label="Cancel"
+          @click="closePopup"
         />
       </div>
 
@@ -65,7 +66,7 @@
           </div>
 
           <div class="mt-2">
-            <div class="flex items-center justify px-1 gap-3">
+            <div class="flex items-center justify px-1 gap-2">
               <div class="flex flex-col gap-2 w-full">
                 <label for="folder">Folder</label>
                 <Select
@@ -78,14 +79,13 @@
                   class="md:w-56"
                 />
               </div>
-
               <div class="flex flex-col gap-2 w-full">
-                <label for="tags">Tags</label>
+                <label for="tag">Tag</label>
                 <MultiSelect
-                  id="tags"
+                  id="tag"
                   v-model="state.tag"
                   :options="tagItems"
-                  optionLabel="name"
+                  optionLabel="label"
                   placeholder="Select Tags"
                   :maxSelectedLabels="2"
                   size="small"
@@ -147,6 +147,10 @@ const tagItems = ref<{ label: string; value: number }[]>([]);
 const getActiveTab = async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   return tab;
+};
+
+const closePopup = () => {
+  window.close();
 };
 
 const formatApiError = (body: unknown, status: number) => {
@@ -238,8 +242,8 @@ const save = async () => {
     const requestBody = {
       title: state.title,
       description: state.description,
-      folder_id: state.folder ?? null,
-      tag_ids: state.tag ?? [],
+      folder_id: state.folder.value ?? null,
+      tag_ids: state.tag.map((e) => e.value),
     };
     const url = new URL("/bookmarks/by-url", apiUrl.value);
     url.searchParams.set("url", state.url);
