@@ -118,7 +118,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from "vue";
+import { onMounted, reactive, ref, watch } from "vue";
 
 // health check
 const isHealthChecking = ref(false);
@@ -149,6 +149,20 @@ const tagItems = ref<{ label: string; value: number }[]>([]);
 const getActiveTab = async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   return tab;
+};
+
+const API_URL_STORAGE_KEY = "popup_api_url";
+
+const loadApiUrl = async () => {
+  const result = await chrome.storage.local.get(API_URL_STORAGE_KEY);
+  const storedApiUrl = result[API_URL_STORAGE_KEY];
+  if (typeof storedApiUrl === "string" && storedApiUrl.trim()) {
+    apiUrl.value = storedApiUrl;
+  }
+};
+
+const saveApiUrl = async (value: string) => {
+  await chrome.storage.local.set({ [API_URL_STORAGE_KEY]: value });
 };
 
 const closePopup = () => {
@@ -188,6 +202,7 @@ const connectApiServer = async () => {
       apiStatusMessageColor.value = "success";
     }
     isApiServerConnect.value = true;
+    register();
   } catch (error) {
     apiStatusMessage.value = "Failed to Connect to API";
     apiStatusMessageColor.value = "error";
@@ -410,6 +425,7 @@ onMounted(async () => {
     state.url = tab.url;
   }
 
+  await loadApiUrl();
   await connectApiServer();
 
   if (isApiServerConnect.value) {
@@ -417,5 +433,9 @@ onMounted(async () => {
     await register();
     await loadExistingBookmark();
   }
+});
+
+watch(apiUrl, (value) => {
+  void saveApiUrl(value);
 });
 </script>
