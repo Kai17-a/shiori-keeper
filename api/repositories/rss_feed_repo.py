@@ -9,10 +9,19 @@ class RSSFeedRepository:
         rows = self.conn.execute(f"PRAGMA table_info({table})").fetchall()
         return any(row["name"] == column for row in rows)
 
-    def insert(self, url: str, title: str, description: str | None) -> dict:
+    def insert(
+        self,
+        url: str,
+        title: str,
+        description: str | None,
+        notify_webhook_enabled: bool,
+    ) -> dict:
         cursor = self.conn.execute(
-            "INSERT INTO rss_feeds (url, title, description) VALUES (?, ?, ?)",
-            (url, title, description),
+            """
+            INSERT INTO rss_feeds (url, title, description, notify_webhook_enabled)
+            VALUES (?, ?, ?, ?)
+            """,
+            (url, title, description, int(notify_webhook_enabled)),
         )
         row = self.conn.execute(
             "SELECT * FROM rss_feeds WHERE id = ?", (cursor.lastrowid,)
@@ -77,7 +86,7 @@ class RSSFeedRepository:
             SELECT id, feed_id, url, title{published_select}, created_at
             FROM rss_feed_articles
             WHERE feed_id = ?
-            ORDER BY created_at DESC, id DESC
+            ORDER BY published IS NULL ASC, published DESC, id DESC
             """
         rows = self.conn.execute(query, (feed_id,)).fetchall()
         return [dict(row) for row in rows]
@@ -98,7 +107,7 @@ class RSSFeedRepository:
             SELECT id, feed_id, url, title{published_select}, created_at
             FROM rss_feed_articles
             WHERE feed_id = ?
-            ORDER BY created_at DESC, id DESC
+            ORDER BY published IS NULL ASC, published DESC, id DESC
             LIMIT ? OFFSET ?
             """
         rows = self.conn.execute(query, (feed_id, limit, offset)).fetchall()

@@ -16,6 +16,7 @@ fn create_in_memory_test_db(enabled: i64) -> Connection {
             url TEXT NOT NULL,
             title TEXT NOT NULL,
             description TEXT,
+            notify_webhook_enabled INTEGER NOT NULL DEFAULT 1,
             created_at TEXT NOT NULL DEFAULT (datetime('now')),
             updated_at TEXT NOT NULL DEFAULT (datetime('now'))
         );
@@ -38,7 +39,7 @@ fn create_in_memory_test_db(enabled: i64) -> Connection {
     .expect("insert settings");
 
     conn.execute(
-        "INSERT INTO rss_feeds (id, url, title, description) VALUES (1, ?, ?, ?)",
+        "INSERT INTO rss_feeds (id, url, title, description, notify_webhook_enabled) VALUES (1, ?, ?, ?, 1)",
         (
             "https://example.com/feed.xml",
             "Example Feed",
@@ -53,6 +54,19 @@ fn create_in_memory_test_db(enabled: i64) -> Connection {
 #[tokio::test]
 async fn disabled_rss_periodic_execution_returns_ok_without_fetching() {
     let conn = create_in_memory_test_db(0);
+
+    let result = run_batch(&conn).await;
+    assert!(result.is_ok());
+}
+
+#[tokio::test]
+async fn disabled_rss_webhook_notification_returns_ok_without_fetching() {
+    let conn = create_in_memory_test_db(1);
+    conn.execute(
+        "INSERT INTO app_settings (key, value, rss_periodic_execution_enabled) VALUES ('rss_webhook_notification_enabled', ?, ?)",
+        ("0", 0),
+    )
+    .expect("insert notification setting");
 
     let result = run_batch(&conn).await;
     assert!(result.is_ok());

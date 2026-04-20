@@ -92,6 +92,7 @@ def test_create_rss_feed_returns_201(client):
     body = resp.json()
     assert body["url"] == "https://example.com/feed.xml"
     assert body["title"] == "Example"
+    assert body["notify_webhook_enabled"] is True
     assert "id" in body
 
 
@@ -185,6 +186,50 @@ def test_update_rss_feed_returns_200(client):
     assert resp.json()["title"] == "New"
 
 
+def test_update_rss_feed_can_disable_webhook_notification(client):
+    feed_id = create_feed(client).json()["id"]
+    resp = client.patch(
+        f"/rss-feeds/{feed_id}", json={"notify_webhook_enabled": False}
+    )
+    assert resp.status_code == 200
+    assert resp.json()["notify_webhook_enabled"] is False
+
+
+def test_execute_rss_feed_still_sends_when_webhook_notification_disabled(client, monkeypatch):
+    import api.services.webhook_service as webhook_module
+
+    called = {}
+
+    def fake_post(url, json, timeout=5.0):
+        called["url"] = url
+        called["json"] = json
+
+        class Response:
+            status_code = 204
+
+        return Response()
+
+    monkeypatch.setattr(webhook_module.httpx, "post", fake_post)
+    client.put(
+        "/settings/webhook",
+        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+    )
+    feed_id = client.post(
+        "/rss-feeds",
+        json={
+            "url": "https://example.com/feed.xml",
+            "title": "Example",
+            "notify_webhook_enabled": False,
+        },
+    ).json()["id"]
+
+    resp = client.post(f"/rss-feeds/{feed_id}/execute")
+    assert resp.status_code == 200
+    assert resp.json()["delivered"] is True
+    assert resp.json()["message"] == "Posted 2 new article(s)."
+    assert called["url"] == "https://discord.com/api/webhooks/1/token"
+
+
 def test_execute_rss_feed_returns_200(client):
     client.put(
         "/settings/webhook",
@@ -214,6 +259,61 @@ def test_list_rss_feed_articles_returns_200(client):
     assert len(body["items"]) == 2
     assert body["items"][0]["feed_id"] == feed_id
     assert body["items"][0]["url"].startswith("https://example.com/item-")
+
+
+def test_list_rss_feed_articles_orders_by_published_desc(client, monkeypatch):
+    import api.services.rss_feed_service as rss_module
+
+    client.put(
+        "/settings/webhook",
+        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+    )
+    feed_id = create_feed(client).json()["id"]
+
+    class ParsedEntry:
+        def __init__(self, title, link, published):
+            self._title = title
+            self._link = link
+            self._published = published
+
+        def get(self, key, default=None):
+            data = {
+                "title": self._title,
+                "link": self._link,
+                "pubDate": self._published,
+            }
+            return data.get(key, default)
+
+    class ParsedFeed:
+        bozo = False
+        feed = {"title": "Parsed Example"}
+        entries = [
+            ParsedEntry("Item 1", "https://example.com/item-1", "Wed, 01 Jan 2025 00:00:00 GMT"),
+            ParsedEntry("Item 2", "https://example.com/item-2", "Fri, 03 Jan 2025 00:00:00 GMT"),
+            ParsedEntry("Item 3", "https://example.com/item-3", "Thu, 02 Jan 2025 00:00:00 GMT"),
+        ]
+
+    def fake_get(url, timeout=5.0, follow_redirects=True):
+        class Response:
+            status_code = 200
+            content = b"feed"
+
+        return Response()
+
+    monkeypatch.setattr(rss_module.httpx, "get", fake_get)
+    monkeypatch.setattr(rss_module.feedparser, "parse", lambda content: ParsedFeed())
+
+    execute = client.post(f"/rss-feeds/{feed_id}/execute")
+    assert execute.status_code == 200
+
+    resp = client.get(f"/rss-feeds/{feed_id}/articles")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert [item["url"] for item in body["items"]] == [
+        "https://example.com/item-2",
+        "https://example.com/item-3",
+        "https://example.com/item-1",
+    ]
 
 
 def test_list_rss_feed_articles_accepts_page_and_per_page(client, monkeypatch):

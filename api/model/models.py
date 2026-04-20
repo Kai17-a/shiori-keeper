@@ -78,6 +78,10 @@ class RSSFeed(SQLModel, table=True):
     url: str = Field(sa_column=Column(String, nullable=False))
     title: str = Field(sa_column=Column(String, nullable=False))
     description: str | None = Field(default=None, sa_column=Column(Text))
+    notify_webhook_enabled: bool = Field(
+        default=True,
+        sa_column=Column(Boolean, nullable=False, server_default=text("1")),
+    )
     created_at: datetime = Field(
         sa_column=Column(
             DateTime,
@@ -281,6 +285,7 @@ class RSSFeedCreate(BaseModel):
     url: AnyHttpUrl
     title: str = PydField(min_length=1)
     description: str | None = None
+    notify_webhook_enabled: bool = True
 
     @field_validator("title")
     @classmethod
@@ -295,6 +300,7 @@ class RSSFeedUpdate(BaseModel):
     url: AnyHttpUrl | None = None
     title: str | None = PydField(default=None, min_length=1)
     description: str | None = None
+    notify_webhook_enabled: bool | None = None
 
     @field_validator("title")
     @classmethod
@@ -348,6 +354,7 @@ class RSSFeedResponse(BaseModel):
     url: str
     title: str
     description: str | None
+    notify_webhook_enabled: bool
     created_at: datetime
     updated_at: datetime
 
@@ -406,6 +413,14 @@ class SettingsRssExecutionResponse(BaseModel):
 
 
 class SettingsRssExecutionUpdate(BaseModel):
+    enabled: bool
+
+
+class SettingsRssWebhookNotificationResponse(BaseModel):
+    enabled: bool
+
+
+class SettingsRssWebhookNotificationUpdate(BaseModel):
     enabled: bool
 
 

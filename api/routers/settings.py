@@ -4,6 +4,8 @@ from api.dependencies import get_settings_service
 from api.model.models import (
     SettingsRssExecutionResponse,
     SettingsRssExecutionUpdate,
+    SettingsRssWebhookNotificationResponse,
+    SettingsRssWebhookNotificationUpdate,
     SettingsWebhookPingRequest,
     SettingsWebhookPingResponse,
     SettingsWebhookResponse,
@@ -52,3 +54,26 @@ def set_rss_execution(
     service: SettingsService = Depends(get_settings_service),
 ):
     return service.set_rss_execution(body)
+
+
+@router.get(
+    "/rss-webhook-notification",
+    status_code=200,
+    response_model=SettingsRssWebhookNotificationResponse,
+)
+def get_rss_webhook_notification(
+    service: SettingsService = Depends(get_settings_service),
+):
+    return service.get_rss_webhook_notification()
+
+
+@router.put(
+    "/rss-webhook-notification",
+    status_code=200,
+    response_model=SettingsRssWebhookNotificationResponse,
+)
+def set_rss_webhook_notification(
+    body: SettingsRssWebhookNotificationUpdate,
+    service: SettingsService = Depends(get_settings_service),
+):
+    return service.set_rss_webhook_notification(body)

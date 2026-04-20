@@ -2,12 +2,14 @@ export interface RSSFeedCreateRequest {
   url: string;
   title: string;
   description?: string | null;
+  notify_webhook_enabled?: boolean;
 }
 
 export interface RSSFeedUpdateRequest {
   url?: string | null;
   title?: string | null;
   description?: string | null;
+  notify_webhook_enabled?: boolean | null;
 }
 
 export interface RSSFeedResponse {
@@ -15,6 +17,7 @@ export interface RSSFeedResponse {
   url: string;
   title: string;
   description: string | null;
+  notify_webhook_enabled: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -61,5 +64,9 @@ export interface SettingsWebhookPingResponse {
 }
 
 export interface SettingsRssExecutionResponse {
+  enabled: boolean;
+}
+
+export interface SettingsRssWebhookNotificationResponse {
   enabled: boolean;
 }

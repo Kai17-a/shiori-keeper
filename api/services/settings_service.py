@@ -5,6 +5,8 @@ from api.database import get_db
 from api.model.models import (
     SettingsRssExecutionResponse,
     SettingsRssExecutionUpdate,
+    SettingsRssWebhookNotificationResponse,
+    SettingsRssWebhookNotificationUpdate,
     SettingsWebhookPingRequest,
     SettingsWebhookPingResponse,
     SettingsWebhookResponse,
@@ -19,6 +21,7 @@ from api.services.webhook_service import (
 
 WEBHOOK_SETTING_KEY = "default_webhook_url"
 RSS_EXECUTION_SETTING_KEY = "rss_periodic_execution_enabled"
+RSS_WEBHOOK_NOTIFICATION_SETTING_KEY = "rss_webhook_notification_enabled"
 
 
 class SettingsService:
@@ -99,4 +102,24 @@ class SettingsService:
             repo = SettingsRepository(conn)
             return SettingsRssExecutionResponse(
                 enabled=repo.set_bool(RSS_EXECUTION_SETTING_KEY, data.enabled)
+            )
+
+    def get_rss_webhook_notification(
+        self,
+    ) -> SettingsRssWebhookNotificationResponse:
+        with get_db() as conn:
+            repo = SettingsRepository(conn)
+            return SettingsRssWebhookNotificationResponse(
+                enabled=repo.get_bool(RSS_WEBHOOK_NOTIFICATION_SETTING_KEY)
+            )
+
+    def set_rss_webhook_notification(
+        self, data: SettingsRssWebhookNotificationUpdate
+    ) -> SettingsRssWebhookNotificationResponse:
+        with get_db() as conn:
+            repo = SettingsRepository(conn)
+            return SettingsRssWebhookNotificationResponse(
+                enabled=repo.set_bool(
+                    RSS_WEBHOOK_NOTIFICATION_SETTING_KEY, data.enabled
+                )
             )

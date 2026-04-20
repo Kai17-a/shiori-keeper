@@ -23,7 +23,7 @@ CREATE TABLE rss_feeds (
   description TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
+, notify_webhook_enabled INTEGER NOT NULL DEFAULT 1);
 CREATE UNIQUE INDEX idx_rss_feeds_url_unique ON rss_feeds(url);
 CREATE TABLE rss_feed_articles (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,4 +53,5 @@ CREATE TABLE bookmark_tags (
 INSERT INTO "schema_migrations" (version) VALUES
   ('010'),
   ('011'),
-  ('012');
+  ('012'),
+  ('013');

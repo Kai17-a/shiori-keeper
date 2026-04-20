@@ -4,7 +4,10 @@ use rusqlite::Connection;
 use std::collections::HashSet;
 use std::error::Error;
 
-use crate::{fetch_app_settings, fetch_rss_feeds, rss_periodic_execution_enabled, webhook};
+use crate::{
+    fetch_app_settings, fetch_rss_feeds, rss_periodic_execution_enabled,
+    rss_webhook_notification_enabled, webhook,
+};
 
 pub async fn run_batch(conn: &Connection) -> Result<(), Box<dyn Error>> {
     let rss_feeds = fetch_rss_feeds(conn)?;
@@ -18,6 +21,10 @@ pub async fn run_batch(conn: &Connection) -> Result<(), Box<dyn Error>> {
         return Ok(());
     }
 
+    if !rss_webhook_notification_enabled(conn)? {
+        return Ok(());
+    }
+
     let app_settings = fetch_app_settings(conn)?;
     if app_settings.is_empty() {
         eprintln!("Not setting webhook URL");
@@ -27,6 +34,9 @@ pub async fn run_batch(conn: &Connection) -> Result<(), Box<dyn Error>> {
     let webhook_url = &app_settings[0].value;
 
     for rss_feed in rss_feeds {
+        if rss_feed.notify_webhook_enabled == 0 {
+            continue;
+        }
         let url = match Url::parse(&rss_feed.url) {
             Ok(url) => url,
             Err(err) => {

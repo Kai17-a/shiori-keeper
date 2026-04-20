@@ -28,7 +28,7 @@
               <div class="flex flex-wrap items-center gap-3">
                 <UButton
                   type="button"
-                  color="neutral"
+                  color="warning"
                   variant="ghost"
                   icon="i-lucide-bell-ring"
                   :loading="webhookChecking"
@@ -53,15 +53,32 @@
             description="Enable or disable the scheduled RSS batch process"
             :ui="{ body: 'space-y-4' }"
           >
-            <div class="space-y-3">
-              <div class="space-y-1">
-                <p class="text-sm font-medium text-default">Run on schedule</p>
-                <p class="text-sm text-muted">
-                  When enabled, the batch process is allowed to run RSS delivery jobs once
-                  every hour.
-                </p>
+            <div class="space-y-4">
+              <div class="flex items-start justify-between gap-4">
+                <div class="space-y-1">
+                  <p class="text-sm font-medium text-default">Run on schedule</p>
+                  <p class="text-sm text-muted">
+                    When enabled, the batch process is allowed to run RSS delivery jobs once
+                    every hour.
+                  </p>
+                </div>
+                <USwitch v-model="rssExecutionEnabled" :loading="rssExecutionLoading" />
               </div>
-              <USwitch v-model="rssExecutionEnabled" :loading="rssExecutionLoading" />
+
+              <div class="h-px bg-border/60" />
+
+              <div class="flex items-start justify-between gap-4">
+                <div class="space-y-1">
+                  <p class="text-sm font-medium text-default">Send webhook notifications</p>
+                  <p class="text-sm text-muted">
+                    When disabled, the batch process still runs but skips webhook delivery.
+                  </p>
+                </div>
+                <USwitch
+                  v-model="rssWebhookNotificationEnabled"
+                  :loading="rssWebhookNotificationLoading"
+                />
+              </div>
             </div>
           </UPageCard>
         </div>
@@ -140,6 +157,7 @@
               :running="executingFeedId === feed.id"
               @edit="openEditModal"
               @execute="executeFeed"
+              @toggle-webhook="toggleWebhookNotification"
               @remove="askDelete"
             />
           </div>
@@ -189,6 +207,7 @@ import type {
   RSSFeedListResponse,
   RSSFeedResponse,
   SettingsRssExecutionResponse,
+  SettingsRssWebhookNotificationResponse,
   SettingsWebhookPingResponse,
   SettingsWebhookResponse,
 } from "~/types";
@@ -208,6 +227,8 @@ const webhookSaving = ref(false);
 const webhookConfigured = ref(false);
 const rssExecutionLoading = ref(false);
 const rssExecutionSaving = ref(false);
+const rssWebhookNotificationLoading = ref(false);
+const rssWebhookNotificationSaving = ref(false);
 const executingFeedId = ref<number | null>(null);
 const loadError = ref("");
 const modalOpen = ref(false);
@@ -226,6 +247,7 @@ const webhookForm = reactive({
   webhookUrl: "",
 });
 const rssExecutionEnabled = ref(false);
+const rssWebhookNotificationEnabled = ref(false);
 
 const pageCount = computed(() => Math.max(feedList.value.total_pages, 1));
 const paginationItems = computed<PaginationItem[]>(() => {
@@ -371,6 +393,25 @@ const loadRssExecution = async () => {
   }
 };
 
+const loadRssWebhookNotification = async () => {
+  rssWebhookNotificationLoading.value = true;
+  try {
+    const response = await request<SettingsRssWebhookNotificationResponse>(
+      "/settings/rss-webhook-notification",
+    );
+    rssWebhookNotificationEnabled.value = response.enabled;
+  } catch (err) {
+    toast.show({
+      title: "Failed to load RSS webhook notification setting.",
+      description: err instanceof Error ? err.message : undefined,
+      color: "error",
+      icon: "i-lucide-circle-alert",
+    });
+  } finally {
+    rssWebhookNotificationLoading.value = false;
+  }
+};
+
 watch(rssExecutionEnabled, async (enabled, previous) => {
   if (rssExecutionLoading.value || enabled === previous) return;
   rssExecutionSaving.value = true;
@@ -397,6 +438,38 @@ watch(rssExecutionEnabled, async (enabled, previous) => {
     });
   } finally {
     rssExecutionSaving.value = false;
+  }
+});
+
+watch(rssWebhookNotificationEnabled, async (enabled, previous) => {
+  if (rssWebhookNotificationLoading.value || enabled === previous) return;
+  rssWebhookNotificationSaving.value = true;
+  try {
+    const response = await request<SettingsRssWebhookNotificationResponse>(
+      "/settings/rss-webhook-notification",
+      {
+        method: "PUT",
+        body: JSON.stringify({ enabled }),
+      },
+    );
+    rssWebhookNotificationEnabled.value = response.enabled;
+    toast.show({
+      title: response.enabled
+        ? "RSS webhook notifications enabled."
+        : "RSS webhook notifications disabled.",
+      color: "success",
+      icon: "i-lucide-check",
+    });
+  } catch (err) {
+    rssWebhookNotificationEnabled.value = previous;
+    toast.show({
+      title: "Failed to update RSS webhook notification setting.",
+      description: err instanceof Error ? err.message : undefined,
+      color: "error",
+      icon: "i-lucide-circle-alert",
+    });
+  } finally {
+    rssWebhookNotificationSaving.value = false;
   }
 });
 
@@ -515,6 +588,38 @@ const executeFeed = async (feed: RSSFeedResponse) => {
   }
 };
 
+const toggleWebhookNotification = async (feed: RSSFeedResponse) => {
+  try {
+    const updated = await request<RSSFeedResponse>(`/rss-feeds/${feed.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        notify_webhook_enabled: !feed.notify_webhook_enabled,
+      }),
+    });
+    feedList.value.items = feedList.value.items.map((item) =>
+      item.id === updated.id ? updated : item,
+    );
+    if (pendingFeed.value?.id === updated.id) {
+      pendingFeed.value = updated;
+    }
+    await refreshSidebarCatalog();
+    toast.show({
+      title: updated.notify_webhook_enabled
+        ? "Webhook notification enabled."
+        : "Webhook notification disabled.",
+      color: "success",
+      icon: "i-lucide-check",
+    });
+  } catch (err) {
+    toast.show({
+      title: "Failed to update webhook notification setting.",
+      description: err instanceof Error ? err.message : undefined,
+      color: "error",
+      icon: "i-lucide-circle-alert",
+    });
+  }
+};
+
 const confirmDelete = async () => {
   if (!pendingFeed.value) return;
   deleting.value = true;
@@ -542,6 +647,6 @@ const confirmDelete = async () => {
 };
 
 onMounted(async () => {
-  await Promise.all([loadFeeds(), loadWebhook(), loadRssExecution()]);
+  await Promise.all([loadFeeds(), loadWebhook(), loadRssExecution(), loadRssWebhookNotification()]);
 });
 </script>

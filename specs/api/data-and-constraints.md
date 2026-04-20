@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 | --------------------------- | ------------------------------------------------------------------------------------ |
 | `BookmarkResponse`          | `id`, `url`, `title`, `description`, `folder_id`, `is_favorite`, `tags`, `created_at`, `updated_at` |
 | `BookmarkListResponse`      | `items`, `total`, `page`, `per_page`, `total_pages`                                  |
-| `RSSFeedResponse`           | `id`, `url`, `title`, `description`, `created_at`, `updated_at`                      |
+| `RSSFeedResponse`           | `id`, `url`, `title`, `description`, `notify_webhook_enabled`, `created_at`, `updated_at` |
 | `RSSFeedListResponse`       | `items`, `total`, `page`, `per_page`, `total_pages`                                  |
 | `RSSFeedArticleResponse`    | `id`, `feed_id`, `url`, `title`, `published`, `created_at`                           |
 | `RSSFeedArticleListResponse`| `items`, `total`, `page`, `per_page`, `total_pages`                                  |
@@ -122,6 +122,10 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `rss_feeds.url` は HTTP/HTTPS URL のみ受け付ける
 - `bookmarks.title` は必須
 - `rss_feeds.title` は必須
+- `rss_webhook_notification_enabled` は RSS 定期実行時の webhook 通知全体可否を表す
+- `rss_webhook_notification_enabled` の既定値は `false` である
+- `rss_feeds.notify_webhook_enabled` は batch による RSS 定期実行時の webhook 通知可否を表す
+- `rss_feeds.notify_webhook_enabled` の既定値は `true` である
 - `folders.name` と `tags.name` は重複を許可しない
 - `bookmarks.url` は一意である
 - `rss_feeds.url` は一意である
@@ -133,6 +137,7 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `settings/webhook` は Discord webhook URL のみを保存する
 - `settings/webhook/ping` は送信前確認用の疎通確認 API である
 - `settings/rss-execution` は RSS 定期実行フラグを保存する
+- `settings/rss-webhook-notification` は RSS 定期実行時の webhook 通知可否を保存する
 - `rss_feed_articles.url` は同一 feed 内で一意である
 
 ## 実装上の補足
@@ -152,11 +157,14 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `POST /settings/webhook/ping` は webhook 到達確認を行う
 - `GET /settings/rss-execution` は RSS 定期実行の現在値を返す
 - `PUT /settings/rss-execution` は RSS 定期実行の有効/無効を更新する
+- `GET /settings/rss-webhook-notification` は RSS 定期実行時の webhook 通知可否の現在値を返す
+- `PUT /settings/rss-webhook-notification` は RSS 定期実行時の webhook 通知可否を更新する
 - `POST /rss-feeds/{id}/execute` は API プロセスが RSS を実行し、登録済み Discord webhook に通知する
 - `POST /rss-feeds/{id}/execute` は webhook URL 未設定時に 400 を返す
 - `POST /rss-feeds/{id}/execute` は新規記事がない場合も `delivered: true` を返し、`message` に "No new articles found." を含める
 - RSS 手動実行の通知送信と `rss_feed_articles` への送信済み記録は API が担当する
-- `batch` は RSS 定期実行が有効な場合だけ巡回し、未送信記事の通知と `rss_feed_articles` への送信済み記録を担当する
+- RSS 手動実行は `rss_feeds.notify_webhook_enabled` の値に関わらず webhook 通知を行う
+- `batch` は RSS 定期実行が有効な場合だけ巡回し、`rss_feeds.notify_webhook_enabled` が有効な RSS フィードについて未送信記事の通知と `rss_feed_articles` への送信済み記録を担当する
 - `batch` は `rss_feed_articles` の `url` を参照して、既に送信済みの記事を webhook 対象から除外する
 - `batch` は webhook 送信成功後に `rss_feed_articles` へ記事を追記する
 - `BookmarkListResponse.total_pages` はクライアントのページング UI が使えるように返す

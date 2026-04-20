@@ -104,3 +104,21 @@ def test_rss_execution_setting_can_toggle_true_and_false(client):
     last = client.get("/settings/rss-execution")
     assert last.status_code == 200
     assert last.json()["enabled"] is False
+
+
+def test_rss_webhook_notification_setting_can_toggle_true_and_false(client):
+    first = client.get("/settings/rss-webhook-notification")
+    assert first.status_code == 200
+    assert first.json()["enabled"] is False
+
+    enabled = client.put("/settings/rss-webhook-notification", json={"enabled": True})
+    assert enabled.status_code == 200
+    assert enabled.json()["enabled"] is True
+
+    disabled = client.put("/settings/rss-webhook-notification", json={"enabled": False})
+    assert disabled.status_code == 200
+    assert disabled.json()["enabled"] is False
+
+    last = client.get("/settings/rss-webhook-notification")
+    assert last.status_code == 200
+    assert last.json()["enabled"] is False

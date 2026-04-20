@@ -50,6 +50,26 @@ class RSSFeedService:
                     return None
         return None
 
+    def _extract_article_published(
+        self, entry: feedparser.FeedParserDict | dict[str, object]
+    ) -> datetime | None:
+        pub_date = entry.get("pubDate")
+        if pub_date is not None:
+            parsed_pub_date = self._parse_article_published(pub_date)
+            if parsed_pub_date is not None:
+                return parsed_pub_date
+
+        published = entry.get("published")
+        if published is not None:
+            parsed_published = self._parse_article_published(published)
+            if parsed_published is not None:
+                return parsed_published
+
+        published_parsed = entry.get("published_parsed")
+        if published_parsed is not None:
+            return datetime.fromtimestamp(mktime(cast(tuple, published_parsed)))
+        return None
+
     def _extract_webhook_error_detail(self, response: httpx.Response) -> str | None:
         content_type = response.headers.get("content-type", "")
         if "application/json" in content_type:
@@ -201,7 +221,12 @@ class RSSFeedService:
                 )
             self._validate_rss_feed_url(str(data.url))
             try:
-                row = repo.insert(str(data.url), data.title, data.description)
+                row = repo.insert(
+                    str(data.url),
+                    data.title,
+                    data.description,
+                    data.notify_webhook_enabled,
+                )
             except sqlite3.IntegrityError:
                 raise HTTPException(
                     status_code=409, detail="RSS feed URL already exists"
@@ -286,6 +311,8 @@ class RSSFeedService:
                 fields["title"] = data.title
             if data.description is not None:
                 fields["description"] = data.description
+            if data.notify_webhook_enabled is not None:
+                fields["notify_webhook_enabled"] = int(data.notify_webhook_enabled)
             row = repo.update(feed_id, fields)
             assert row is not None
             return RSSFeedResponse(**row)
@@ -330,18 +357,12 @@ class RSSFeedService:
                 if not entry_link or entry_link in sent_urls:
                     continue
                 summary = entry.get("summary") or entry.get("description")
-                published = entry.get("published_parsed")
-                published_dt = (
-                    datetime.fromtimestamp(mktime(cast(tuple, published)))
-                    if published is not None
-                    else None
-                )
                 articles.append(
                     {
                         "url": entry_link,
                         "title": entry.get("title") or "(no title)",
                         "summary": summary,
-                        "published": published_dt,
+                        "published": self._extract_article_published(entry),
                     }
                 )
 

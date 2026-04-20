@@ -202,6 +202,7 @@ CREATE TABLE IF NOT EXISTS rss_feeds (
     url         TEXT    NOT NULL,
     title       TEXT    NOT NULL,
     description TEXT,
+    notify_webhook_enabled INTEGER NOT NULL DEFAULT 1,
     created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
     updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
 );
@@ -248,9 +249,15 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `app_settings` はアプリ全体設定のキーバリューストアとして扱う
 - `default_webhook_url` は Discord webhook URL だけを許可する
 - `rss_periodic_execution_enabled` は RSS 定期実行の有効/無効を保持する
+- `rss_webhook_notification_enabled` は RSS 定期実行時に webhook 通知を送るかを保持する
+- `rss_feeds.notify_webhook_enabled` は batch による RSS 定期実行時に webhook 通知するかを保持する
+- `rss_feeds.notify_webhook_enabled` の既定値は `1` である
+- `rss_webhook_notification_enabled` の既定値は `0` である
 - RSS 実行 API は `default_webhook_url` 未設定時に 400 を返す
 - RSS 手動実行の送信本体は API が担当する
 - `batch` は RSS 定期実行が有効なときだけ RSS 巡回を行う
+- `batch` は `rss_webhook_notification_enabled` が無効な場合、RSS 巡回自体を行わない
+- `batch` は `rss_feeds.notify_webhook_enabled` が無効な RSS フィードを通知対象から除外する
 - `batch` は `rss_feed_articles` を参照して既送信記事を除外し、送信成功後に同テーブルへ記録する
 - `batch` は webhook 送信失敗時に最大 3 回までリトライし、失敗したフィードはスキップする
 

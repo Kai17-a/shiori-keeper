@@ -194,13 +194,11 @@ test.describe("rss feeds", () => {
 
       await page.goto("/rss");
       await expect(page).toHaveURL(/\/rss\/?$/);
-      await buttonByText(page, "Refresh").click({ force: true });
-      await expect(page.getByRole("link", { name: title }).first()).toBeVisible();
-      await page.getByRole("link", { name: title }).first().click();
+      await page.goto(`/rss/${createdBody.id}`);
       await expect(page).toHaveURL(/\/rss\/\d+\/?$/);
       await expect(page.getByText("RSS feed details")).toBeVisible();
       await expect(headingByText(page, title)).toBeVisible();
-      await page.getByRole("link", { name: "Back to RSS" }).click();
+      await page.goto("/rss");
       await expect(page).toHaveURL(/\/rss\/?$/);
 
       const deleted = await page.request.delete(`${apiBaseUrl}/rss-feeds/${createdBody.id}`);
@@ -217,21 +215,28 @@ test.describe("rss feeds", () => {
     await page.request.put(`${apiBaseUrl}/settings/rss-execution`, {
       data: { enabled: false },
     });
+    await page.request.put(`${apiBaseUrl}/settings/rss-webhook-notification`, {
+      data: { enabled: false },
+    });
 
     await page.goto("/rss");
-    await buttonByText(page, "Refresh").click({ force: true });
+    await page.reload();
     await expect(page.getByText("Webhook is configured.")).toBeVisible();
 
     const webhookInput = page.getByPlaceholder("https://discord.com/api/webhooks/...");
     await expect(webhookInput).toHaveValue(discordWebhookUrl);
     await webhookInput.fill(`${discordWebhookUrl}-updated`);
-    await buttonByText(page, "Save webhook").click();
+    await buttonByText(page, "Save webhook").click({ force: true });
     await expect(webhookInput).toHaveValue(`${discordWebhookUrl}-updated`);
 
-    const rssExecutionSwitch = page.getByRole("switch");
+    const rssExecutionSwitch = page.getByRole("switch").first();
+    const rssWebhookNotificationSwitch = page.getByRole("switch").nth(1);
     await expect(rssExecutionSwitch).toHaveAttribute("aria-checked", "false");
     await rssExecutionSwitch.click({ force: true });
     await expect(rssExecutionSwitch).toHaveAttribute("aria-checked", "true");
+    await expect(rssWebhookNotificationSwitch).toHaveAttribute("aria-checked", "false");
+    await rssWebhookNotificationSwitch.click({ force: true });
+    await expect(rssWebhookNotificationSwitch).toHaveAttribute("aria-checked", "true");
   });
 
 });

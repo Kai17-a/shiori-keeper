@@ -17,6 +17,19 @@
         <UButton
           type="button"
           size="xs"
+          variant="ghost"
+          class="shrink-0 px-1"
+          :color="feed.notify_webhook_enabled ? 'warning' : 'neutral'"
+          :icon="feed.notify_webhook_enabled ? 'i-lucide-bell' : 'i-lucide-bell-off'"
+          @click.stop="$emit('toggleWebhook', feed)"
+        >
+          <span class="sr-only">
+            {{ feed.notify_webhook_enabled ? "Disable webhook notification" : "Enable webhook notification" }}
+          </span>
+        </UButton>
+        <UButton
+          type="button"
+          size="xs"
           variant="soft"
           color="primary"
           icon="i-lucide-play"
@@ -50,6 +63,19 @@
     <p v-else class="text-sm text-muted">No description.</p>
 
     <div class="flex justify-end gap-2 sm:hidden">
+      <UButton
+        type="button"
+        size="xs"
+        variant="ghost"
+        class="shrink-0 px-1"
+        :color="feed.notify_webhook_enabled ? 'warning' : 'neutral'"
+        :icon="feed.notify_webhook_enabled ? 'i-lucide-bell' : 'i-lucide-bell-off'"
+        @click.stop="$emit('toggleWebhook', feed)"
+      >
+        <span class="sr-only">
+          {{ feed.notify_webhook_enabled ? "Disable webhook notification" : "Enable webhook notification" }}
+        </span>
+      </UButton>
       <UButton
         type="button"
         size="xs"
@@ -95,6 +121,7 @@ defineProps<{
 defineEmits<{
   edit: [feed: RSSFeedResponse];
   execute: [feed: RSSFeedResponse];
+  toggleWebhook: [feed: RSSFeedResponse];
   remove: [feed: RSSFeedResponse];
 }>();
 </script>

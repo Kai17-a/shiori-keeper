@@ -140,16 +140,18 @@
 33. `POST /settings/webhook/ping` は、Discord webhook の疎通確認を行い `pong: true` を返す。
 34. `GET /settings/rss-execution` は、RSS 定期実行の有効/無効状態を返す。
 35. `PUT /settings/rss-execution` は、RSS 定期実行の有効/無効状態を更新する。
+36. `GET /settings/rss-webhook-notification` は、定期実行時に webhook 通知を送るかどうかの全体設定を返す。
+37. `PUT /settings/rss-webhook-notification` は、定期実行時に webhook 通知を送るかどうかの全体設定を更新する。
 
 ### RSS
 
-36. `POST /rss-feeds` は、201 と作成済み RSS フィードを返す。
-37. `GET /rss-feeds` は、RSS フィード一覧とページング情報を返す。
-38. `GET /rss-feeds/{id}` は、対象 RSS フィードを返す。
-39. `GET /rss-feeds/{id}/articles` は、保存済み記事一覧とページング情報を返す。
-40. `PATCH /rss-feeds/{id}` は、部分更新を行い更新後 RSS フィードを返す。
-41. `DELETE /rss-feeds/{id}` は、204 を返す。
-42. `POST /rss-feeds/{id}/execute` は、RSS を取得して Discord webhook に通知する。
+38. `POST /rss-feeds` は、201 と作成済み RSS フィードを返す。
+39. `GET /rss-feeds` は、RSS フィード一覧とページング情報を返す。
+40. `GET /rss-feeds/{id}` は、対象 RSS フィードを返す。
+41. `GET /rss-feeds/{id}/articles` は、保存済み記事一覧とページング情報を返す。
+42. `PATCH /rss-feeds/{id}` は、部分更新を行い更新後 RSS フィードを返す。
+43. `DELETE /rss-feeds/{id}` は、204 を返す。
+44. `POST /rss-feeds/{id}/execute` は、RSS を取得して Discord webhook に通知する。
 
 ### `GET /metrics/dashboard`
 
@@ -415,6 +417,7 @@ Response:
 - フィード URL を取得して RSS として解析する
 - 登録済み webhook URL がない場合は 400 を返す
 - 新規記事のみ webhook に送信する
+- `notify_webhook_enabled` は batch の定期実行でのみ参照する
 - 新規記事がない場合も成功として扱い、メッセージを返す
 - 送信済み記事は `rss_feed_articles` に保存済みとして追記する
 
