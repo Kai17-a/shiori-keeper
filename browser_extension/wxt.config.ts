@@ -15,7 +15,7 @@ export default defineConfig({
       default_popup: "popup.html",
       default_title: "Shiori Keeper",
     },
-    permissions: ["tabs", "storage", "bookmarks"],
+    permissions: ["tabs", "storage"],
     host_permissions: ["<all_urls>"],
     content_security_policy: {},
   },
