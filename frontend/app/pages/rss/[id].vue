@@ -67,24 +67,22 @@
               >
                 Run feed
               </UButton>
-              <UButton
+              <IconButton
+                size="sm"
+                label="Edit RSS feed"
+                icon="i-lucide-pencil"
                 color="neutral"
                 variant="soft"
-                size="sm"
-                icon="i-lucide-pencil"
                 @click="openEditModal"
-              >
-                <span class="sr-only">Edit RSS feed</span>
-              </UButton>
-              <UButton
+              />
+              <IconButton
+                size="sm"
+                label="Delete RSS feed"
+                icon="i-lucide-trash-2"
                 color="error"
                 variant="soft"
-                size="sm"
-                icon="i-lucide-trash-2"
                 @click="deleteOpen = true"
-              >
-                <span class="sr-only">Delete RSS feed</span>
-              </UButton>
+              />
             </div>
           </div>
         </UPageCard>

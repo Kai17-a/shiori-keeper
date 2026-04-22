@@ -13,20 +13,12 @@
           </NuxtLink>
         </div>
         <div class="flex shrink-0 items-center gap-2">
-          <UButton
-            size="xs"
-            variant="ghost"
-            color="neutral"
-            icon="i-lucide-pencil"
-            @click="$emit('edit')"
-          >
-            <span class="sr-only">Edit</span>
-          </UButton>
-          <UButton
-            size="xs"
-            variant="soft"
-            color="error"
+          <IconButton label="Edit" icon="i-lucide-pencil" @click="$emit('edit')" />
+          <IconButton
+            label="Delete"
             icon="i-lucide-trash-2"
+            color="error"
+            variant="soft"
             @click="$emit('remove')"
           />
         </div>
@@ -47,20 +39,12 @@
           </p>
         </div>
         <div class="flex shrink-0 items-center gap-2">
-          <UButton
-            size="xs"
-            variant="ghost"
-            color="neutral"
-            icon="i-lucide-pencil"
-            @click="$emit('edit')"
-          >
-            <span class="sr-only">Edit</span>
-          </UButton>
-          <UButton
-            size="xs"
-            variant="soft"
-            color="error"
+          <IconButton label="Edit" icon="i-lucide-pencil" @click="$emit('edit')" />
+          <IconButton
+            label="Delete"
             icon="i-lucide-trash-2"
+            color="error"
+            variant="soft"
             @click="$emit('remove')"
           />
         </div>

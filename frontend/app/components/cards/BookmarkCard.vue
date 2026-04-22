@@ -3,19 +3,13 @@
     <div class="flex items-start justify-between gap-4">
       <div class="min-w-0">
         <div class="flex items-center gap-1.5">
-          <UButton
-            type="button"
-            size="xs"
-            variant="ghost"
+          <IconButton
             class="shrink-0 px-1"
             :color="bookmark.is_favorite ? 'warning' : 'neutral'"
             :icon="bookmark.is_favorite ? 'i-lucide-star' : 'i-lucide-star-off'"
+            :label="bookmark.is_favorite ? 'Remove from favorites' : 'Add to favorites'"
             @click.stop="$emit('favorite', bookmark)"
-          >
-            <span class="sr-only">
-              {{ bookmark.is_favorite ? "Remove from favorites" : "Add to favorites" }}
-            </span>
-          </UButton>
+          />
           <NuxtLink
             :to="bookmark.url"
             external
@@ -32,22 +26,12 @@
       </div>
 
       <div class="hidden shrink-0 items-center gap-2 sm:flex">
-        <UButton
-          type="button"
-          size="xs"
-          variant="ghost"
-          color="neutral"
-          icon="i-lucide-pencil"
-          @click.stop="$emit('edit', bookmark)"
-        >
-          <span class="sr-only">Edit</span>
-        </UButton>
-        <UButton
-          type="button"
-          size="xs"
-          variant="soft"
-          color="error"
+        <IconButton label="Edit" icon="i-lucide-pencil" @click.stop="$emit('edit', bookmark)" />
+        <IconButton
+          label="Delete"
           icon="i-lucide-trash-2"
+          color="error"
+          variant="soft"
           @click.stop="$emit('remove', bookmark)"
         />
       </div>
@@ -79,22 +63,12 @@
     </div>
 
     <div class="flex justify-end gap-2 sm:hidden">
-      <UButton
-        type="button"
-        size="xs"
-        variant="ghost"
-        color="neutral"
-        icon="i-lucide-pencil"
-        @click.stop="$emit('edit', bookmark)"
-      >
-        <span class="sr-only">Edit</span>
-      </UButton>
-      <UButton
-        type="button"
-        size="xs"
-        variant="soft"
-        color="error"
+      <IconButton label="Edit" icon="i-lucide-pencil" @click.stop="$emit('edit', bookmark)" />
+      <IconButton
+        label="Delete"
         icon="i-lucide-trash-2"
+        color="error"
+        variant="soft"
         @click.stop="$emit('remove', bookmark)"
       />
     </div>

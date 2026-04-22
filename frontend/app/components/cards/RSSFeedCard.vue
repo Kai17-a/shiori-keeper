@@ -14,44 +14,27 @@
       </div>
 
       <div class="hidden shrink-0 items-center gap-2 sm:flex">
-        <UButton
-          type="button"
-          size="xs"
-          variant="ghost"
+        <IconButton
           class="shrink-0 px-1"
           :color="feed.notify_webhook_enabled ? 'warning' : 'neutral'"
           :icon="feed.notify_webhook_enabled ? 'i-lucide-bell' : 'i-lucide-bell-off'"
+          :label="feed.notify_webhook_enabled ? 'Disable webhook notification' : 'Enable webhook notification'"
           @click.stop="$emit('toggleWebhook', feed)"
-        >
-          <span class="sr-only">
-            {{ feed.notify_webhook_enabled ? "Disable webhook notification" : "Enable webhook notification" }}
-          </span>
-        </UButton>
-        <UButton
-          type="button"
-          size="xs"
+        />
+        <IconButton
+          label="Run feed"
+          icon="i-lucide-play"
           variant="soft"
           color="primary"
-          icon="i-lucide-play"
           :loading="running"
           @click.stop="$emit('execute', feed)"
         />
-        <UButton
-          type="button"
-          size="xs"
-          variant="ghost"
-          color="neutral"
-          icon="i-lucide-pencil"
-          @click.stop="$emit('edit', feed)"
-        >
-          <span class="sr-only">Edit</span>
-        </UButton>
-        <UButton
-          type="button"
-          size="xs"
-          variant="soft"
-          color="error"
+        <IconButton label="Edit" icon="i-lucide-pencil" @click.stop="$emit('edit', feed)" />
+        <IconButton
+          label="Delete"
           icon="i-lucide-trash-2"
+          color="error"
+          variant="soft"
           @click.stop="$emit('remove', feed)"
         />
       </div>
@@ -63,19 +46,13 @@
     <p v-else class="text-sm text-muted">No description.</p>
 
     <div class="flex justify-end gap-2 sm:hidden">
-      <UButton
-        type="button"
-        size="xs"
-        variant="ghost"
+      <IconButton
         class="shrink-0 px-1"
         :color="feed.notify_webhook_enabled ? 'warning' : 'neutral'"
         :icon="feed.notify_webhook_enabled ? 'i-lucide-bell' : 'i-lucide-bell-off'"
+        :label="feed.notify_webhook_enabled ? 'Disable webhook notification' : 'Enable webhook notification'"
         @click.stop="$emit('toggleWebhook', feed)"
-      >
-        <span class="sr-only">
-          {{ feed.notify_webhook_enabled ? "Disable webhook notification" : "Enable webhook notification" }}
-        </span>
-      </UButton>
+      />
       <UButton
         type="button"
         size="xs"
@@ -87,22 +64,12 @@
       >
         Run
       </UButton>
-      <UButton
-        type="button"
-        size="xs"
-        variant="ghost"
-        color="neutral"
-        icon="i-lucide-pencil"
-        @click.stop="$emit('edit', feed)"
-      >
-        <span class="sr-only">Edit</span>
-      </UButton>
-      <UButton
-        type="button"
-        size="xs"
-        variant="soft"
-        color="error"
+      <IconButton label="Edit" icon="i-lucide-pencil" @click.stop="$emit('edit', feed)" />
+      <IconButton
+        label="Delete"
         icon="i-lucide-trash-2"
+        color="error"
+        variant="soft"
         @click.stop="$emit('remove', feed)"
       />
     </div>
