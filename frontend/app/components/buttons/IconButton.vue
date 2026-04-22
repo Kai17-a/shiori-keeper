@@ -1,18 +1,17 @@
 <template>
-  <UButton
-    type="button"
-    :size="size"
-    :variant="variant"
-    :color="color"
-    :icon="icon"
-    :loading="loading"
-    v-bind="$attrs"
-    @click="$emit('click', $event)"
-  >
-    <span class="sr-only">
-      {{ label }}
-    </span>
-  </UButton>
+  <UTooltip :delay-duration="0" :text="label">
+    <UButton
+      type="button"
+      :size="size"
+      :variant="variant"
+      :color="color"
+      :icon="icon"
+      :loading="loading"
+      :aria-label="label"
+      v-bind="$attrs"
+      @click="$emit('click', $event)"
+    />
+  </UTooltip>
 </template>
 
 <script setup lang="ts">
