@@ -94,11 +94,9 @@
               @favorite="toggleFavorite"
             />
           </div>
-          <div
-            v-else
-            class="rounded-2xl border border-dashed border-default p-6 text-sm text-muted"
-          >
-            No bookmarks in this folder.
+          <div v-else class="rounded-2xl border border-dashed border-default p-6 text-sm text-muted">
+            <p v-if="state === 'loading' || refreshing">Loading bookmarks</p>
+            <p v-else>No bookmarks in this folder.</p>
           </div>
         </UPageCard>
 
