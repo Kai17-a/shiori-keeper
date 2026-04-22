@@ -29,6 +29,9 @@ cd "$repo_root/api"
 uv run ruff check .
 uv run pytest -q
 
+cd "$repo_root/batch"
+cargo test
+
 cd "$repo_root/frontend"
 bun run test
 
