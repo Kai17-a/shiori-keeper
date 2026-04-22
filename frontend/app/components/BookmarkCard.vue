@@ -1,5 +1,5 @@
 <template>
-  <article class="rounded-2xl border border-default bg-elevated/40 p-4 space-y-4">
+  <article class="rounded-2xl border border-default bg-elevated/40 p-4 space-y-4 min-w-full">
     <div class="flex items-start justify-between gap-4">
       <div class="min-w-0">
         <div class="flex items-center gap-1.5">
