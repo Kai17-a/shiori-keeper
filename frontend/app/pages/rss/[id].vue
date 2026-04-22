@@ -96,16 +96,7 @@
               <p class="text-sm text-muted">Stored article links associated with this feed</p>
             </div>
             <div class="flex items-center gap-2">
-              <UButton
-                icon="i-lucide-refresh-cw"
-                color="neutral"
-                variant="ghost"
-                size="sm"
-                :loading="articlesLoading"
-                @click="loadArticles(true)"
-              >
-                Refresh
-              </UButton>
+              <RefreshButton :loading="articlesLoading" @click="loadArticles(true)" />
             </div>
           </div>
 

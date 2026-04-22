@@ -33,16 +33,7 @@
               <p class="text-sm text-muted">Latest bookmarks matching the current filters</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-              <UButton
-                icon="i-lucide-refresh-cw"
-                color="neutral"
-                variant="ghost"
-                size="sm"
-                :loading="loading"
-                @click="refreshBookmarks"
-              >
-                Refresh
-              </UButton>
+              <RefreshButton :loading="loading" @click="refreshBookmarks" />
               <UButton label="Register" icon="i-lucide-plus" size="sm" @click="openCreateModal" />
             </div>
           </div>

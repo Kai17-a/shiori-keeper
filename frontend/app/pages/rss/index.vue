@@ -90,16 +90,7 @@
               <p class="text-sm text-muted">Manage external feed links separately from bookmarks</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-              <UButton
-                icon="i-lucide-refresh-cw"
-                color="neutral"
-                variant="ghost"
-                size="sm"
-                :loading="loading"
-                @click="refreshFeeds"
-              >
-                Refresh
-              </UButton>
+              <RefreshButton :loading="loading" @click="refreshFeeds" />
               <UButton label="Register" icon="i-lucide-plus" size="sm" @click="openCreateModal" />
             </div>
           </div>

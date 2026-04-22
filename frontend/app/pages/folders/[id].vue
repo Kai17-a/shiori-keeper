@@ -70,16 +70,7 @@
               <h2 class="text-lg font-semibold text-default">Bookmarks in this folder</h2>
               <p class="text-sm text-muted">Bookmarks associated with the selected folder</p>
             </div>
-            <UButton
-              icon="i-lucide-refresh-cw"
-              color="neutral"
-              variant="ghost"
-              size="sm"
-              :loading="refreshing"
-              @click="loadFolder(true)"
-            >
-              Refresh
-            </UButton>
+            <RefreshButton :loading="refreshing" @click="loadFolder(true)" />
           </div>
 
           <div v-if="bookmarks.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

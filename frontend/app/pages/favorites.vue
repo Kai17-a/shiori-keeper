@@ -14,16 +14,7 @@
                 Bookmarks marked with a star through the dedicated favorite API
               </p>
             </div>
-            <UButton
-              icon="i-lucide-refresh-cw"
-              color="neutral"
-              variant="ghost"
-              size="sm"
-              :loading="loading"
-              @click="refreshFavorites"
-            >
-              Refresh
-            </UButton>
+            <RefreshButton :loading="loading" @click="refreshFavorites" />
           </div>
 
           <div

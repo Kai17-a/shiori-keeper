@@ -30,16 +30,7 @@
             <div>
               <h2 class="text-lg font-semibold text-default">Tag list</h2>
             </div>
-            <UButton
-              icon="i-lucide-refresh-cw"
-              color="neutral"
-              variant="ghost"
-              size="sm"
-              :loading="refreshing"
-              @click="refresh"
-            >
-              Refresh
-            </UButton>
+            <RefreshButton :loading="refreshing" @click="refresh" />
           </div>
 
           <div v-if="tags.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

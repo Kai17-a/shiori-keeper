@@ -70,16 +70,7 @@
               <h2 class="text-lg font-semibold text-default">Bookmarks with this tag</h2>
               <p class="text-sm text-muted">Bookmarks associated with the selected tag</p>
             </div>
-            <UButton
-              icon="i-lucide-refresh-cw"
-              color="neutral"
-              variant="ghost"
-              size="sm"
-              :loading="refreshing"
-              @click="loadTag(true)"
-            >
-              Refresh
-            </UButton>
+            <RefreshButton :loading="refreshing" @click="loadTag(true)" />
           </div>
 
           <div v-if="bookmarks.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

@@ -31,16 +31,7 @@
               <h2 class="text-lg font-semibold text-default">Folder list</h2>
               <p class="text-sm text-muted">Browse and manage every folder in one place</p>
             </div>
-            <UButton
-              icon="i-lucide-refresh-cw"
-              color="neutral"
-              variant="ghost"
-              size="sm"
-              :loading="refreshing"
-              @click="refresh"
-            >
-              Refresh
-            </UButton>
+            <RefreshButton :loading="refreshing" @click="refresh" />
           </div>
 
           <div v-if="folders.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
