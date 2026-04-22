@@ -8,7 +8,7 @@
       :ui="{ footer: 'lg:border-t lg:border-default' }"
     >
       <template #default="{ collapsed }">
-        <NavigationSidebarNav
+        <SidebarNav
           :collapsed="collapsed"
           :primary-links="primaryLinks"
           :secondary-links="secondaryLinks"

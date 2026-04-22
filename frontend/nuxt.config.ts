@@ -6,6 +6,14 @@ const apiProxyTarget = process.env.PLAYWRIGHT_API_BASE_URL ?? "http://127.0.0.1:
 export default defineNuxtConfig({
   modules: ["@nuxt/ui"],
 
+  components: [
+    { path: "~/components/cards", pathPrefix: false },
+    { path: "~/components/buttons", pathPrefix: false },
+    { path: "~/components/modals", pathPrefix: false },
+    { path: "~/components/layout", pathPrefix: false },
+    "~/components",
+  ],
+
   devtools: { enabled: false },
   css: ["~/assets/css/main.css"],
   ssr: false,

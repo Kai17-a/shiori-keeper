@@ -35,7 +35,7 @@
           </div>
 
           <div v-if="folders.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <CardsEntityCard
+            <EntityCard
               v-for="folder in folders"
               :key="folder.id"
               :title="folder.name"

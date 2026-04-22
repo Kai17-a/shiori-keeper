@@ -34,7 +34,7 @@
           </div>
 
           <div v-if="tags.length" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <CardsEntityCard
+            <EntityCard
               v-for="tag in tags"
               :key="tag.id"
               :title="tag.name"
