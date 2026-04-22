@@ -109,6 +109,7 @@ const metrics = ref<DashboardMetricsResponse>({
   folders_total: 0,
   tags_total: 0,
   favorites_total: 0,
+  rss_feeds_total: 0,
 });
 
 const stats = computed(() => [
