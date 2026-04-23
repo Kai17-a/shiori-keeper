@@ -201,11 +201,17 @@ class RSSFeedService:
                 """
         )
         for article in articles:
+            published = article.get("published")
+            published_value = (
+                published.strftime("%Y-%m-%d %H:%M:%S")
+                if isinstance(published, datetime)
+                else published
+            )
             params = (
                 feed_id,
                 article["url"],
                 article.get("title"),
-                article.get("published"),
+                published_value,
             )
             conn.execute(
                 insert_query,
@@ -263,19 +269,43 @@ class RSSFeedService:
             return RSSFeedResponse(**row)
 
     def list_articles(
-        self, feed_id: int, page: int = 1, per_page: int = 20
+        self,
+        feed_id: int,
+        q: str | None = None,
+        page: int = 1,
+        per_page: int = 20,
+        published_from: str | None = None,
+        published_to: str | None = None,
     ) -> RSSFeedArticleListResponse:
         with get_db() as conn:
             repo = RSSFeedRepository(conn)
             if repo.find_by_id(feed_id) is None:
                 raise HTTPException(status_code=404, detail="RSS feed not found")
-            total = repo.count_articles_by_feed_id(feed_id)
+            rows = repo.find_articles_by_feed_id(feed_id)
+            if q is not None:
+                query = q.strip().lower()
+                if query:
+                    rows = [
+                        row
+                        for row in rows
+                        if query in str(row.get("title") or "").lower()
+                    ]
+            rows = [
+                row
+                for row in rows
+                if self._article_matches_date_range(
+                    row,
+                    published_from=published_from,
+                    published_to=published_to,
+                )
+            ]
+            total = len(rows)
             total_pages = max((total + per_page - 1) // per_page, 1) if total else 0
             page = max(page, 1)
             if total_pages and page > total_pages:
                 page = total_pages
             offset = (page - 1) * per_page
-            rows = repo.find_articles_by_feed_id_paginated(feed_id, per_page, offset)
+            rows = rows[offset : offset + per_page]
             items = [
                 RSSFeedArticleResponse(
                     **{
@@ -292,6 +322,22 @@ class RSSFeedService:
                 per_page=per_page,
                 total_pages=total_pages,
             )
+
+    def _article_matches_date_range(
+        self,
+        row: dict,
+        published_from: str | None = None,
+        published_to: str | None = None,
+    ) -> bool:
+        published = row.get("published") or row.get("created_at")
+        if not isinstance(published, str):
+            return False
+        published_date = published[:10]
+        if published_from is not None and published_date < published_from:
+            return False
+        if published_to is not None and published_date > published_to:
+            return False
+        return True
 
     def update(self, feed_id: int, data: RSSFeedUpdate) -> RSSFeedResponse:
         with get_db() as conn:

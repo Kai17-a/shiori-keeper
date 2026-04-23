@@ -81,6 +81,30 @@
           </div>
         </UPageCard>
 
+        <UPageCard title="Search articles" description="Filter articles by title or published date" :ui="{ body: 'space-y-4' }">
+          <form class="grid gap-3 lg:grid-cols-[4fr_1fr]">
+            <UInput v-model="searchTitle" placeholder="Search article title" />
+            <UInputDate ref="inputDate" v-model="selectedPublishedRange" range>
+              <template #trailing>
+                <UPopover :reference="inputDate?.inputsRef[0]?.$el">
+                  <UButton
+                    color="neutral"
+                    variant="link"
+                    size="sm"
+                    icon="i-lucide-calendar"
+                    aria-label="Select a published date range"
+                    class="px-0"
+                  />
+
+                  <template #content>
+                    <UCalendar v-model="selectedPublishedRange" class="p-2" :number-of-months="2" range />
+                  </template>
+                </UPopover>
+              </template>
+            </UInputDate>
+          </form>
+        </UPageCard>
+
         <UPageCard :ui="{ body: 'space-y-3' }">
           <div class="flex items-center justify-between gap-3">
             <div>
@@ -160,6 +184,9 @@
             class="rounded-2xl border border-dashed border-default p-6 text-sm text-muted"
           >
             <p v-if="articlesLoading">Loading articles...</p>
+            <p v-else-if="searchTitle || selectedPublishedRange.start || selectedPublishedRange.end">
+              No articles match your search.
+            </p>
             <p v-else>No articles recorded for this feed yet.</p>
           </div>
         </UPageCard>
@@ -192,6 +219,7 @@
 </template>
 
 <script setup lang="ts">
+import type { DateValue } from "@internationalized/date";
 import type { RSSFeedArticleListResponse, RSSFeedExecuteResponse, RSSFeedResponse } from "~/types";
 import { formatDateTime } from "~/utils/dateTime";
 
@@ -210,6 +238,9 @@ const saving = ref(false);
 const deleting = ref(false);
 const executing = ref(false);
 const articlesLoading = ref(false);
+const searchTitle = ref("");
+const inputDate = useTemplateRef("inputDate");
+const selectedPublishedRange = shallowRef<{ start?: DateValue; end?: DateValue }>({});
 const modalOpen = ref(false);
 const deleteOpen = ref(false);
 const feed = ref<RSSFeedResponse | null>(null);
@@ -224,6 +255,17 @@ const articlePage = ref(1);
 const feedForm = reactive({ id: "", title: "", url: "", description: "" });
 
 const articlePageCount = computed(() => Math.max(articleList.value.total_pages, 1));
+
+const buildArticleQuery = () => {
+  const params = new URLSearchParams({ page: String(articlePage.value) });
+  const q = searchTitle.value.trim();
+  if (q) params.set("q", q);
+  const publishedFrom = selectedPublishedRange.value.start?.toString();
+  const publishedTo = selectedPublishedRange.value.end?.toString();
+  if (publishedFrom) params.set("published_from", publishedFrom);
+  if (publishedTo) params.set("published_to", publishedTo);
+  return params.toString();
+};
 const articlePaginationItems = computed<PaginationItem[]>(() => {
   const total = articlePageCount.value;
   const current = articlePage.value;
@@ -284,7 +326,7 @@ const loadFeedArticles = async (showToast = false) => {
   articlesLoading.value = true;
   try {
     const result = await request<RSSFeedArticleListResponse>(
-      `/rss-feeds/${route.params.id}/articles?page=${articlePage.value}`,
+      `/rss-feeds/${route.params.id}/articles?${buildArticleQuery()}`,
     );
     articleList.value = result;
     if (showToast) {
@@ -314,6 +356,23 @@ const setArticlePage = async (nextPage: number) => {
   articlePage.value = Math.min(Math.max(nextPage, 1), articlePageCount.value);
   await loadArticles();
 };
+
+watch(
+  searchTitle,
+  async () => {
+    articlePage.value = 1;
+    await loadArticles();
+  },
+);
+
+watch(
+  selectedPublishedRange,
+  async () => {
+    articlePage.value = 1;
+    await loadArticles();
+  },
+  { deep: true },
+);
 
 const openEditModal = () => {
   if (!feed.value) return;

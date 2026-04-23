@@ -92,23 +92,57 @@ class RSSFeedRepository:
         return [dict(row) for row in rows]
 
     def count_articles_by_feed_id(self, feed_id: int) -> int:
+        return self.count_articles_by_feed_id_filtered(feed_id)
+
+    def count_articles_by_feed_id_filtered(
+        self,
+        feed_id: int,
+        published_from: str | None = None,
+        published_to: str | None = None,
+    ) -> int:
+        clauses = ["feed_id = ?"]
+        params: list = [feed_id]
+        clauses, params = self._append_article_date_filters(clauses, params, published_from, published_to)
         row = self.conn.execute(
-            "SELECT COUNT(*) AS total FROM rss_feed_articles WHERE feed_id = ?",
-            (feed_id,),
+            f"SELECT COUNT(*) AS total FROM rss_feed_articles WHERE {' AND '.join(clauses)}",
+            params,
         ).fetchone()
         return int(row["total"]) if row else 0
 
     def find_articles_by_feed_id_paginated(
-        self, feed_id: int, limit: int, offset: int
+        self,
+        feed_id: int,
+        limit: int,
+        offset: int,
+        published_from: str | None = None,
+        published_to: str | None = None,
     ) -> list[dict]:
         has_published = self._has_column("rss_feed_articles", "published")
         published_select = ", published" if has_published else ", NULL AS published"
+        clauses = ["feed_id = ?"]
+        params: list = [feed_id]
+        clauses, params = self._append_article_date_filters(clauses, params, published_from, published_to)
         query = f"""
             SELECT id, feed_id, url, title{published_select}, created_at
             FROM rss_feed_articles
-            WHERE feed_id = ?
+            WHERE {' AND '.join(clauses)}
             ORDER BY published IS NULL ASC, published DESC, id DESC
             LIMIT ? OFFSET ?
             """
-        rows = self.conn.execute(query, (feed_id, limit, offset)).fetchall()
+        rows = self.conn.execute(query, [*params, limit, offset]).fetchall()
         return [dict(row) for row in rows]
+
+    def _append_article_date_filters(
+        self,
+        clauses: list[str],
+        params: list,
+        published_from: str | None,
+        published_to: str | None,
+    ) -> tuple[list[str], list]:
+        if published_from:
+            clauses.append("substr(coalesce(published, created_at), 1, 10) >= ?")
+            params.append(published_from)
+        if published_to:
+            clauses.append("substr(coalesce(published, created_at), 1, 10) <= ?")
+            params.append(published_to)
+        return clauses, params

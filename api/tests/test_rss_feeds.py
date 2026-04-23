@@ -364,6 +364,116 @@ def test_list_rss_feed_articles_accepts_page_and_per_page(client, monkeypatch):
     assert len(body["items"]) == 2
 
 
+def test_list_rss_feed_articles_filters_by_published_date_range(client, monkeypatch):
+    import api.services.rss_feed_service as rss_module
+
+    client.put(
+        "/settings/webhook",
+        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+    )
+    feed_id = create_feed(client).json()["id"]
+
+    class ParsedEntry:
+        def __init__(self, title, link, published):
+            self._title = title
+            self._link = link
+            self._published = published
+
+        def get(self, key, default=None):
+            data = {
+                "title": self._title,
+                "link": self._link,
+                "pubDate": self._published,
+            }
+            return data.get(key, default)
+
+    class ParsedFeed:
+        bozo = False
+        feed = {"title": "Parsed Example"}
+        entries = [
+            ParsedEntry("Item 1", "https://example.com/item-1", "Mon, 06 Jan 2025 00:00:00 GMT"),
+            ParsedEntry("Item 2", "https://example.com/item-2", "Tue, 07 Jan 2025 00:00:00 GMT"),
+            ParsedEntry("Item 3", "https://example.com/item-3", "Wed, 08 Jan 2025 00:00:00 GMT"),
+        ]
+
+    def fake_get(url, timeout=5.0, follow_redirects=True):
+        class Response:
+            status_code = 200
+            content = b"feed"
+
+        return Response()
+
+    monkeypatch.setattr(rss_module.httpx, "get", fake_get)
+    monkeypatch.setattr(rss_module.feedparser, "parse", lambda content: ParsedFeed())
+
+    execute = client.post(f"/rss-feeds/{feed_id}/execute")
+    assert execute.status_code == 200
+
+    resp = client.get(f"/rss-feeds/{feed_id}/articles?published_from=2025-01-07&published_to=2025-01-08")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert [item["url"] for item in body["items"]] == [
+        "https://example.com/item-3",
+        "https://example.com/item-2",
+    ]
+    assert body["total"] == 2
+
+
+def test_list_rss_feed_articles_filters_by_title_query(client, monkeypatch):
+    import api.services.rss_feed_service as rss_module
+
+    client.put(
+        "/settings/webhook",
+        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+    )
+    feed_id = create_feed(client).json()["id"]
+
+    class ParsedEntry:
+        def __init__(self, title, link, published):
+            self._title = title
+            self._link = link
+            self._published = published
+
+        def get(self, key, default=None):
+            data = {
+                "title": self._title,
+                "link": self._link,
+                "pubDate": self._published,
+            }
+            return data.get(key, default)
+
+    class ParsedFeed:
+        bozo = False
+        feed = {"title": "Parsed Example"}
+        entries = [
+            ParsedEntry("Alpha One", "https://example.com/alpha-1", "Mon, 06 Jan 2025 00:00:00 GMT"),
+            ParsedEntry("Beta Two", "https://example.com/beta-2", "Tue, 07 Jan 2025 00:00:00 GMT"),
+            ParsedEntry("Alpha Three", "https://example.com/alpha-3", "Wed, 08 Jan 2025 00:00:00 GMT"),
+        ]
+
+    def fake_get(url, timeout=5.0, follow_redirects=True):
+        class Response:
+            status_code = 200
+            content = b"feed"
+
+        return Response()
+
+    monkeypatch.setattr(rss_module.httpx, "get", fake_get)
+    monkeypatch.setattr(rss_module.feedparser, "parse", lambda content: ParsedFeed())
+
+    execute = client.post(f"/rss-feeds/{feed_id}/execute")
+    assert execute.status_code == 200
+
+    resp = client.get(f"/rss-feeds/{feed_id}/articles?q=alpha")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert [item["url"] for item in body["items"]] == [
+        "https://example.com/alpha-3",
+        "https://example.com/alpha-1",
+    ]
+    assert body["total"] == 2
+
+
 def test_list_rss_feed_articles_returns_404_for_missing_feed(client):
     resp = client.get("/rss-feeds/99999/articles")
     assert resp.status_code == 404

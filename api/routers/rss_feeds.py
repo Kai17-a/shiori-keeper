@@ -40,11 +40,21 @@ def get_rss_feed(feed_id: int, service: RSSFeedService = Depends(get_rss_feed_se
 @router.get("/{feed_id}/articles", status_code=200, response_model=RSSFeedArticleListResponse)
 def list_rss_feed_articles(
     feed_id: int,
+    q: str | None = None,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
+    published_from: str | None = Query(default=None),
+    published_to: str | None = Query(default=None),
     service: RSSFeedService = Depends(get_rss_feed_service),
 ):
-    return service.list_articles(feed_id, page=page, per_page=per_page)
+    return service.list_articles(
+        feed_id,
+        q=q,
+        page=page,
+        per_page=per_page,
+        published_from=published_from,
+        published_to=published_to,
+    )
 
 
 @router.patch(

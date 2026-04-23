@@ -170,11 +170,21 @@ class CompatTestClient:
         if method == "GET" and path.startswith("/rss-feeds/") and path.endswith("/articles"):
             parts = path.strip("/").split("/")
             feed_id = int(parts[1])
+            q = query.get("q")
             page = int(query.get("page", "1"))
             per_page = int(query.get("per_page", "20"))
+            published_from = query.get("published_from")
+            published_to = query.get("published_to")
             payload = (
                 RSSFeedService()
-                .list_articles(feed_id, page=page, per_page=per_page)
+                .list_articles(
+                    feed_id,
+                    q=q,
+                    page=page,
+                    per_page=per_page,
+                    published_from=published_from,
+                    published_to=published_to,
+                )
                 .model_dump()
             )
             return self._ok(payload, 200)
