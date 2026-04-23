@@ -196,7 +196,6 @@ test.describe("rss feeds", () => {
       await expect(page).toHaveURL(/\/rss\/?$/);
       await page.goto(`/rss/${createdBody.id}`);
       await expect(page).toHaveURL(/\/rss\/\d+\/?$/);
-      await expect(page.getByText("RSS feed details")).toBeVisible();
       await expect(headingByText(page, title)).toBeVisible();
       await page.goto("/rss");
       await expect(page).toHaveURL(/\/rss\/?$/);

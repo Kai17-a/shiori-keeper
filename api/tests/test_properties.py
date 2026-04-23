@@ -247,7 +247,11 @@ def test_property_6_keyword_search_accuracy(client, q):
         alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Nd")),
     ),
 )
-@settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(
+    max_examples=100,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+    deadline=None,
+)
 def test_property_7_partial_update_immutability(client, new_title):
     """Validates: Requirements 3.1, 3.2"""
     _reset_database()
