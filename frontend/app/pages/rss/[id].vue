@@ -24,29 +24,33 @@
           />
 
           <div v-else-if="feed" class="space-y-3">
-            <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div class="min-w-0 space-y-1">
+            <DetailPageHeader>
+              <template #title>
                 <h1 class="text-2xl font-semibold text-default">
                   {{ feed.title }}
                 </h1>
+              </template>
+
+              <template #description>
                 <p v-if="feed.description" class="text-sm leading-6 text-default/90">
                   {{ feed.description }}
                 </p>
                 <p v-else class="text-sm text-muted">No description provided.</p>
-                <div class="space-y-1">
-                  <p class="text-xs font-medium uppercase tracking-wide text-muted">URL</p>
-                  <a
-                    :href="feed.url"
-                    target="_blank"
-                    rel="noreferrer"
-                    class="break-all text-sm text-primary hover:underline"
-                  >
-                    {{ feed.url }}
-                  </a>
-                </div>
+              </template>
+
+              <div class="space-y-1 pt-1">
+                <p class="text-xs font-medium uppercase tracking-wide text-muted">URL</p>
+                <a
+                  :href="feed.url"
+                  target="_blank"
+                  rel="noreferrer"
+                  class="break-all text-sm text-primary hover:underline"
+                >
+                  {{ feed.url }}
+                </a>
               </div>
 
-              <div class="flex flex-wrap gap-3 self-start">
+              <template #actions>
                 <IconButton
                   size="sm"
                   label="Run"
@@ -72,8 +76,8 @@
                   variant="soft"
                   @click="deleteOpen = true"
                 />
-              </div>
-            </div>
+              </template>
+            </DetailPageHeader>
           </div>
         </UPageCard>
 

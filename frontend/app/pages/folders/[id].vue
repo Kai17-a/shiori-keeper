@@ -24,43 +24,45 @@
           />
 
           <div v-else-if="folder" class="space-y-3">
-            <h1 class="text-2xl font-semibold text-default">
-              {{ folder.name }}
-            </h1>
-            <div class="flex flex-wrap items-center gap-2">
-              <UBadge color="primary" variant="soft"> Folder #{{ folder.id }} </UBadge>
-              <span class="text-sm text-muted">
-                {{ bookmarks.length }} bookmark{{ bookmarks.length === 1 ? "" : "s" }}
-              </span>
-            </div>
-            <div class="space-y-1">
-              <p class="text-xs font-medium uppercase tracking-wide text-muted">Description</p>
-              <p v-if="folder.description" class="text-sm leading-6 text-default/90">
-                {{ folder.description }}
-              </p>
-              <p v-else class="text-sm text-muted">No description provided.</p>
-            </div>
-            <div class="flex flex-wrap gap-3">
-              <UButton to="/folders" variant="ghost" size="sm"> Back to folders </UButton>
-              <UButton
-                color="neutral"
-                variant="soft"
-                size="sm"
-                icon="i-lucide-pencil"
-                @click="openEdit"
-              >
-                <span class="sr-only">Edit folder</span>
-              </UButton>
-              <UButton
-                color="error"
-                variant="soft"
-                size="sm"
-                icon="i-lucide-trash-2"
-                @click="confirmOpen = true"
-              >
-                <span class="sr-only">Delete folder</span>
-              </UButton>
-            </div>
+            <DetailPageHeader>
+              <template #title>
+                <h1 class="text-2xl font-semibold text-default">
+                  {{ folder.name }}
+                </h1>
+              </template>
+
+              <template #description>
+                <p v-if="folder.description" class="text-sm leading-6 text-default/90">
+                  {{ folder.description }}
+                </p>
+                <p v-else class="text-sm text-muted">No description provided.</p>
+              </template>
+
+              <div class="flex flex-wrap items-center gap-2 pt-1">
+                <span class="text-sm text-muted">
+                  {{ bookmarks.length }} bookmark{{ bookmarks.length === 1 ? "" : "s" }}
+                </span>
+              </div>
+
+              <template #actions>
+                <IconButton
+                  size="sm"
+                  label="Edit"
+                  icon="i-lucide-pencil"
+                  color="neutral"
+                  variant="soft"
+                  @click="openEdit"
+                />
+                <IconButton
+                  size="sm"
+                  label="Edit"
+                  icon="i-lucide-trash-2"
+                  color="error"
+                  variant="soft"
+                  @click="confirmOpen = true"
+                />
+              </template>
+            </DetailPageHeader>
           </div>
         </UPageCard>
 
@@ -85,7 +87,10 @@
               @favorite="toggleFavorite"
             />
           </div>
-          <div v-else class="rounded-2xl border border-dashed border-default p-6 text-sm text-muted">
+          <div
+            v-else
+            class="rounded-2xl border border-dashed border-default p-6 text-sm text-muted"
+          >
             <p v-if="state === 'loading' || refreshing">Loading bookmarks</p>
             <p v-else>No bookmarks in this folder.</p>
           </div>
