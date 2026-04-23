@@ -6,7 +6,7 @@
 
     <template #body>
       <div class="space-y-6">
-        <UPageCard title="RSS feed details" description="Inspect and manage a single feed">
+        <UPageCard>
           <UAlert
             v-if="state === 'error'"
             title="Failed to load RSS feed"
@@ -24,65 +24,55 @@
           />
 
           <div v-else-if="feed" class="space-y-3">
-            <div class="flex flex-wrap items-center gap-2">
-              <UBadge color="primary" variant="soft"> RSS #{{ feed.id }} </UBadge>
-              <span class="text-sm text-muted">
-                Updated {{ formatDateTime(feed.updated_at) }}
-              </span>
-            </div>
+            <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div class="min-w-0 space-y-1">
+                <h1 class="text-2xl font-semibold text-default">
+                  {{ feed.title }}
+                </h1>
+                <p v-if="feed.description" class="text-sm leading-6 text-default/90">
+                  {{ feed.description }}
+                </p>
+                <p v-else class="text-sm text-muted">No description provided.</p>
+                <div class="space-y-1">
+                  <p class="text-xs font-medium uppercase tracking-wide text-muted">URL</p>
+                  <a
+                    :href="feed.url"
+                    target="_blank"
+                    rel="noreferrer"
+                    class="break-all text-sm text-primary hover:underline"
+                  >
+                    {{ feed.url }}
+                  </a>
+                </div>
+              </div>
 
-            <h1 class="text-2xl font-semibold text-default">
-              {{ feed.title }}
-            </h1>
-
-            <div class="space-y-1">
-              <p class="text-xs font-medium uppercase tracking-wide text-muted">URL</p>
-              <a
-                :href="feed.url"
-                target="_blank"
-                rel="noreferrer"
-                class="break-all text-sm text-primary hover:underline"
-              >
-                {{ feed.url }}
-              </a>
-            </div>
-
-            <div class="space-y-1">
-              <p class="text-xs font-medium uppercase tracking-wide text-muted">Description</p>
-              <p v-if="feed.description" class="text-sm leading-6 text-default/90">
-                {{ feed.description }}
-              </p>
-              <p v-else class="text-sm text-muted">No description provided.</p>
-            </div>
-
-            <div class="flex flex-wrap gap-3">
-              <UButton to="/rss" variant="ghost" size="sm"> Back to RSS </UButton>
-              <UButton
-                color="neutral"
-                variant="soft"
-                size="sm"
-                icon="i-lucide-play"
-                :loading="executing"
-                @click="executeFeed"
-              >
-                Run feed
-              </UButton>
-              <IconButton
-                size="sm"
-                label="Edit RSS feed"
-                icon="i-lucide-pencil"
-                color="neutral"
-                variant="soft"
-                @click="openEditModal"
-              />
-              <IconButton
-                size="sm"
-                label="Delete RSS feed"
-                icon="i-lucide-trash-2"
-                color="error"
-                variant="soft"
-                @click="deleteOpen = true"
-              />
+              <div class="flex flex-wrap gap-3 self-start">
+                <IconButton
+                  size="sm"
+                  label="Run"
+                  icon="i-lucide-play"
+                  color="primary"
+                  variant="soft"
+                  :loading="executing"
+                  @click="executeFeed"
+                />
+                <IconButton
+                  size="sm"
+                  label="Edit"
+                  icon="i-lucide-pencil"
+                  color="neutral"
+                  variant="soft"
+                  @click="openEditModal"
+                />
+                <IconButton
+                  size="sm"
+                  label="Delete"
+                  icon="i-lucide-trash-2"
+                  color="error"
+                  variant="soft"
+                  @click="deleteOpen = true"
+                />
+              </div>
             </div>
           </div>
         </UPageCard>
