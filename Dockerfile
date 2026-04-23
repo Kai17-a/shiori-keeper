@@ -18,19 +18,21 @@ RUN bun run generate
 # Batch build stage
 FROM rust:1-slim AS batch-build
 
+ARG TARGETPLATFORM
+
 WORKDIR /app/batch
 
 COPY batch/Cargo.toml batch/Cargo.lock ./
 RUN mkdir src && echo "fn main(){}" > src/main.rs
 
-RUN --mount=type=cache,target=/usr/local/cargo/registry \
-    --mount=type=cache,target=/app/batch/target \
+RUN --mount=type=cache,id=cargo-registry-${TARGETPLATFORM},target=/usr/local/cargo/registry,sharing=locked \
+    --mount=type=cache,id=cargo-target-${TARGETPLATFORM},target=/app/batch/target,sharing=locked \
     cargo build --release
 
 COPY batch/src ./src
 
-RUN --mount=type=cache,target=/usr/local/cargo/registry \
-    --mount=type=cache,target=/app/batch/target \
+RUN --mount=type=cache,id=cargo-registry-${TARGETPLATFORM},target=/usr/local/cargo/registry,sharing=locked \
+    --mount=type=cache,id=cargo-target-${TARGETPLATFORM},target=/app/batch/target,sharing=locked \
     cargo build --release \
     && cp target/release/shiori-keeper-batch /bin/
 
