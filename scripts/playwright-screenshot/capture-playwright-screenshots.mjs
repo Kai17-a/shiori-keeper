@@ -1,6 +1,9 @@
-import { chromium } from "@playwright/test";
+import { createRequire } from "node:module";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
+
+const require = createRequire(new URL("../../frontend/package.json", import.meta.url));
+const { chromium } = require("@playwright/test");
 
 const screenshotDir = process.env.PLAYWRIGHT_SCREENSHOT_DIR ?? "docs/app-images";
 const frontendBaseUrl = process.env.PLAYWRIGHT_FRONTEND_BASE_URL ?? "http://127.0.0.1:3001";
