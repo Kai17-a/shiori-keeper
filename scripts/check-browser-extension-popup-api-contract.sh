@@ -8,6 +8,10 @@ bookmark_description="${4:-${BOOKMARK_DESCRIPTION:-Example description}}"
 folder_id="${5:-${FOLDER_ID:-null}}"
 tag_ids_csv="${6:-${TAG_IDS:-}}"
 
+green=$'\033[32m'
+red=$'\033[31m'
+reset=$'\033[0m'
+
 if [[ -n "${API_BASE_URL:-}" ]]; then
   api_base_url="${API_BASE_URL}"
 fi
@@ -93,14 +97,14 @@ check() {
   )"
 
   if [[ "${status}" != "${expected}" ]]; then
-    printf 'result: %s (mismatch)\n' "${status}" >&2
+    printf '%sresult: %s (mismatch)%s\n' "${red}" "${status}" "${reset}" >&2
     printf 'response body:\n' >&2
     cat "${response_file}" >&2
     rm -f "${response_file}"
     exit 1
   fi
 
-  printf 'result: %s\n' "${status}"
+  printf '%sresult: %s%s\n' "${green}" "${status}" "${reset}"
   if [[ -s "${response_file}" ]]; then
     printf 'response body:\n'
     cat "${response_file}"
