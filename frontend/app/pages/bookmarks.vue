@@ -262,22 +262,26 @@ const paginationItems = computed<PaginationItem[]>(() =>
 );
 
 type LoadToastKind = "loaded" | "refreshed";
+let loadRequestId = 0;
 
 async function loadData(showToast = true, toastKind: LoadToastKind = "loaded") {
+  const requestId = ++loadRequestId;
   loading.value = true;
   loadError.value = "";
+
+  void sidebarCatalog.refresh();
+
   try {
-    const [bookmarkRes] = await Promise.all([
-      request<BookmarkListResponse>(
-        buildBookmarkQuery({
-          searchQ: searchQ.value,
-          folderId: filterFolder.value,
-          tagId: filterTag.value,
-          page: page.value,
-        }),
-      ),
-      sidebarCatalog.refresh(),
-    ]);
+    const bookmarkRes = await request<BookmarkListResponse>(
+      buildBookmarkQuery({
+        searchQ: searchQ.value,
+        folderId: filterFolder.value,
+        tagId: filterTag.value,
+        page: page.value,
+      }),
+    );
+
+    if (requestId !== loadRequestId) return;
 
     bookmarkList.value = bookmarkRes;
 
@@ -297,7 +301,9 @@ async function loadData(showToast = true, toastKind: LoadToastKind = "loaded") {
       icon: "i-lucide-circle-alert",
     });
   } finally {
-    loading.value = false;
+    if (requestId === loadRequestId) {
+      loading.value = false;
+    }
   }
 }
 
@@ -341,6 +347,10 @@ const setPage = async (nextPage: number) => {
   page.value = next;
 };
 
+onMounted(() => {
+  void loadData(true);
+});
+
 watch(
   [searchQ, filterFolder, filterTag, page],
   async ([nextSearch, nextFolder, nextTag, nextPage]) => {
@@ -352,9 +362,8 @@ watch(
         page: nextPage,
       }),
     );
-    await loadData();
+    await loadData(true);
   },
-  { immediate: true },
 );
 
 watch(
