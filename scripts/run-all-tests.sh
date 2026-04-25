@@ -55,3 +55,5 @@ cd "$repo_root/frontend"
 PLAYWRIGHT_API_BASE_URL=http://127.0.0.1:8000 \
 PLAYWRIGHT_FRONTEND_BASE_URL=http://127.0.0.1:3000 \
 bunx playwright test
+
+sh "$repo_root/scripts/check-browser-extension-popup-api-contract.sh" http://127.0.0.1:8000
