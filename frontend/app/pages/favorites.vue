@@ -101,13 +101,14 @@ import type { BookmarkListResponse, BookmarkResponse, FolderResponse, TagRespons
 import { mapBookmarksWithFolderNames } from "~/utils/bookmarkList";
 
 const { request } = useBookmarkApi();
+const sidebarCatalog = useSidebarCatalog();
 const toast = useSingleToast();
 
 const loading = ref(false);
 const loadError = ref("");
 const favoriteBookmarks = ref<BookmarkResponse[]>([]);
-const folders = ref<FolderResponse[]>([]);
-const tags = ref<TagResponse[]>([]);
+const folders = computed<FolderResponse[]>(() => sidebarCatalog.folders.value);
+const tags = computed<TagResponse[]>(() => sidebarCatalog.tags.value);
 const bookmarkFolderOptions = computed(() => [
   { label: "No folder", value: "" },
   ...folders.value.map((folder) => ({ label: folder.name, value: String(folder.id) })),
@@ -122,14 +123,11 @@ const bookmarkTagOptions = computed(() =>
 );
 
 const loadFavoriteBookmarks = async () => {
-  const [bookmarkRes, foldersRes, tagsRes] = await Promise.all([
+  const [bookmarkRes] = await Promise.all([
     request<BookmarkListResponse>("/bookmarks?is_favorite=true&per_page=100&page=1"),
-    request<FolderResponse[]>("/folders"),
-    request<TagResponse[]>("/tags"),
+    sidebarCatalog.refresh(),
   ]);
   favoriteBookmarks.value = bookmarkRes.items;
-  folders.value = foldersRes;
-  tags.value = tagsRes;
 };
 
 type LoadToastKind = "loaded" | "refreshed";

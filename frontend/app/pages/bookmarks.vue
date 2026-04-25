@@ -153,6 +153,7 @@ import {
 const route = useRoute();
 const router = useRouter();
 const { request } = useBookmarkApi();
+const sidebarCatalog = useSidebarCatalog();
 const toast = useSingleToast();
 
 const loading = ref(false);
@@ -164,8 +165,8 @@ const bookmarkList = ref<BookmarkListResponse>({
   per_page: 20,
   total_pages: 0,
 });
-const folders = ref<FolderResponse[]>([]);
-const tags = ref<TagResponse[]>([]);
+const folders = computed<FolderResponse[]>(() => sidebarCatalog.folders.value);
+const tags = computed<TagResponse[]>(() => sidebarCatalog.tags.value);
 const searchQ = ref(String(route.query.q || ""));
 const filterFolder = ref(String(route.query.folder_id || ""));
 const filterTag = ref(String(route.query.tag_id || ""));
@@ -266,7 +267,7 @@ async function loadData(showToast = true, toastKind: LoadToastKind = "loaded") {
   loading.value = true;
   loadError.value = "";
   try {
-    const [bookmarkRes, folderRes, tagRes] = await Promise.all([
+    const [bookmarkRes] = await Promise.all([
       request<BookmarkListResponse>(
         buildBookmarkQuery({
           searchQ: searchQ.value,
@@ -275,13 +276,10 @@ async function loadData(showToast = true, toastKind: LoadToastKind = "loaded") {
           page: page.value,
         }),
       ),
-      request<FolderResponse[]>("/folders"),
-      request<TagResponse[]>("/tags"),
+      sidebarCatalog.refresh(),
     ]);
 
     bookmarkList.value = bookmarkRes;
-    folders.value = folderRes;
-    tags.value = tagRes;
 
     if (showToast) {
       toast.show({

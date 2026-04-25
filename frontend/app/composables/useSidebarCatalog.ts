@@ -5,19 +5,24 @@ import {
 } from "~/utils/sidebarCatalog";
 import type { FolderResponse, RSSFeedListResponse, TagResponse } from "~/types";
 
+let sidebarCatalogLoadPromise: Promise<void> | null = null;
+
 export const useSidebarCatalog = () => {
   const state = useState<SidebarCatalogState>("sidebar-catalog", createSidebarCatalogState);
 
   const { request } = useBookmarkApi();
   const loading = ref(false);
-  let loadPromise: Promise<void> | null = null;
 
   const refresh = async () => {
-    if (loadPromise) {
-      return loadPromise;
+    if (state.value.loaded) {
+      return;
     }
 
-    loadPromise = (async () => {
+    if (sidebarCatalogLoadPromise) {
+      return sidebarCatalogLoadPromise;
+    }
+
+    sidebarCatalogLoadPromise = (async () => {
       loading.value = true;
       try {
         const [foldersRes, tagsRes, rssFeedsRes] = await Promise.all([
@@ -29,11 +34,11 @@ export const useSidebarCatalog = () => {
         applySidebarCatalogResults(state.value, foldersRes, tagsRes, rssFeedsRes.items || []);
       } finally {
         loading.value = false;
-        loadPromise = null;
+        sidebarCatalogLoadPromise = null;
       }
     })();
 
-    return loadPromise;
+    return sidebarCatalogLoadPromise;
   };
 
   return {

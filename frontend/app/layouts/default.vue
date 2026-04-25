@@ -149,16 +149,20 @@ const secondaryLinks = computed<NavigationMenuItem[]>(() => [
   },
 ]);
 
-onMounted(async () => {
-  await refresh();
+onMounted(() => {
+  void refresh();
 
-  if (!healthChecked.value) {
-    await checkApiHealth();
-    toast.show({
-      title: healthOk.value ? "API server is reachable." : "API server responded unexpectedly.",
-      color: healthOk.value ? "success" : "warning",
-      icon: healthOk.value ? "i-lucide-check" : "i-lucide-circle-alert",
-    });
-  }
+  window.setTimeout(() => {
+    void (async () => {
+      if (healthChecked.value) return;
+
+      await checkApiHealth();
+      toast.show({
+        title: healthOk.value ? "API server is reachable." : "API server responded unexpectedly.",
+        color: healthOk.value ? "success" : "warning",
+        icon: healthOk.value ? "i-lucide-check" : "i-lucide-circle-alert",
+      });
+    })();
+  }, 1000);
 });
 </script>
