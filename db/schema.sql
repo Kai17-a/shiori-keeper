@@ -49,9 +49,25 @@ CREATE TABLE bookmark_tags (
   tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
   PRIMARY KEY (bookmark_id, tag_id)
 );
+CREATE INDEX idx_bookmarks_created_id
+  ON bookmarks(created_at DESC, id DESC);
+CREATE INDEX idx_bookmarks_folder_created_id
+  ON bookmarks(folder_id, created_at DESC, id DESC);
+CREATE INDEX idx_bookmarks_favorite_created_id
+  ON bookmarks(is_favorite, created_at DESC, id DESC);
+CREATE INDEX idx_bookmark_tags_tag_bookmark
+  ON bookmark_tags(tag_id, bookmark_id);
+CREATE INDEX idx_rss_feeds_title_id
+  ON rss_feeds(title ASC, id ASC);
+CREATE INDEX idx_rss_feed_articles_feed_published_id
+  ON rss_feed_articles(feed_id, published DESC, id DESC);
+CREATE INDEX idx_rss_feed_articles_feed_published_null_id
+  ON rss_feed_articles(feed_id, published IS NULL, published DESC, id DESC);
 -- Dbmate schema migrations
 INSERT INTO "schema_migrations" (version) VALUES
   ('010'),
   ('011'),
   ('012'),
-  ('013');
+  ('013'),
+  ('202604251114'),
+  ('202604251124');

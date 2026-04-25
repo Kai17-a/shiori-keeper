@@ -95,7 +95,7 @@
 3. `POST /bookmarks` は、無効 URL または title 省略時に 422 を返す。
 4. `POST /bookmarks` は、存在しない `folder_id` に対して 404 を返す。
 5. `GET /bookmarks` は、一覧とページング情報を返す。
-6. `GET /bookmarks` は、`folder_id`、`tag_id`、`q`、`sort`、`page`、`per_page` を受け付ける。
+6. `GET /bookmarks` は、`folder_id`、`tag_id`、`q`、`is_favorite`、`sort`、`page`、`per_page` を受け付ける。
 7. `GET /bookmarks` の `sort` は複数指定でき、指定順に `ORDER BY` を適用する。
 8. `GET /bookmarks` の `sort` に存在しない項目が指定された場合は 422 を返す。
 9. `GET /bookmarks/{id}` は、対象ブックマークを返す。
@@ -215,6 +215,7 @@ Response:
 - `folder_id` でフォルダ絞り込みを行う
 - `tag_id` でタグ絞り込みを行う
 - `q` でタイトル、URL、説明を検索する
+- `is_favorite` でお気に入り状態を絞り込む
 - `page` と `per_page` でページングする
 
 Response:

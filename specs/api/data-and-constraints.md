@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 
 ## 実装上の補足
 
-- `/bookmarks` の一覧は `folder_id`、`tag_id`、`q`、`sort`、`page`、`per_page` を受け付ける
+- `/bookmarks` の一覧は `folder_id`、`tag_id`、`q`、`is_favorite`、`sort`、`page`、`per_page` を受け付ける
 - `/bookmarks` の `sort` は `id`、`url`、`title`、`description`、`folder_id`、`is_favorite`、`created_at`、`updated_at` を受け付ける
 - `/bookmarks` の `sort` は複数指定でき、左から右へ優先度が高い
 - `/bookmarks` の `sort` に存在しない項目が指定された場合は 422 を返す

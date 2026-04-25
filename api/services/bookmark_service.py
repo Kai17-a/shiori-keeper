@@ -101,13 +101,19 @@ class BookmarkService(BookmarkServiceBase):
         folder_id: int | None = None,
         tag_id: int | None = None,
         q: str | None = None,
+        is_favorite: bool | None = None,
         sort: list[str] | None = None,
         page: int = 1,
         per_page: int = 20,
     ) -> BookmarkListResponse:
         with get_db() as conn:
             repo = BookmarkRepository(conn)
-            total = repo.count_all(folder_id=folder_id, tag_id=tag_id, q=q)
+            total = repo.count_all(
+                folder_id=folder_id,
+                tag_id=tag_id,
+                q=q,
+                is_favorite=is_favorite,
+            )
             total_pages = max((total + per_page - 1) // per_page, 1) if total else 0
             page = max(page, 1)
             if total_pages and page > total_pages:
@@ -117,12 +123,20 @@ class BookmarkService(BookmarkServiceBase):
                 folder_id=folder_id,
                 tag_id=tag_id,
                 q=q,
+                is_favorite=is_favorite,
                 order_by=self._build_order_by(sort),
                 limit=per_page,
                 offset=offset,
             )
+            tags_by_bookmark_id = repo.get_tags_by_bookmark_ids(
+                [int(row["id"]) for row in rows]
+            )
             items = [
-                self._build_bookmark_response(repo, repo.normalize_row(row))
+                self._build_bookmark_response(
+                    repo,
+                    repo.normalize_row(row),
+                    tags_by_bookmark_id.get(int(row["id"]), []),
+                )
                 for row in rows
             ]
             return BookmarkListResponse(

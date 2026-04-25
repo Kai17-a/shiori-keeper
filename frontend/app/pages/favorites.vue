@@ -24,7 +24,7 @@
               {{ favoriteBookmarks.length }} favorites
             </p>
             <p class="text-xs uppercase tracking-[0.08em] text-muted">
-              {{ allBookmarks.length }} loaded
+              {{ favoriteBookmarks.length }} loaded
             </p>
           </div>
 
@@ -87,7 +87,7 @@
             subject="this bookmark"
             confirm-label="Delete bookmark"
             :loading="deleting"
-            @cancel="pendingBookmark = null"
+            @cancel="pendingDeleteBookmark = null"
             @confirm="confirmDelete"
           />
         </UPageCard>
@@ -105,17 +105,13 @@ const toast = useSingleToast();
 
 const loading = ref(false);
 const loadError = ref("");
-const allBookmarks = ref<BookmarkResponse[]>([]);
+const favoriteBookmarks = ref<BookmarkResponse[]>([]);
 const folders = ref<FolderResponse[]>([]);
 const tags = ref<TagResponse[]>([]);
 const bookmarkFolderOptions = computed(() => [
   { label: "No folder", value: "" },
   ...folders.value.map((folder) => ({ label: folder.name, value: String(folder.id) })),
 ]);
-
-const favoriteBookmarks = computed(() =>
-  allBookmarks.value.filter((bookmark) => bookmark.is_favorite),
-);
 
 const favoriteBookmarksWithFolderNames = computed(() =>
   mapBookmarksWithFolderNames(favoriteBookmarks.value, folders.value),
@@ -125,20 +121,13 @@ const bookmarkTagOptions = computed(() =>
   tags.value.map((tag) => ({ label: tag.name, value: String(tag.id) })),
 );
 
-const loadAllBookmarks = async () => {
-  const firstPage = await request<BookmarkListResponse>("/bookmarks?per_page=100&page=1");
-  const items = [...firstPage.items];
-
-  for (let page = 2; page <= firstPage.total_pages; page += 1) {
-    const nextPage = await request<BookmarkListResponse>(`/bookmarks?per_page=100&page=${page}`);
-    items.push(...nextPage.items);
-  }
-
-  allBookmarks.value = items;
-  const [foldersRes, tagsRes] = await Promise.all([
+const loadFavoriteBookmarks = async () => {
+  const [bookmarkRes, foldersRes, tagsRes] = await Promise.all([
+    request<BookmarkListResponse>("/bookmarks?is_favorite=true&per_page=100&page=1"),
     request<FolderResponse[]>("/folders"),
     request<TagResponse[]>("/tags"),
   ]);
+  favoriteBookmarks.value = bookmarkRes.items;
   folders.value = foldersRes;
   tags.value = tagsRes;
 };
@@ -149,7 +138,7 @@ async function loadFavorites(showToast = true, toastKind: LoadToastKind = "loade
   loading.value = true;
   loadError.value = "";
   try {
-    await loadAllBookmarks();
+    await loadFavoriteBookmarks();
     if (showToast) {
       toast.show({
         title: toastKind === "loaded" ? "Favorites loaded." : "Favorites refreshed.",
@@ -181,13 +170,14 @@ const {
   deleting,
   loadBookmarkForm,
   modalOpen,
+  pendingDeleteBookmark,
   removeBookmark,
   saveBookmark,
   saving,
 } = useBookmarkEditor({
   request,
   refresh: loadFavorites,
-  findBookmarkById: (id) => allBookmarks.value.find((item) => item.id === id) || null,
+  findBookmarkById: (id) => favoriteBookmarks.value.find((item) => item.id === id) || null,
 });
 
 const selectedBookmarkFolder = computed({
@@ -208,9 +198,11 @@ const toggleFavorite = async (bookmark: BookmarkResponse) => {
       }),
     });
 
-    const index = allBookmarks.value.findIndex((item) => item.id === updated.id);
-    if (index >= 0) {
-      allBookmarks.value[index] = updated;
+    const index = favoriteBookmarks.value.findIndex((item) => item.id === updated.id);
+    if (index >= 0 && updated.is_favorite) {
+      favoriteBookmarks.value[index] = updated;
+    } else if (index >= 0) {
+      favoriteBookmarks.value.splice(index, 1);
     }
 
     toast.show({

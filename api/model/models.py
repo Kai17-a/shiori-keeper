@@ -36,7 +36,12 @@ class Folder(SQLModel, table=True):
 
 class Bookmark(SQLModel, table=True):
     __tablename__: ClassVar[str] = "bookmarks"
-    __table_args__ = (Index("idx_bookmarks_url_unique", "url", unique=True),)
+    __table_args__ = (
+        Index("idx_bookmarks_url_unique", "url", unique=True),
+        Index("idx_bookmarks_created_id", "created_at", "id"),
+        Index("idx_bookmarks_folder_created_id", "folder_id", "created_at", "id"),
+        Index("idx_bookmarks_favorite_created_id", "is_favorite", "created_at", "id"),
+    )
 
     id: int | None = Field(default=None, primary_key=True)
     url: str = Field(sa_column=Column(String, nullable=False))
@@ -72,7 +77,10 @@ class Bookmark(SQLModel, table=True):
 
 class RSSFeed(SQLModel, table=True):
     __tablename__: ClassVar[str] = "rss_feeds"
-    __table_args__ = (Index("idx_rss_feeds_url_unique", "url", unique=True),)
+    __table_args__ = (
+        Index("idx_rss_feeds_url_unique", "url", unique=True),
+        Index("idx_rss_feeds_title_id", "title", "id"),
+    )
 
     id: int | None = Field(default=None, primary_key=True)
     url: str = Field(sa_column=Column(String, nullable=False))
@@ -102,6 +110,7 @@ class RSSFeedArticle(SQLModel, table=True):
     __tablename__: ClassVar[str] = "rss_feed_articles"
     __table_args__ = (
         Index("idx_rss_feed_articles_feed_url_unique", "feed_id", "url", unique=True),
+        Index("idx_rss_feed_articles_feed_published_id", "feed_id", "published", "id"),
     )
 
     id: int | None = Field(default=None, primary_key=True)
@@ -148,6 +157,7 @@ class Tag(SQLModel, table=True):
 
 class BookmarkTag(SQLModel, table=True):
     __tablename__: ClassVar[str] = "bookmark_tags"
+    __table_args__ = (Index("idx_bookmark_tags_tag_bookmark", "tag_id", "bookmark_id"),)
 
     bookmark_id: int = Field(
         sa_column=Column(

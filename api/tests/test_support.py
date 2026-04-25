@@ -219,12 +219,25 @@ class CompatTestClient:
             folder_id = int(query["folder_id"][0]) if "folder_id" in query else None
             tag_id = int(query["tag_id"][0]) if "tag_id" in query else None
             q = query["q"][0] if "q" in query else None
+            is_favorite = (
+                query["is_favorite"][0].lower() == "true"
+                if "is_favorite" in query
+                else None
+            )
             sort = query.get("sort")
             page = int(query.get("page", ["1"])[0])
             per_page = int(query.get("per_page", ["20"])[0])
             payload = (
                 BookmarkService()
-                .list(folder_id, tag_id, q, sort=sort, page=page, per_page=per_page)
+                .list(
+                    folder_id,
+                    tag_id,
+                    q,
+                    is_favorite=is_favorite,
+                    sort=sort,
+                    page=page,
+                    per_page=per_page,
+                )
                 .model_dump()
             )
             return self._ok(BookmarkListPayload(payload), 200)

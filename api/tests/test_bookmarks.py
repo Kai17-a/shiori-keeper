@@ -151,6 +151,23 @@ def test_list_bookmarks_rejects_unknown_sort_field(client):
     assert resp.status_code == 422
 
 
+def test_list_bookmarks_filters_by_is_favorite(client):
+    favorite_id = create_bookmark(
+        client, url="https://favorite.example.com", title="Favorite"
+    ).json()["id"]
+    create_bookmark(client, url="https://regular.example.com", title="Regular")
+    client.patch(
+        "/bookmarks/favorite",
+        json={"bookmark_id": favorite_id, "is_favorite": True},
+    )
+
+    resp = client.get("/bookmarks?is_favorite=true")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["total"] == 1
+    assert [item["title"] for item in body["items"]] == ["Favorite"]
+
+
 def test_get_bookmark_returns_200(client):
     bm_id = create_bookmark(client).json()["id"]
     resp = client.get(f"/bookmarks/{bm_id}")

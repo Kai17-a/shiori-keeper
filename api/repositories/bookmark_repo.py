@@ -23,21 +23,30 @@ class BookmarkRepository:
         return dict(row)
 
     def count_all(
-        self, folder_id: int | None, tag_id: int | None, q: str | None
+        self,
+        folder_id: int | None,
+        tag_id: int | None,
+        q: str | None,
+        is_favorite: bool | None,
     ) -> int:
-        query = "SELECT COUNT(DISTINCT b.id) AS total FROM bookmarks b"
+        query = "SELECT COUNT(*) AS total FROM bookmarks b"
         params: list = []
-
-        if tag_id is not None:
-            query += " INNER JOIN bookmark_tags bt ON b.id = bt.bookmark_id"
 
         conditions: list[str] = []
         if folder_id is not None:
             conditions.append("b.folder_id = ?")
             params.append(folder_id)
         if tag_id is not None:
-            conditions.append("bt.tag_id = ?")
+            conditions.append(
+                "EXISTS ("
+                "SELECT 1 FROM bookmark_tags bt "
+                "WHERE bt.bookmark_id = b.id AND bt.tag_id = ?"
+                ")"
+            )
             params.append(tag_id)
+        if is_favorite is not None:
+            conditions.append("b.is_favorite = ?")
+            params.append(int(is_favorite))
         if q is not None:
             conditions.append("(b.title LIKE ? OR b.url LIKE ?)")
             like = f"%{q}%"
@@ -54,23 +63,29 @@ class BookmarkRepository:
         folder_id: int | None,
         tag_id: int | None,
         q: str | None,
+        is_favorite: bool | None,
         order_by: str,
         limit: int,
         offset: int,
     ) -> list[dict]:
-        query = "SELECT DISTINCT b.* FROM bookmarks b"
+        query = "SELECT b.* FROM bookmarks b"
         params: list = []
-
-        if tag_id is not None:
-            query += " INNER JOIN bookmark_tags bt ON b.id = bt.bookmark_id"
 
         conditions: list[str] = []
         if folder_id is not None:
             conditions.append("b.folder_id = ?")
             params.append(folder_id)
         if tag_id is not None:
-            conditions.append("bt.tag_id = ?")
+            conditions.append(
+                "EXISTS ("
+                "SELECT 1 FROM bookmark_tags bt "
+                "WHERE bt.bookmark_id = b.id AND bt.tag_id = ?"
+                ")"
+            )
             params.append(tag_id)
+        if is_favorite is not None:
+            conditions.append("b.is_favorite = ?")
+            params.append(int(is_favorite))
         if q is not None:
             conditions.append("(b.title LIKE ? OR b.url LIKE ?)")
             like = f"%{q}%"
@@ -183,6 +198,30 @@ class BookmarkRepository:
             (bookmark_id,),
         ).fetchall()
         return [dict(row) for row in rows]
+
+    def get_tags_by_bookmark_ids(self, bookmark_ids: list[int]) -> dict[int, list[dict]]:
+        if not bookmark_ids:
+            return {}
+
+        placeholders = ", ".join("?" for _ in bookmark_ids)
+        rows = self.conn.execute(
+            f"""
+            SELECT bt.bookmark_id, t.id, t.name
+            FROM bookmark_tags bt
+            INNER JOIN tags t ON t.id = bt.tag_id
+            WHERE bt.bookmark_id IN ({placeholders})
+            ORDER BY bt.bookmark_id ASC, t.id ASC
+            """,
+            bookmark_ids,
+        ).fetchall()
+        tags_by_bookmark_id: dict[int, list[dict]] = {
+            bookmark_id: [] for bookmark_id in bookmark_ids
+        }
+        for row in rows:
+            tags_by_bookmark_id[int(row["bookmark_id"])].append(
+                {"id": row["id"], "name": row["name"]}
+            )
+        return tags_by_bookmark_id
 
     def normalize_row(self, row: dict) -> dict:
         normalized = dict(row)

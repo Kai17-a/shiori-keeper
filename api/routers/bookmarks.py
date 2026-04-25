@@ -33,6 +33,7 @@ def list_bookmarks(
     folder_id: int | None = None,
     tag_id: int | None = None,
     q: str | None = None,
+    is_favorite: bool | None = None,
     sort: list[str] | None = Query(default=None),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -42,6 +43,7 @@ def list_bookmarks(
         folder_id=folder_id,
         tag_id=tag_id,
         q=q,
+        is_favorite=is_favorite,
         sort=sort,
         page=page,
         per_page=per_page,
@@ -127,16 +129,16 @@ def delete_bookmark(
     )
 
 
-@router.delete("/{bookmark_id}", status_code=204)
-def delete_bookmark_by_id(
-    bookmark_id: int, service: BookmarkService = Depends(get_bookmark_service)
-):
-    service.delete_by_criteria(bookmark_id=bookmark_id)
-
-
 @router.delete("/by-url", status_code=204)
 def delete_bookmark_by_url(
     url: str = Query(...),
     service: BookmarkService = Depends(get_bookmark_service),
 ):
     service.delete_by_url(url)
+
+
+@router.delete("/{bookmark_id}", status_code=204)
+def delete_bookmark_by_id(
+    bookmark_id: int, service: BookmarkService = Depends(get_bookmark_service)
+):
+    service.delete_by_criteria(bookmark_id=bookmark_id)
