@@ -222,6 +222,41 @@ class BookmarkService(BookmarkServiceBase):
             if not found:
                 raise HTTPException(status_code=404, detail="Bookmark not found")
 
+    def delete_by_criteria(
+        self,
+        bookmark_id: int | None = None,
+        url: str | None = None,
+        title: str | None = None,
+        description: str | None = None,
+        folder_id: int | None = None,
+        is_favorite: bool | None = None,
+    ) -> None:
+        if (
+            bookmark_id is None
+            and url is None
+            and title is None
+            and description is None
+            and folder_id is None
+            and is_favorite is None
+        ):
+            raise HTTPException(
+                status_code=422,
+                detail="At least one bookmark field must be provided",
+            )
+
+        with get_db() as conn:
+            repo = BookmarkRepository(conn)
+            found = repo.delete_by_criteria(
+                bookmark_id=bookmark_id,
+                url=url,
+                title=title,
+                description=description,
+                folder_id=folder_id,
+                is_favorite=is_favorite,
+            )
+            if not found:
+                raise HTTPException(status_code=404, detail="Bookmark not found")
+
     def add_tag(self, bookmark_id: int, tag_id: int) -> BookmarkResponse:
         with get_db() as conn:
             repo = BookmarkRepository(conn)

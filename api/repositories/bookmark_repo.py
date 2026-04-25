@@ -120,6 +120,44 @@ class BookmarkRepository:
         cursor = self.conn.execute("DELETE FROM bookmarks WHERE id = ?", (bookmark_id,))
         return cursor.rowcount > 0
 
+    def delete_by_criteria(
+        self,
+        bookmark_id: int | None = None,
+        url: str | None = None,
+        title: str | None = None,
+        description: str | None = None,
+        folder_id: int | None = None,
+        is_favorite: bool | None = None,
+    ) -> bool:
+        conditions: list[str] = []
+        params: list[object] = []
+        if bookmark_id is not None:
+            conditions.append("id = ?")
+            params.append(bookmark_id)
+        if url is not None:
+            conditions.append("url = ?")
+            params.append(url)
+        if title is not None:
+            conditions.append("title = ?")
+            params.append(title)
+        if description is not None:
+            conditions.append("description = ?")
+            params.append(description)
+        if folder_id is not None:
+            conditions.append("folder_id = ?")
+            params.append(folder_id)
+        if is_favorite is not None:
+            conditions.append("is_favorite = ?")
+            params.append(int(is_favorite))
+
+        if not conditions:
+            return False
+
+        cursor = self.conn.execute(
+            f"DELETE FROM bookmarks WHERE {' AND '.join(conditions)}", params
+        )
+        return cursor.rowcount > 0
+
     def add_tag(self, bookmark_id: int, tag_id: int) -> None:
         # Let sqlite3.IntegrityError propagate on duplicate (PRIMARY KEY violation)
         self.conn.execute(

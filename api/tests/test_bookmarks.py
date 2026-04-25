@@ -247,19 +247,69 @@ def test_unset_bookmark_favorite_returns_200(client):
 
 def test_delete_bookmark_returns_204(client):
     bm_id = create_bookmark(client).json()["id"]
-    resp = client.delete(f"/bookmarks/{bm_id}")
+    resp = client.delete("/bookmarks", params={"id": bm_id})
     assert resp.status_code == 204
 
 
 def test_delete_bookmark_by_url_returns_204(client):
     url = create_bookmark(client).json()["url"]
-    resp = client.delete("/bookmarks", params={"url": url})
+    resp = client.delete("/bookmarks/by-url", params={"url": url})
     assert resp.status_code == 204
+
+
+def test_delete_bookmark_by_title_returns_204(client):
+    title = "Delete Me"
+    create_bookmark(client, url="https://delete-by-title.example.com", title=title)
+    resp = client.delete("/bookmarks", params={"title": title})
+    assert resp.status_code == 204
+
+
+def test_delete_bookmark_by_url_and_title_returns_204(client):
+    title = "Delete Together"
+    url = create_bookmark(client, url="https://delete-together.example.com", title=title).json()["url"]
+    resp = client.delete("/bookmarks", params={"url": url, "title": title})
+    assert resp.status_code == 204
+
+
+def test_delete_bookmark_by_id_returns_204(client):
+    bm_id = create_bookmark(client).json()["id"]
+    resp = client.delete("/bookmarks", params={"id": bm_id})
+    assert resp.status_code == 204
+
+
+def test_delete_bookmark_by_folder_id_returns_204(client):
+    folder_id = create_folder(client).json()["id"]
+    create_bookmark(client, url="https://folder-delete.example.com", folder_id=folder_id)
+    resp = client.delete("/bookmarks", params={"folder_id": folder_id})
+    assert resp.status_code == 204
+
+
+def test_delete_bookmark_by_is_favorite_returns_204(client):
+    bm_id = create_bookmark(client).json()["id"]
+    client.patch(
+        "/bookmarks/favorite", json={"bookmark_id": bm_id, "is_favorite": True}
+    )
+    resp = client.delete("/bookmarks", params={"is_favorite": True})
+    assert resp.status_code == 204
+
+
+def test_delete_bookmark_by_url_and_title_returns_404_when_not_matching_and(client):
+    create_bookmark(client, url="https://keep.example.com", title="Keep")
+    resp = client.delete(
+        "/bookmarks",
+        params={"url": "https://keep.example.com", "title": "Wrong"},
+    )
+    assert resp.status_code == 404
+
+
+def test_delete_bookmark_without_criteria_returns_422(client):
+    resp = client.delete("/bookmarks")
+    assert resp.status_code == 422
 
 
 def test_deleted_bookmark_returns_404(client):
     bm_id = create_bookmark(client).json()["id"]
-    client.delete(f"/bookmarks/{bm_id}")
+    client.delete("/bookmarks", params={"id": bm_id})
     resp = client.get(f"/bookmarks/{bm_id}")
     assert resp.status_code == 404
 
@@ -296,11 +346,6 @@ def test_get_nonexistent_bookmark_returns_404(client):
 
 def test_update_nonexistent_bookmark_returns_404(client):
     resp = client.patch("/bookmarks/99999", json={"title": "X"})
-    assert resp.status_code == 404
-
-
-def test_delete_nonexistent_bookmark_returns_404(client):
-    resp = client.delete("/bookmarks/99999")
     assert resp.status_code == 404
 
 

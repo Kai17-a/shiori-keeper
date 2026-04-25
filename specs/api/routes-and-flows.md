@@ -9,8 +9,8 @@
 | GET    | `/bookmarks/{id}`               | ブックマーク詳細取得             |
 | PATCH  | `/bookmarks/{id}`               | ブックマーク部分更新             |
 | PATCH  | `/bookmarks/by-url`             | URL 指定ブックマーク部分更新     |
-| DELETE | `/bookmarks/{id}`               | ブックマーク削除                 |
-| DELETE | `/bookmarks?url=...`            | URL 指定ブックマーク削除         |
+| DELETE | `/bookmarks`                    | 条件指定ブックマーク削除         |
+| DELETE | `/bookmarks/by-url`             | URL 指定ブックマーク削除         |
 | PATCH  | `/bookmarks/favorite`           | ブックマークのお気に入り状態更新 |
 | POST   | `/bookmarks/{id}/tags`          | ブックマークへタグ付与           |
 | DELETE | `/bookmarks/{id}/tags/{tag_id}` | ブックマークからタグ解除         |
@@ -101,9 +101,12 @@
 9. `GET /bookmarks/{id}` は、対象ブックマークを返す。
 10. `PATCH /bookmarks/{id}` は、部分更新を行い更新後リソースを返す。
 11. `PATCH /bookmarks/by-url` は、URL で対象ブックマークを特定して部分更新を行う。
-12. `DELETE /bookmarks/{id}` は、204 を返す。
-13. `DELETE /bookmarks?url=...` は、指定 URL のブックマークを削除し、204 を返す。
-14. `PATCH /bookmarks/favorite` は、お気に入り状態を更新し更新後リソースを返す。
+12. `DELETE /bookmarks` は、条件に一致するブックマークを削除し、204 を返す。
+13. `DELETE /bookmarks` は、`id`、`url`、`title`、`description`、`folder_id`、`is_favorite` を受け付ける。
+14. `DELETE /bookmarks` は、指定した条件をすべて AND で評価する。
+15. `DELETE /bookmarks` は、どの条件も指定されない場合に 422 を返す。
+16. `DELETE /bookmarks/by-url` は、URL で対象ブックマークを特定して削除し、204 を返す。
+17. `PATCH /bookmarks/favorite` は、お気に入り状態を更新し更新後リソースを返す。
 
 ### フォルダ
 
@@ -235,10 +238,11 @@ Response:
 - `PATCH /bookmarks/{id}` と同じ更新ルールを使う
 - 存在しない URL は 404 を返す
 
-### `DELETE /bookmarks?url=...`
+### `DELETE /bookmarks?...`
 
-- `url` クエリパラメータで対象ブックマークを特定する
-- 存在しない URL は 404 を返す
+- `id`、`url`、`title`、`description`、`folder_id`、`is_favorite` のうち 1 つ以上のクエリパラメータで対象ブックマークを特定する
+- 指定された条件をすべて AND で満たすブックマークを削除する
+- どの条件も指定されない場合は 422 を返す
 - 成功時は 204 を返す
 
 ### `PATCH /bookmarks/{id}`

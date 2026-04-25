@@ -160,9 +160,9 @@ class CompatTestClient:
             payload = RSSFeedService().create(body).model_dump()
             return self._ok(payload, 201)
         if method == "GET" and path == "/rss-feeds":
-            q = query.get("q")
-            page = int(query.get("page", "1"))
-            per_page = int(query.get("per_page", "20"))
+            q = query.get("q", [None])[0]
+            page = int(query.get("page", ["1"])[0])
+            per_page = int(query.get("per_page", ["20"])[0])
             payload = (
                 RSSFeedService().list(q=q, page=page, per_page=per_page).model_dump()
             )
@@ -170,11 +170,11 @@ class CompatTestClient:
         if method == "GET" and path.startswith("/rss-feeds/") and path.endswith("/articles"):
             parts = path.strip("/").split("/")
             feed_id = int(parts[1])
-            q = query.get("q")
-            page = int(query.get("page", "1"))
-            per_page = int(query.get("per_page", "20"))
-            published_from = query.get("published_from")
-            published_to = query.get("published_to")
+            q = query.get("q", [None])[0]
+            page = int(query.get("page", ["1"])[0])
+            per_page = int(query.get("per_page", ["20"])[0])
+            published_from = query.get("published_from", [None])[0]
+            published_to = query.get("published_to", [None])[0]
             payload = (
                 RSSFeedService()
                 .list_articles(
@@ -245,15 +245,31 @@ class CompatTestClient:
                 BookmarkService().update(int(path.rsplit("/", 1)[1]), body).model_dump()
             )
             return self._ok(payload, 200)
-        if (
-            method == "DELETE"
-            and path.startswith("/bookmarks/")
-            and "/tags" not in path
-        ):
-            BookmarkService().delete(int(path.rsplit("/", 1)[1]))
+        if method == "DELETE" and path == "/bookmarks":
+            bookmark_id = int(query["id"][0]) if "id" in query else None
+            url = query["url"][0] if "url" in query else None
+            title = query["title"][0] if "title" in query else None
+            description = query["description"][0] if "description" in query else None
+            folder_id = int(query["folder_id"][0]) if "folder_id" in query else None
+            is_favorite = (
+                query["is_favorite"][0].lower() == "true"
+                if "is_favorite" in query
+                else None
+            )
+            BookmarkService().delete_by_criteria(
+                bookmark_id=bookmark_id,
+                url=url,
+                title=title,
+                description=description,
+                folder_id=folder_id,
+                is_favorite=is_favorite,
+            )
             return self._ok(status_code=204)
-        if method == "DELETE" and path == "/bookmarks" and "url" in query:
+        if method == "DELETE" and path == "/bookmarks/by-url" and "url" in query:
             BookmarkService().delete_by_url(query["url"][0])
+            return self._ok(status_code=204)
+        if method == "DELETE" and path.startswith("/bookmarks/") and "/tags" not in path:
+            BookmarkService().delete_by_criteria(bookmark_id=int(path.rsplit("/", 1)[1]))
             return self._ok(status_code=204)
         if (
             method == "POST"

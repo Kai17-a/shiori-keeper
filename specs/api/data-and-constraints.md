@@ -149,6 +149,9 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `/bookmarks/{id}` は詳細取得と更新対象を兼ねる
 - `GET /folders/{id}` は単一フォルダを ID で取得する
 - `GET /tags/{id}` は単一タグを ID で取得する
+- `DELETE /bookmarks` は `id`、`url`、`title`、`description`、`folder_id`、`is_favorite` の任意組み合わせで対象ブックマークを特定する
+- `DELETE /bookmarks` は指定した条件を AND で評価する
+- `DELETE /bookmarks` は条件未指定時に 422 を返す
 - `PATCH /bookmarks/by-url` は URL で対象ブックマークを特定する
 - `PATCH /folders/{id}` と `PATCH /tags/{id}` は partial update として `name` の省略を許可する
 - `/bookmarks/{id}/tags` はタグ付与、`DELETE /bookmarks/{id}/tags/{tag_id}` は解除を担当する

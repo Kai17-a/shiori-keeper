@@ -107,14 +107,34 @@ def update_bookmark(
     return service.update(bookmark_id, body)
 
 
-@router.delete("/{bookmark_id}", status_code=204)
+@router.delete("", status_code=204)
 def delete_bookmark(
+    bookmark_id: int | None = Query(default=None, alias="id"),
+    url: str | None = Query(default=None),
+    title: str | None = Query(default=None),
+    description: str | None = Query(default=None),
+    folder_id: int | None = Query(default=None),
+    is_favorite: bool | None = Query(default=None),
+    service: BookmarkService = Depends(get_bookmark_service),
+):
+    service.delete_by_criteria(
+        bookmark_id=bookmark_id,
+        url=url,
+        title=title,
+        description=description,
+        folder_id=folder_id,
+        is_favorite=is_favorite,
+    )
+
+
+@router.delete("/{bookmark_id}", status_code=204)
+def delete_bookmark_by_id(
     bookmark_id: int, service: BookmarkService = Depends(get_bookmark_service)
 ):
-    service.delete(bookmark_id)
+    service.delete_by_criteria(bookmark_id=bookmark_id)
 
 
-@router.delete("", status_code=204)
+@router.delete("/by-url", status_code=204)
 def delete_bookmark_by_url(
     url: str = Query(...),
     service: BookmarkService = Depends(get_bookmark_service),
