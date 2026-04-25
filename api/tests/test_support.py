@@ -110,9 +110,9 @@ class CompatTestClient:
     def _error(self, status_code: int, detail):
         return Response(status_code=status_code, payload={"detail": detail})
 
-    def _parse(self, url: str) -> tuple[str, dict[str, str]]:
+    def _parse(self, url: str) -> tuple[str, dict[str, list[str]]]:
         parsed = urlparse(url)
-        query = {k: v[0] for k, v in parse_qs(parsed.query).items()}
+        query = parse_qs(parsed.query)
         return parsed.path, query
 
     def _serialize(self, items):
@@ -216,14 +216,15 @@ class CompatTestClient:
             payload = BookmarkService().create(body).model_dump()
             return self._ok(payload, 201)
         if method == "GET" and path == "/bookmarks":
-            folder_id = int(query["folder_id"]) if "folder_id" in query else None
-            tag_id = int(query["tag_id"]) if "tag_id" in query else None
-            q = query.get("q")
-            page = int(query.get("page", "1"))
-            per_page = int(query.get("per_page", "20"))
+            folder_id = int(query["folder_id"][0]) if "folder_id" in query else None
+            tag_id = int(query["tag_id"][0]) if "tag_id" in query else None
+            q = query["q"][0] if "q" in query else None
+            sort = query.get("sort")
+            page = int(query.get("page", ["1"])[0])
+            per_page = int(query.get("per_page", ["20"])[0])
             payload = (
                 BookmarkService()
-                .list(folder_id, tag_id, q, page=page, per_page=per_page)
+                .list(folder_id, tag_id, q, sort=sort, page=page, per_page=per_page)
                 .model_dump()
             )
             return self._ok(BookmarkListPayload(payload), 200)
@@ -236,7 +237,7 @@ class CompatTestClient:
             return self._ok(payload, 200)
         if method == "PATCH" and path == "/bookmarks/by-url" and "url" in query:
             body = BookmarkUpdate(**(json or {}))
-            payload = BookmarkService().update_by_url(query["url"], body).model_dump()
+            payload = BookmarkService().update_by_url(query["url"][0], body).model_dump()
             return self._ok(payload, 200)
         if method == "PATCH" and path.startswith("/bookmarks/") and "/tags" not in path:
             body = BookmarkUpdate(**(json or {}))
@@ -252,7 +253,7 @@ class CompatTestClient:
             BookmarkService().delete(int(path.rsplit("/", 1)[1]))
             return self._ok(status_code=204)
         if method == "DELETE" and path == "/bookmarks" and "url" in query:
-            BookmarkService().delete_by_url(query["url"])
+            BookmarkService().delete_by_url(query["url"][0])
             return self._ok(status_code=204)
         if (
             method == "POST"

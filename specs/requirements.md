@@ -32,13 +32,14 @@ API は Python で実装し、データストアには SQLite を使用する。
 3. IF Clientが無効なURL形式を送信したとき、THEN THE API SHALL HTTPステータス422を返す。
 4. IF Clientが `title` を省略したとき、THEN THE API SHALL HTTPステータス422を返す。
 5. IF Clientが存在しない `folder_id` を指定したとき、THEN THE API SHALL HTTPステータス404を返す。
-6. WHEN Clientが `GET /bookmarks` にリクエストを送信したとき、THE API SHALL ブックマーク一覧を返し、`folder_id`、`tag_id`、`q`、`page`、`per_page` による絞り込みとページングをサポートする。
-7. WHEN Clientが `GET /bookmarks/{id}` にリクエストを送信したとき、THE API SHALL 指定IDのブックマークを返す。
-8. WHEN Clientが `PATCH /bookmarks/{id}` にリクエストを送信したとき、THE API SHALL 指定ブックマークを部分更新し、更新後のブックマークを返す。
-9. WHEN Clientが `PATCH /bookmarks/by-url?url=...` にリクエストを送信したとき、THE API SHALL 指定URLのブックマークを部分更新し、更新後のブックマークを返す。
-10. WHEN Clientが `DELETE /bookmarks/{id}` にリクエストを送信したとき、THE API SHALL 指定ブックマークを削除し、HTTPステータス204を返す。
-11. WHEN Clientが `DELETE /bookmarks?url=...` にリクエストを送信したとき、THE API SHALL 指定URLのブックマークを削除し、HTTPステータス204を返す。
-12. WHEN Clientが `PATCH /bookmarks/favorite` にリクエストを送信したとき、THE API SHALL 指定ブックマークのお気に入り状態を更新し、更新後のブックマークを返す。
+6. WHEN Clientが `GET /bookmarks` にリクエストを送信したとき、THE API SHALL ブックマーク一覧を返し、`folder_id`、`tag_id`、`q`、`sort`、`page`、`per_page` による絞り込み、ソート、ページングをサポートする。
+7. WHEN Clientが `GET /bookmarks` に存在しない `sort` 項目を含めてリクエストを送信したとき、THE API SHALL HTTPステータス422を返す。
+8. WHEN Clientが `GET /bookmarks/{id}` にリクエストを送信したとき、THE API SHALL 指定IDのブックマークを返す。
+9. WHEN Clientが `PATCH /bookmarks/{id}` にリクエストを送信したとき、THE API SHALL 指定ブックマークを部分更新し、更新後のブックマークを返す。
+10. WHEN Clientが `PATCH /bookmarks/by-url?url=...` にリクエストを送信したとき、THE API SHALL 指定URLのブックマークを部分更新し、更新後のブックマークを返す。
+11. WHEN Clientが `DELETE /bookmarks/{id}` にリクエストを送信したとき、THE API SHALL 指定ブックマークを削除し、HTTPステータス204を返す。
+12. WHEN Clientが `DELETE /bookmarks?url=...` にリクエストを送信したとき、THE API SHALL 指定URLのブックマークを削除し、HTTPステータス204を返す。
+13. WHEN Clientが `PATCH /bookmarks/favorite` にリクエストを送信したとき、THE API SHALL 指定ブックマークのお気に入り状態を更新し、更新後のブックマークを返す。
 
 ### 要件2: フォルダ管理
 
@@ -124,4 +125,3 @@ API は Python で実装し、データストアには SQLite を使用する。
 9. IF webhook URL が未設定の状態で `POST /rss-feeds/{id}/execute` が呼ばれたとき、THEN THE API SHALL HTTP ステータス 400 を返す。
 10. IF webhook 通知に失敗したとき、THEN THE API SHALL HTTP ステータス 502 を返す。
 11. THE API SHALL アルファ版では Discord webhook のみを正式対応とする。
-

@@ -33,12 +33,18 @@ def list_bookmarks(
     folder_id: int | None = None,
     tag_id: int | None = None,
     q: str | None = None,
+    sort: list[str] | None = Query(default=None),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     service: BookmarkService = Depends(get_bookmark_service),
 ):
     return service.list(
-        folder_id=folder_id, tag_id=tag_id, q=q, page=page, per_page=per_page
+        folder_id=folder_id,
+        tag_id=tag_id,
+        q=q,
+        sort=sort,
+        page=page,
+        per_page=per_page,
     )
 
 

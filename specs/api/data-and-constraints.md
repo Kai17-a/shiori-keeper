@@ -142,7 +142,10 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 
 ## 実装上の補足
 
-- `/bookmarks` の一覧は `folder_id`、`tag_id`、`q`、`page`、`per_page` を受け付ける
+- `/bookmarks` の一覧は `folder_id`、`tag_id`、`q`、`sort`、`page`、`per_page` を受け付ける
+- `/bookmarks` の `sort` は `id`、`url`、`title`、`description`、`folder_id`、`is_favorite`、`created_at`、`updated_at` を受け付ける
+- `/bookmarks` の `sort` は複数指定でき、左から右へ優先度が高い
+- `/bookmarks` の `sort` に存在しない項目が指定された場合は 422 を返す
 - `/bookmarks/{id}` は詳細取得と更新対象を兼ねる
 - `GET /folders/{id}` は単一フォルダを ID で取得する
 - `GET /tags/{id}` は単一タグを ID で取得する

@@ -17,6 +17,44 @@ from api.services.bookmark_base import BookmarkServiceBase
 
 
 class BookmarkService(BookmarkServiceBase):
+    def _build_order_by(self, sort: list[str] | None) -> str:
+        allowed_fields = {
+            "id": "b.id",
+            "url": "b.url",
+            "title": "b.title",
+            "description": "b.description",
+            "folder_id": "b.folder_id",
+            "is_favorite": "b.is_favorite",
+            "created_at": "b.created_at",
+            "updated_at": "b.updated_at",
+        }
+
+        if not sort:
+            return "ORDER BY b.created_at DESC, b.id DESC"
+
+        clauses: list[str] = []
+        for item in sort:
+            direction = "ASC"
+            field = item
+            if item.startswith("-"):
+                direction = "DESC"
+                field = item[1:]
+            elif item.startswith("+"):
+                field = item[1:]
+
+            column = allowed_fields.get(field)
+            if column is None:
+                from fastapi import HTTPException
+
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Invalid sort field: {field}",
+                )
+            clauses.append(f"{column} {direction}")
+
+        clauses.append("b.id DESC")
+        return "ORDER BY " + ", ".join(clauses)
+
     def _verify_folder(self, conn, folder_id: int) -> None:
         folder_repo = FolderRepository(conn)
         if folder_repo.find_by_id(folder_id) is None:
@@ -63,6 +101,7 @@ class BookmarkService(BookmarkServiceBase):
         folder_id: int | None = None,
         tag_id: int | None = None,
         q: str | None = None,
+        sort: list[str] | None = None,
         page: int = 1,
         per_page: int = 20,
     ) -> BookmarkListResponse:
@@ -75,7 +114,12 @@ class BookmarkService(BookmarkServiceBase):
                 page = total_pages
             offset = (page - 1) * per_page
             rows = repo.find_all(
-                folder_id=folder_id, tag_id=tag_id, q=q, limit=per_page, offset=offset
+                folder_id=folder_id,
+                tag_id=tag_id,
+                q=q,
+                order_by=self._build_order_by(sort),
+                limit=per_page,
+                offset=offset,
             )
             items = [
                 self._build_bookmark_response(repo, repo.normalize_row(row))

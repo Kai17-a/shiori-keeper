@@ -54,6 +54,7 @@ class BookmarkRepository:
         folder_id: int | None,
         tag_id: int | None,
         q: str | None,
+        order_by: str,
         limit: int,
         offset: int,
     ) -> list[dict]:
@@ -78,7 +79,7 @@ class BookmarkRepository:
         if conditions:
             query += " WHERE " + " AND ".join(conditions)
 
-        query += " ORDER BY b.created_at DESC, b.id DESC LIMIT ? OFFSET ?"
+        query += f" {order_by} LIMIT ? OFFSET ?"
         params.extend([limit, offset])
 
         rows = self.conn.execute(query, params).fetchall()

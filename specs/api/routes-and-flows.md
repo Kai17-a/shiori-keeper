@@ -95,13 +95,15 @@
 3. `POST /bookmarks` は、無効 URL または title 省略時に 422 を返す。
 4. `POST /bookmarks` は、存在しない `folder_id` に対して 404 を返す。
 5. `GET /bookmarks` は、一覧とページング情報を返す。
-6. `GET /bookmarks` は、`folder_id`、`tag_id`、`q`、`page`、`per_page` を受け付ける。
-7. `GET /bookmarks/{id}` は、対象ブックマークを返す。
-8. `PATCH /bookmarks/{id}` は、部分更新を行い更新後リソースを返す。
-9. `PATCH /bookmarks/by-url` は、URL で対象ブックマークを特定して部分更新を行う。
-10. `DELETE /bookmarks/{id}` は、204 を返す。
-11. `DELETE /bookmarks?url=...` は、指定 URL のブックマークを削除し、204 を返す。
-12. `PATCH /bookmarks/favorite` は、お気に入り状態を更新し更新後リソースを返す。
+6. `GET /bookmarks` は、`folder_id`、`tag_id`、`q`、`sort`、`page`、`per_page` を受け付ける。
+7. `GET /bookmarks` の `sort` は複数指定でき、指定順に `ORDER BY` を適用する。
+8. `GET /bookmarks` の `sort` に存在しない項目が指定された場合は 422 を返す。
+9. `GET /bookmarks/{id}` は、対象ブックマークを返す。
+10. `PATCH /bookmarks/{id}` は、部分更新を行い更新後リソースを返す。
+11. `PATCH /bookmarks/by-url` は、URL で対象ブックマークを特定して部分更新を行う。
+12. `DELETE /bookmarks/{id}` は、204 を返す。
+13. `DELETE /bookmarks?url=...` は、指定 URL のブックマークを削除し、204 を返す。
+14. `PATCH /bookmarks/favorite` は、お気に入り状態を更新し更新後リソースを返す。
 
 ### フォルダ
 

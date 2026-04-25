@@ -120,6 +120,37 @@ def test_list_bookmarks_accepts_page_and_per_page(client):
     assert len(body["items"]) == 2
 
 
+def test_list_bookmarks_accepts_multiple_sort_fields(client):
+    create_bookmark(client, url="https://example.com/c", title="C")
+    create_bookmark(client, url="https://example.com/a", title="A")
+    create_bookmark(client, url="https://example.com/b", title="A")
+
+    resp = client.get("/bookmarks?sort=title&sort=url")
+    assert resp.status_code == 200
+    titles_and_urls = [(b["title"], b["url"]) for b in resp.json()["items"]]
+    assert titles_and_urls == [
+        ("A", "https://example.com/a"),
+        ("A", "https://example.com/b"),
+        ("C", "https://example.com/c"),
+    ]
+
+
+def test_list_bookmarks_accepts_desc_sort_prefix(client):
+    create_bookmark(client, url="https://example.com/a", title="A")
+    create_bookmark(client, url="https://example.com/c", title="C")
+    create_bookmark(client, url="https://example.com/b", title="B")
+
+    resp = client.get("/bookmarks?sort=-title")
+    assert resp.status_code == 200
+    titles = [b["title"] for b in resp.json()["items"]]
+    assert titles == ["C", "B", "A"]
+
+
+def test_list_bookmarks_rejects_unknown_sort_field(client):
+    resp = client.get("/bookmarks?sort=unknown")
+    assert resp.status_code == 422
+
+
 def test_get_bookmark_returns_200(client):
     bm_id = create_bookmark(client).json()["id"]
     resp = client.get(f"/bookmarks/{bm_id}")
