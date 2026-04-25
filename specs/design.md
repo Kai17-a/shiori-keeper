@@ -4,8 +4,8 @@
 
 本ドキュメントは、ブックマーク管理システムの技術設計を定義する。
 Python で API サーバーを実装し、SQLite をデータストアとして使用する。
-加えて、Rust の `batch` で RSS 定期巡回と Discord webhook 通知を担当し、`chrome-extension/` でブラウザからのブックマーク登録 UI を提供する。
-ブックマーク・RSS フィード・フォルダ・タグ・設定の CRUD と、ブックマークへのタグ付与・解除、RSS 実行による Discord webhook 通知を提供する。
+加えて、Rust の `batch` で RSS 定期巡回と webhook 通知を担当し、`browser_extension/` でブラウザからのブックマーク登録 UI を提供する。
+ブックマーク・RSS フィード・フォルダ・タグ・設定の CRUD と、ブックマークへのタグ付与・解除、RSS 実行による Discord または Microsoft Teams webhook 通知を提供する。
 
 ### 技術スタック
 
@@ -61,7 +61,7 @@ SQLite Database
               │
               ▼
 ┌─────────────────────────────┐
-│  Discord Webhook            │
+│  Webhook                    │
 └─────────────────────────────┘
 ```
 
@@ -78,7 +78,7 @@ Active Browser Tab
     ▼
 ┌─────────────────────────────┐
 │  Chrome Extension Popup     │
-│  chrome-extension/          │
+│  browser_extension/         │
 └─────────────┬───────────────┘
               │
               ▼
@@ -106,10 +106,14 @@ shiori-keeper/
 │   ├── services/
 │   └── repositories/
 ├── frontend/
-├── chrome-extension/
+├── browser_extension/
 └── specs/
     ├── requirements.md
     ├── design.md
+    ├── batch/
+    ├── api/
+    ├── frontend/
+    ├── chrome-extension/
     ├── tasks.md
     └── test-observations/
 ├── batch/
@@ -131,28 +135,34 @@ shiori-keeper/
 | ------ | ------------------------------- | ------------------------ |
 | POST   | `/bookmarks`                    | ブックマーク作成         |
 | GET    | `/bookmarks`                    | ブックマーク一覧取得     |
+| GET    | `/bookmarks/by-url`             | URL 指定ブックマーク取得 |
 | GET    | `/bookmarks/{id}`               | ブックマーク詳細取得     |
 | PATCH  | `/bookmarks/{id}`               | ブックマーク部分更新     |
 | PATCH  | `/bookmarks/by-url`             | URL 指定ブックマーク更新 |
-| DELETE | `/bookmarks/{id}`               | ブックマーク削除         |
-| DELETE | `/bookmarks?url=...`            | URL 指定ブックマーク削除 |
+| DELETE | `/bookmarks`                    | 条件指定ブックマーク削除 |
+| DELETE | `/bookmarks/by-url`             | URL 指定ブックマーク削除 |
+| DELETE | `/bookmarks/{id}`               | ID 指定ブックマーク削除  |
 | PATCH  | `/bookmarks/favorite`           | ブックマークのお気に入り状態更新 |
 | POST   | `/bookmarks/{id}/tags`          | ブックマークへタグ付与   |
 | DELETE | `/bookmarks/{id}/tags/{tag_id}` | ブックマークからタグ解除 |
 | GET    | `/metrics/dashboard`            | ダッシュボード集計取得   |
 | POST   | `/folders`                      | フォルダ作成             |
 | GET    | `/folders`                      | フォルダ一覧取得         |
+| GET    | `/folders/{id}`                 | フォルダ詳細取得         |
 | PATCH  | `/folders/{id}`                 | フォルダ更新             |
 | DELETE | `/folders/{id}`                 | フォルダ削除             |
 | POST   | `/tags`                         | タグ作成                 |
 | GET    | `/tags`                         | タグ一覧取得             |
+| GET    | `/tags/{id}`                    | タグ詳細取得             |
 | PATCH  | `/tags/{id}`                    | タグ更新                 |
 | DELETE | `/tags/{id}`                    | タグ削除                 |
-| PUT    | `/settings/webhook`             | Discord webhook 設定     |
-| GET    | `/settings/webhook`             | Discord webhook 取得     |
-| POST   | `/settings/webhook/ping`        | Discord webhook 疎通確認 |
+| PUT    | `/settings/webhook`             | webhook 設定             |
+| GET    | `/settings/webhook`             | webhook 取得             |
+| POST   | `/settings/webhook/ping`        | webhook 疎通確認         |
 | GET    | `/settings/rss-execution`       | RSS 定期実行設定取得     |
 | PUT    | `/settings/rss-execution`       | RSS 定期実行設定更新     |
+| GET    | `/settings/rss-webhook-notification` | RSS 定期実行 webhook 通知設定取得 |
+| PUT    | `/settings/rss-webhook-notification` | RSS 定期実行 webhook 通知設定更新 |
 | POST   | `/rss-feeds`                    | RSS フィード作成         |
 | GET    | `/rss-feeds`                    | RSS フィード一覧取得     |
 | GET    | `/rss-feeds/{id}`               | RSS フィード詳細取得     |
@@ -224,6 +234,7 @@ CREATE UNIQUE INDEX idx_rss_feed_articles_feed_url_unique
 CREATE TABLE IF NOT EXISTS app_settings (
     key         TEXT    PRIMARY KEY,
     value       TEXT    NOT NULL,
+    rss_periodic_execution_enabled INTEGER NOT NULL DEFAULT 0,
     updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -247,7 +258,7 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - SQLite の外部キー制約は接続時に `PRAGMA foreign_keys = ON` で有効化する
 - `bookmarks.url`、`rss_feeds.url`、`folders.name`、`tags.name` は DB 一意制約と事前チェックの両方で重複を防ぐ
 - `app_settings` はアプリ全体設定のキーバリューストアとして扱う
-- `default_webhook_url` は Discord webhook URL だけを許可する
+- `default_webhook_url` は Discord または Microsoft Teams webhook URL だけを許可する
 - `rss_periodic_execution_enabled` は RSS 定期実行の有効/無効を保持する
 - `rss_webhook_notification_enabled` は RSS 定期実行時に webhook 通知を送るかを保持する
 - `rss_feeds.notify_webhook_enabled` は batch による RSS 定期実行時に webhook 通知するかを保持する

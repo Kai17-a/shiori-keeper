@@ -6,28 +6,34 @@
 | ------ | ------------------------------- | -------------------------------- |
 | POST   | `/bookmarks`                    | ブックマーク作成                 |
 | GET    | `/bookmarks`                    | ブックマーク一覧取得             |
+| GET    | `/bookmarks/by-url`             | URL 指定ブックマーク取得         |
 | GET    | `/bookmarks/{id}`               | ブックマーク詳細取得             |
 | PATCH  | `/bookmarks/{id}`               | ブックマーク部分更新             |
 | PATCH  | `/bookmarks/by-url`             | URL 指定ブックマーク部分更新     |
 | DELETE | `/bookmarks`                    | 条件指定ブックマーク削除         |
 | DELETE | `/bookmarks/by-url`             | URL 指定ブックマーク削除         |
+| DELETE | `/bookmarks/{id}`               | ID 指定ブックマーク削除          |
 | PATCH  | `/bookmarks/favorite`           | ブックマークのお気に入り状態更新 |
 | POST   | `/bookmarks/{id}/tags`          | ブックマークへタグ付与           |
 | DELETE | `/bookmarks/{id}/tags/{tag_id}` | ブックマークからタグ解除         |
 | GET    | `/metrics/dashboard`            | ダッシュボード用集計取得         |
 | POST   | `/folders`                      | フォルダ作成                     |
 | GET    | `/folders`                      | フォルダ一覧取得                 |
+| GET    | `/folders/{id}`                 | フォルダ詳細取得                 |
 | PATCH  | `/folders/{id}`                 | フォルダ更新                     |
 | DELETE | `/folders/{id}`                 | フォルダ削除                     |
 | POST   | `/tags`                         | タグ作成                         |
 | GET    | `/tags`                         | タグ一覧取得                     |
+| GET    | `/tags/{id}`                    | タグ詳細取得                     |
 | PATCH  | `/tags/{id}`                    | タグ更新                         |
 | DELETE | `/tags/{id}`                    | タグ削除                         |
-| PUT    | `/settings/webhook`             | Discord webhook 設定             |
-| GET    | `/settings/webhook`             | Discord webhook 取得             |
-| POST   | `/settings/webhook/ping`        | Discord webhook 疎通確認         |
+| PUT    | `/settings/webhook`             | webhook 設定                     |
+| GET    | `/settings/webhook`             | webhook 取得                     |
+| POST   | `/settings/webhook/ping`        | webhook 疎通確認                 |
 | GET    | `/settings/rss-execution`       | RSS 定期実行設定取得             |
 | PUT    | `/settings/rss-execution`       | RSS 定期実行設定更新             |
+| GET    | `/settings/rss-webhook-notification` | RSS 定期実行 webhook 通知設定取得 |
+| PUT    | `/settings/rss-webhook-notification` | RSS 定期実行 webhook 通知設定更新 |
 | POST   | `/rss-feeds`                    | RSS フィード作成                 |
 | GET    | `/rss-feeds`                    | RSS フィード一覧取得             |
 | GET    | `/rss-feeds/{id}`               | RSS フィード詳細取得             |
@@ -44,6 +50,7 @@
 - URL とタイトルを入力して作成する
 - 一覧で検索・ページング・絞り込みを行う
 - 詳細を確認して編集または削除する
+- URL 指定で詳細取得する
 - URL 指定で詳細なしに部分更新する
 - 必要に応じてタグを追加・削除する
 - 必要に応じてお気に入り状態を切り替える
@@ -66,10 +73,11 @@
 
 ### 設定
 
-- Discord webhook URL を保存する
+- Discord または Microsoft Teams webhook URL を保存する
 - webhook の疎通確認を行う
 - 未設定時の webhook 取得は 404 を返す
 - RSS 定期実行の有効/無効を切り替える
+- RSS 定期実行時に webhook 通知を送るかどうかを切り替える
 
 ### RSS
 
@@ -99,32 +107,36 @@
 7. `GET /bookmarks` の `sort` は複数指定でき、指定順に `ORDER BY` を適用する。
 8. `GET /bookmarks` の `sort` に存在しない項目が指定された場合は 422 を返す。
 9. `GET /bookmarks/{id}` は、対象ブックマークを返す。
-10. `PATCH /bookmarks/{id}` は、部分更新を行い更新後リソースを返す。
-11. `PATCH /bookmarks/by-url` は、URL で対象ブックマークを特定して部分更新を行う。
-12. `DELETE /bookmarks` は、条件に一致するブックマークを削除し、204 を返す。
-13. `DELETE /bookmarks` は、`id`、`url`、`title`、`description`、`folder_id`、`is_favorite` を受け付ける。
-14. `DELETE /bookmarks` は、指定した条件をすべて AND で評価する。
-15. `DELETE /bookmarks` は、どの条件も指定されない場合に 422 を返す。
-16. `DELETE /bookmarks/by-url` は、URL で対象ブックマークを特定して削除し、204 を返す。
-17. `PATCH /bookmarks/favorite` は、お気に入り状態を更新し更新後リソースを返す。
+10. `GET /bookmarks/by-url` は、URL で対象ブックマークを特定して返す。
+11. `PATCH /bookmarks/{id}` は、部分更新を行い更新後リソースを返す。
+12. `PATCH /bookmarks/by-url` は、URL で対象ブックマークを特定して部分更新を行う。
+13. `DELETE /bookmarks` は、条件に一致するブックマークを削除し、204 を返す。
+14. `DELETE /bookmarks` は、`id`、`url`、`title`、`description`、`folder_id`、`is_favorite` を受け付ける。
+15. `DELETE /bookmarks` は、指定した条件をすべて AND で評価する。
+16. `DELETE /bookmarks` は、どの条件も指定されない場合に 422 を返す。
+17. `DELETE /bookmarks/by-url` は、URL で対象ブックマークを特定して削除し、204 を返す。
+18. `DELETE /bookmarks/{id}` は、ID で対象ブックマークを特定して削除し、204 を返す。
+19. `PATCH /bookmarks/favorite` は、お気に入り状態を更新し更新後リソースを返す。
 
 ### フォルダ
 
 13. `POST /folders` は、201 と作成済みフォルダを返す。
 14. `GET /folders` は、フォルダ一覧を配列で返す。
-15. `PATCH /folders/{id}` は、更新後フォルダを返す。
-16. `DELETE /folders/{id}` は、204 を返す。
-17. フォルダ削除時は、関連ブックマークの `folder_id` を `NULL` にする。
-18. フォルダは `name` に加えて `description` を保持する。
+15. `GET /folders/{id}` は、対象フォルダを返す。
+16. `PATCH /folders/{id}` は、更新後フォルダを返す。
+17. `DELETE /folders/{id}` は、204 を返す。
+18. フォルダ削除時は、関連ブックマークの `folder_id` を `NULL` にする。
+19. フォルダは `name` に加えて `description` を保持する。
 
 ### タグ
 
 19. `POST /tags` は、201 と作成済みタグを返す。
 20. `GET /tags` は、タグ一覧を配列で返す。
-21. `PATCH /tags/{id}` は、更新後タグを返す。
-22. `DELETE /tags/{id}` は、204 を返す。
-23. タグ削除時は、関連 `bookmark_tags` を削除する。
-24. タグは `name` に加えて `description` を保持する。
+21. `GET /tags/{id}` は、対象タグを返す。
+22. `PATCH /tags/{id}` は、更新後タグを返す。
+23. `DELETE /tags/{id}` は、204 を返す。
+24. タグ削除時は、関連 `bookmark_tags` を削除する。
+25. タグは `name` に加えて `description` を保持する。
 
 ### タグ付与
 
@@ -141,8 +153,8 @@
 ### 設定
 
 31. `GET /settings/webhook` は、現在設定済みの webhook URL を返す。
-32. `PUT /settings/webhook` は、Discord webhook URL を保存する。
-33. `POST /settings/webhook/ping` は、Discord webhook の疎通確認を行い `pong: true` を返す。
+32. `PUT /settings/webhook` は、Discord または Microsoft Teams webhook URL を保存する。
+33. `POST /settings/webhook/ping` は、webhook の疎通確認を行い `pong: true` を返す。
 34. `GET /settings/rss-execution` は、RSS 定期実行の有効/無効状態を返す。
 35. `PUT /settings/rss-execution` は、RSS 定期実行の有効/無効状態を更新する。
 36. `GET /settings/rss-webhook-notification` は、定期実行時に webhook 通知を送るかどうかの全体設定を返す。
@@ -156,7 +168,7 @@
 41. `GET /rss-feeds/{id}/articles` は、保存済み記事一覧とページング情報を返す。
 42. `PATCH /rss-feeds/{id}` は、部分更新を行い更新後 RSS フィードを返す。
 43. `DELETE /rss-feeds/{id}` は、204 を返す。
-44. `POST /rss-feeds/{id}/execute` は、RSS を取得して Discord webhook に通知する。
+44. `POST /rss-feeds/{id}/execute` は、RSS を取得して登録済み webhook に通知する。
 
 ### `GET /metrics/dashboard`
 
@@ -239,6 +251,11 @@ Response:
 - `PATCH /bookmarks/{id}` と同じ更新ルールを使う
 - 存在しない URL は 404 を返す
 
+### `GET /bookmarks/by-url`
+
+- `url` クエリパラメータで対象ブックマークを特定する
+- 存在しない URL は 404 を返す
+
 ### `DELETE /bookmarks?...`
 
 - `id`、`url`、`title`、`description`、`folder_id`、`is_favorite` のうち 1 つ以上のクエリパラメータで対象ブックマークを特定する
@@ -311,6 +328,11 @@ Response:
 - レスポンスは配列で返す
 - `name` と `id` の昇順で返す
 
+### `GET /folders/{id}`
+
+- 指定 ID のフォルダを返す
+- 存在しない ID は 404 を返す
+
 ### `PATCH /folders/{id}`
 
 - 名前を更新する
@@ -336,6 +358,11 @@ Response:
 
 - レスポンスは配列で返す
 - `name` と `id` の昇順で返す
+
+### `GET /tags/{id}`
+
+- 指定 ID のタグを返す
+- 存在しない ID は 404 を返す
 
 ### `PATCH /tags/{id}`
 
@@ -398,6 +425,26 @@ Response:
 { "enabled": true }
 ```
 
+### `GET /settings/rss-webhook-notification`
+
+```json
+{ "enabled": false }
+```
+
+### `PUT /settings/rss-webhook-notification`
+
+Request:
+
+```json
+{ "enabled": true }
+```
+
+Response:
+
+```json
+{ "enabled": true }
+```
+
 ### `GET /rss-feeds/{id}`
 
 - 指定 ID の RSS フィードを返す
@@ -405,7 +452,7 @@ Response:
 ### `GET /rss-feeds/{id}/articles`
 
 - 保存済み記事の一覧を返す
-- `page` と `per_page` を受け付ける
+- `q`、`published_from`、`published_to`、`page`、`per_page` を受け付ける
 
 Response:
 

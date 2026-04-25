@@ -11,8 +11,8 @@
 - ブックマーク、RSS リンク、フォルダ、タグの CRUD
 - `metrics` によるダッシュボード集計の取得
 - `settings` によるアプリ全体設定の管理
-- RSS 実行 API、RSS 記事の保存済み一覧取得、Discord webhook 通知
-- 手動 RSS 実行は API が直接 RSS 取得と Discord 通知を行う
+- RSS 実行 API、RSS 記事の保存済み一覧取得、Discord または Microsoft Teams webhook 通知
+- 手動 RSS 実行は API が直接 RSS 取得と webhook 通知を行う
 - Rust の `batch` は RSS 定期実行が有効な場合のみ巡回処理を担う
 - ブックマークへのタグ付与・解除
 - ブックマークのお気に入り状態切り替え
@@ -20,6 +20,7 @@
 - `/health` による疎通確認
 - webhook 疎通確認用の ping API
 - RSS 実行の有効/無効設定
+- RSS 定期実行時の webhook 通知有効/無効設定
 - 例外ハンドリングと検証エラーの標準化
 
 ## 主要ファイル

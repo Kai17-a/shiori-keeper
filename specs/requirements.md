@@ -114,14 +114,15 @@ API は Python で実装し、データストアには SQLite を使用する。
 
 #### 受け入れ基準
 
-1. WHEN Clientが有効な Discord webhook URL を含む `PUT /settings/webhook` を送信したとき、THE API SHALL その URL をアプリ全体設定として保存し、保存結果を返す。
+1. WHEN Clientが有効な Discord または Microsoft Teams webhook URL を含む `PUT /settings/webhook` を送信したとき、THE API SHALL その URL をアプリ全体設定として保存し、保存結果を返す。
 2. WHEN Clientが `GET /settings/webhook` にリクエストを送信したとき、THE API SHALL 現在設定されている webhook URL を返す。
 3. IF webhook URL がまだ設定されていない状態で `GET /settings/webhook` が呼ばれたとき、THEN THE API SHALL HTTP ステータス 404 を返す。
-4. IF Clientが Discord webhook URL ではない URL を `PUT /settings/webhook` に送信したとき、THEN THE API SHALL HTTP ステータス 422 を返す。
+4. IF Clientが Discord または Microsoft Teams webhook URL ではない URL を `PUT /settings/webhook` に送信したとき、THEN THE API SHALL HTTP ステータス 422 を返す。
 5. WHEN Clientが `POST /settings/webhook/ping` にリクエストを送信したとき、THE API SHALL webhook の疎通確認を行い、`pong: true` を返す。
 6. WHEN Clientが `GET /settings/rss-execution` または `PUT /settings/rss-execution` にリクエストを送信したとき、THE API SHALL RSS 定期実行の有効/無効状態を取得・更新する。
 7. WHEN Clientが `GET /metrics/dashboard` にリクエストを送信したとき、THE API SHALL ダッシュボード用の集計値を返す。
 8. WHEN Clientが `POST /rss-feeds/{id}/execute` にリクエストを送信したとき、THE API SHALL 指定 RSS フィードを検証し、登録済み webhook URL に通知を送信し、実行結果を返す。
 9. IF webhook URL が未設定の状態で `POST /rss-feeds/{id}/execute` が呼ばれたとき、THEN THE API SHALL HTTP ステータス 400 を返す。
 10. IF webhook 通知に失敗したとき、THEN THE API SHALL HTTP ステータス 502 を返す。
-11. THE API SHALL アルファ版では Discord webhook のみを正式対応とする。
+11. WHEN Clientが `GET /settings/rss-webhook-notification` または `PUT /settings/rss-webhook-notification` にリクエストを送信したとき、THE API SHALL RSS 定期実行時の webhook 通知有効/無効状態を取得・更新する。
+12. THE API SHALL Discord と Microsoft Teams webhook に対応する。
