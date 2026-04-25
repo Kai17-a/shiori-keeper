@@ -199,14 +199,15 @@ const route = useRoute();
 const router = useRouter();
 const { request } = useBookmarkApi();
 const toast = useSingleToast();
-const { refresh: refreshSidebarCatalog } = useSidebarCatalog();
+const sidebarCatalog = useSidebarCatalog();
+const { refresh: refreshSidebarCatalog } = sidebarCatalog;
 
 const state = ref<"loading" | "ready" | "error" | "not-found">("loading");
 const errorMessage = ref("");
 const tag = ref<TagResponse | null>(null);
 const bookmarks = ref<BookmarkListResponse["items"]>([]);
-const folders = ref<FolderResponse[]>([]);
-const allTags = ref<TagResponse[]>([]);
+const folders = computed<FolderResponse[]>(() => sidebarCatalog.folders.value);
+const allTags = computed<TagResponse[]>(() => sidebarCatalog.tags.value);
 const editOpen = ref(false);
 const editBookmarkOpen = ref(false);
 const deleteBookmarkOpen = ref(false);
@@ -241,12 +242,11 @@ const loadTagCore = async (showToast = false) => {
 
 const loadTagRelations = async () => {
   try {
-    const [foldersRes, bookmarksRes] = await Promise.all([
-      request("/folders"),
+    const [bookmarksRes] = await Promise.all([
       request(`/bookmarks?tag_id=${route.params.id}`),
+      refreshSidebarCatalog(),
     ]);
 
-    folders.value = foldersRes;
     bookmarks.value = bookmarksRes.items || [];
   } catch (err) {
     bookmarks.value = [];
@@ -259,8 +259,7 @@ const loadTag = async (showToast = false) => {
   refreshing.value = true;
   errorMessage.value = "";
   try {
-    await loadTagCore(showToast);
-    await loadTagRelations();
+    await Promise.all([loadTagCore(showToast), loadTagRelations()]);
   } finally {
     refreshing.value = false;
   }
@@ -327,7 +326,7 @@ const saveTag = async () => {
         description: editForm.description || null,
       }),
     });
-    await refreshSidebarCatalog();
+    await refreshSidebarCatalog(true);
     await loadTag();
     editOpen.value = false;
     toast.show({
@@ -461,7 +460,7 @@ const deleteTag = async () => {
   deleting.value = true;
   try {
     await request(`/tags/${tag.value.id}`, { method: "DELETE" });
-    await refreshSidebarCatalog();
+    await refreshSidebarCatalog(true);
     toast.show({
       title: "Tag deleted.",
       color: "success",

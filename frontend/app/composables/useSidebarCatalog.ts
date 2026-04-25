@@ -13,8 +13,8 @@ export const useSidebarCatalog = () => {
   const { request } = useBookmarkApi();
   const loading = ref(false);
 
-  const refresh = async () => {
-    if (state.value.loaded) {
+  const refresh = async (force = false) => {
+    if (state.value.loaded && !force) {
       return;
     }
 

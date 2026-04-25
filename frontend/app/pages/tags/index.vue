@@ -83,10 +83,11 @@
 import type { TagResponse } from "~/types";
 
 const { request } = useBookmarkApi();
-const { refresh: refreshSidebarCatalog } = useSidebarCatalog();
+const sidebarCatalog = useSidebarCatalog();
+const { refresh: refreshSidebarCatalog } = sidebarCatalog;
 const toast = useSingleToast();
 
-const tags = ref<TagResponse[]>([]);
+const tags = computed<TagResponse[]>(() => sidebarCatalog.tags.value);
 const tagName = ref("");
 const tagDescription = ref("");
 const refreshing = ref(false);
@@ -96,11 +97,10 @@ const confirmOpen = ref(false);
 const pendingTag = ref<TagResponse | null>(null);
 const editForm = reactive({ id: "", name: "", description: "" });
 
-const refresh = async () => {
+const refresh = async (force = false) => {
   refreshing.value = true;
   try {
-    tags.value = await request("/tags");
-    await refreshSidebarCatalog();
+    await refreshSidebarCatalog(force);
     toast.show({
       title: "Tags loaded.",
       color: "success",
@@ -138,7 +138,7 @@ const createTag = async () => {
     });
     tagName.value = "";
     tagDescription.value = "";
-    await refresh();
+    await refresh(true);
   } catch (err) {
     toast.show({
       title: "Failed to create tag.",
@@ -176,7 +176,7 @@ const saveEdit = async () => {
       }),
     });
     closeEdit();
-    await refresh();
+    await refresh(true);
   } catch (err) {
     toast.show({
       title: "Failed to update tag.",
@@ -200,7 +200,7 @@ const confirmDelete = async () => {
     await request(`/tags/${pendingTag.value.id}`, { method: "DELETE" });
     confirmOpen.value = false;
     pendingTag.value = null;
-    await refresh();
+    await refresh(true);
   } catch (err) {
     toast.show({
       title: "Failed to delete tag.",

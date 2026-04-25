@@ -84,10 +84,11 @@
 import type { FolderResponse } from "~/types";
 
 const { request } = useBookmarkApi();
-const { refresh: refreshSidebarCatalog } = useSidebarCatalog();
+const sidebarCatalog = useSidebarCatalog();
+const { refresh: refreshSidebarCatalog } = sidebarCatalog;
 const toast = useSingleToast();
 
-const folders = ref<FolderResponse[]>([]);
+const folders = computed<FolderResponse[]>(() => sidebarCatalog.folders.value);
 const folderName = ref("");
 const folderDescription = ref("");
 const refreshing = ref(false);
@@ -97,11 +98,10 @@ const confirmOpen = ref(false);
 const pendingFolder = ref<FolderResponse | null>(null);
 const editForm = reactive({ id: "", name: "", description: "" });
 
-const refresh = async () => {
+const refresh = async (force = false) => {
   refreshing.value = true;
   try {
-    folders.value = await request("/folders");
-    await refreshSidebarCatalog();
+    await refreshSidebarCatalog(force);
     toast.show({
       title: "Folders loaded.",
       color: "success",
@@ -139,7 +139,7 @@ const createFolder = async () => {
     });
     folderName.value = "";
     folderDescription.value = "";
-    await refresh();
+    await refresh(true);
   } catch (err) {
     toast.show({
       title: "Failed to create folder.",
@@ -177,7 +177,7 @@ const saveEdit = async () => {
       }),
     });
     closeEdit();
-    await refresh();
+    await refresh(true);
   } catch (err) {
     toast.show({
       title: "Failed to update folder.",
@@ -203,7 +203,7 @@ const confirmDelete = async () => {
     });
     confirmOpen.value = false;
     pendingFolder.value = null;
-    await refresh();
+    await refresh(true);
   } catch (err) {
     toast.show({
       title: "Failed to delete folder.",

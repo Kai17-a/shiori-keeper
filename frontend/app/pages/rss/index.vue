@@ -521,7 +521,7 @@ const saveFeed = async () => {
     };
     if (feedForm.id) {
       await request(`/rss-feeds/${feedForm.id}`, { method: "PATCH", body: JSON.stringify(body) });
-      await refreshSidebarCatalog();
+      await refreshSidebarCatalog(true);
       toast.show({
         title: "RSS feed updated.",
         color: "success",
@@ -529,7 +529,7 @@ const saveFeed = async () => {
       });
     } else {
       await request("/rss-feeds", { method: "POST", body: JSON.stringify(body) });
-      await refreshSidebarCatalog();
+      await refreshSidebarCatalog(true);
     }
     closeModal();
     await loadFeeds(false);
@@ -593,7 +593,7 @@ const toggleWebhookNotification = async (feed: RSSFeedResponse) => {
     if (pendingFeed.value?.id === updated.id) {
       pendingFeed.value = updated;
     }
-    await refreshSidebarCatalog();
+    await refreshSidebarCatalog(true);
     toast.show({
       title: updated.notify_webhook_enabled
         ? "Webhook notification enabled."
@@ -616,7 +616,7 @@ const confirmDelete = async () => {
   deleting.value = true;
   try {
     await request(`/rss-feeds/${pendingFeed.value.id}`, { method: "DELETE" });
-    await refreshSidebarCatalog();
+    await refreshSidebarCatalog(true);
     deleteOpen.value = false;
     pendingFeed.value = null;
     await loadFeeds(false);

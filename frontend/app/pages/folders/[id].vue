@@ -200,14 +200,15 @@ const route = useRoute();
 const router = useRouter();
 const { request } = useBookmarkApi();
 const toast = useSingleToast();
-const { refresh: refreshSidebarCatalog } = useSidebarCatalog();
+const sidebarCatalog = useSidebarCatalog();
+const { refresh: refreshSidebarCatalog } = sidebarCatalog;
 
 const state = ref<"loading" | "ready" | "error" | "not-found">("loading");
 const errorMessage = ref("");
 const folder = ref<FolderResponse | null>(null);
 const bookmarks = ref<BookmarkListResponse["items"]>([]);
-const folders = ref<FolderResponse[]>([]);
-const tags = ref<TagResponse[]>([]);
+const folders = computed<FolderResponse[]>(() => sidebarCatalog.folders.value);
+const tags = computed<TagResponse[]>(() => sidebarCatalog.tags.value);
 const editOpen = ref(false);
 const editBookmarkOpen = ref(false);
 const deleteBookmarkOpen = ref(false);
@@ -242,12 +243,11 @@ const loadFolderCore = async (showToast = false) => {
 
 const loadFolderRelations = async () => {
   try {
-    const [tagsRes, bookmarksRes] = await Promise.all([
-      request("/tags"),
+    const [bookmarksRes] = await Promise.all([
       request(`/bookmarks?folder_id=${route.params.id}`),
+      refreshSidebarCatalog(),
     ]);
 
-    tags.value = tagsRes;
     bookmarks.value = bookmarksRes.items || [];
   } catch (err) {
     bookmarks.value = [];
@@ -260,8 +260,7 @@ const loadFolder = async (showToast = false) => {
   refreshing.value = true;
   errorMessage.value = "";
   try {
-    await loadFolderCore(showToast);
-    await loadFolderRelations();
+    await Promise.all([loadFolderCore(showToast), loadFolderRelations()]);
   } finally {
     refreshing.value = false;
   }
@@ -430,7 +429,7 @@ const saveFolder = async () => {
         description: editForm.description || null,
       }),
     });
-    await refreshSidebarCatalog();
+    await refreshSidebarCatalog(true);
     await loadFolder();
     editOpen.value = false;
     toast.show({
@@ -455,7 +454,7 @@ const deleteFolder = async () => {
   deleting.value = true;
   try {
     await request(`/folders/${folder.value.id}`, { method: "DELETE" });
-    await refreshSidebarCatalog();
+    await refreshSidebarCatalog(true);
     toast.show({
       title: "Folder deleted.",
       color: "success",

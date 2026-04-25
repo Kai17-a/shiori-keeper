@@ -456,7 +456,7 @@ const confirmDelete = async () => {
   deleting.value = true;
   try {
     await request(`/rss-feeds/${feed.value.id}`, { method: "DELETE" });
-    await refreshSidebarCatalog();
+    await refreshSidebarCatalog(true);
     toast.show({
       title: "RSS feed deleted.",
       color: "success",
