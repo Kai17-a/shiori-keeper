@@ -2,8 +2,8 @@
 
 この API は、ブックマーク、RSS フィード、フォルダ、タグ、アプリ設定を管理する FastAPI サービスである。
 
-この配下の仕様書は、`specs/requirements.md` の要件を実装視点に分解したものとして扱う。
-`specs/requirements.md` はプロダクト要件、`specs/api/` は API の入出力と挙動を中心に記述する。
+この配下の仕様書は、`specs/product/requirements.md` の要件を実装視点に分解したものとして扱う。
+`specs/product/requirements.md` はプロダクト要件、`specs/components/api/` は API の入出力と挙動を中心に記述する。
 
 ## 主な特徴
 
@@ -25,22 +25,22 @@
 
 ## 主要ファイル
 
-- [アプリケーション本体](../../api/main.py)
-- [DB 初期化](../../api/database.py)
-- [ブックマークルータ](../../api/routers/bookmarks.py)
-- [RSS ルータ](../../api/routers/rss_feeds.py)
-- [集計ルータ](../../api/routers/metrics.py)
-- [設定ルータ](../../api/routers/settings.py)
-- [フォルダルータ](../../api/routers/folders.py)
-- [タグルータ](../../api/routers/tags.py)
-- [タグ付与ルータ](../../api/routers/bookmark_tags.py)
-- [ブックマークサービス](../../api/services/bookmark_service.py)
-- [RSS サービス](../../api/services/rss_feed_service.py)
-- [集計サービス](../../api/services/dashboard_service.py)
-- [設定サービス](../../api/services/settings_service.py)
-- [フォルダサービス](../../api/services/folder_service.py)
-- [タグサービス](../../api/services/tag_service.py)
-- [モデル定義](../../api/model/models.py)
+- [アプリケーション本体](../../../api/main.py)
+- [DB 初期化](../../../api/database.py)
+- [ブックマークルータ](../../../api/routers/bookmarks.py)
+- [RSS ルータ](../../../api/routers/rss_feeds.py)
+- [集計ルータ](../../../api/routers/metrics.py)
+- [設定ルータ](../../../api/routers/settings.py)
+- [フォルダルータ](../../../api/routers/folders.py)
+- [タグルータ](../../../api/routers/tags.py)
+- [タグ付与ルータ](../../../api/routers/bookmark_tags.py)
+- [ブックマークサービス](../../../api/services/bookmark_service.py)
+- [RSS サービス](../../../api/services/rss_feed_service.py)
+- [集計サービス](../../../api/services/dashboard_service.py)
+- [設定サービス](../../../api/services/settings_service.py)
+- [フォルダサービス](../../../api/services/folder_service.py)
+- [タグサービス](../../../api/services/tag_service.py)
+- [モデル定義](../../../api/model/models.py)
 
 ## 仕様の範囲
 

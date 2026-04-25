@@ -9,17 +9,18 @@ Use this skill when creating or restructuring documentation under `specs/`.
 
 ## Scope
 
-- `specs/requirements.md`
-- `specs/design.md`
-- `specs/tasks.md`
-- `specs/api/`
-- `specs/frontend/`
-- `specs/test-observations/`
+- `specs/product/requirements.md`
+- `specs/architecture/system-design.md`
+- `specs/components/api/`
+- `specs/components/frontend/`
+- `specs/components/batch/`
+- `specs/components/browser-extension/`
+- `specs/quality/observations/`
 
 ## Principles
 
-- Keep `specs/requirements.md` as the top-level product requirement source.
-- Put implementation-facing details in `specs/api/` and `specs/frontend/`.
+- Keep `specs/product/requirements.md` as the top-level product requirement source.
+- Put implementation-facing details in `specs/components/<area>/`.
 - Keep sections short and aligned with the current codebase.
 - Prefer tables for routes, schemas, constraints, and traceability.
 - Update `README.md` links when a specs directory changes.

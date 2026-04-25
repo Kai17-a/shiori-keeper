@@ -1,6 +1,6 @@
 # 要件対応表
 
-`specs/requirements.md` の要件番号と、この API 仕様書の対応を示す。
+`specs/product/requirements.md` の要件番号と、この API 仕様書の対応を示す。
 
 ## 対応表
 
@@ -16,6 +16,6 @@
 
 ## 補足
 
-- `specs/requirements.md` は何を作るかを定義する。
-- `specs/api/` はどう返すか、どう失敗するかを定義する。
+- `specs/product/requirements.md` は何を作るかを定義する。
+- `specs/components/api/` はどう返すか、どう失敗するかを定義する。
 - 実装変更時は要件変更より先に API 仕様の差分を確認する。

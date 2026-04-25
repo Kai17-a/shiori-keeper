@@ -15,9 +15,9 @@
 
 ## 主要ファイル
 
-- [Manifest 設定](../../browser_extension/wxt.config.ts)
-- [ポップアップ UI](../../browser_extension/entrypoints/popup/App.vue)
-- [ポップアップエントリ](../../browser_extension/entrypoints/popup/main.ts)
-- [ポップアップスタイル](../../browser_extension/entrypoints/popup/style.css)
-- [Background](../../browser_extension/entrypoints/background.ts)
-- [Content Script](../../browser_extension/entrypoints/content.ts)
+- [Manifest 設定](../../../browser_extension/wxt.config.ts)
+- [ポップアップ UI](../../../browser_extension/entrypoints/popup/App.vue)
+- [ポップアップエントリ](../../../browser_extension/entrypoints/popup/main.ts)
+- [ポップアップスタイル](../../../browser_extension/entrypoints/popup/style.css)
+- [Background](../../../browser_extension/entrypoints/background.ts)
+- [Content Script](../../../browser_extension/entrypoints/content.ts)

@@ -108,14 +108,17 @@ shiori-keeper/
 ├── frontend/
 ├── browser_extension/
 └── specs/
-    ├── requirements.md
-    ├── design.md
-    ├── batch/
-    ├── api/
-    ├── frontend/
-    ├── chrome-extension/
-    ├── tasks.md
-    └── test-observations/
+    ├── README.md
+    ├── llm-reading-guide.md
+    ├── product/
+    ├── architecture/
+    ├── components/
+    │   ├── api/
+    │   ├── frontend/
+    │   ├── batch/
+    │   └── browser-extension/
+    └── quality/
+        └── observations/
 ├── batch/
 │   ├── Cargo.toml
 │   └── src/
@@ -183,6 +186,8 @@ shiori-keeper/
 ---
 
 ## データモデル
+
+DB の全体像は [DB 定義](./data-model.md) に Mermaid ER 図としても記載する。
 
 ### テーブル
 
