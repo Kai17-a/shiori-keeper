@@ -44,3 +44,5 @@ When adding or changing DB columns, follow this process:
 4. If the DB needs to be rolled back, run `mise x -- dbmate -u "sqlite:data/data.db" down`.
 
 If you change code, tests, or repository behavior, finish the task by creating the corresponding commit unless the user explicitly says not to.
+
+If you change any API route, request/response shape, or backend behavior that `browser_extension/entrypoints/popup/App.vue` depends on, run `scripts/check-browser-extension-popup-api-contract.sh` before finishing.

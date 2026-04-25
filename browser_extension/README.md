@@ -17,4 +17,15 @@ This directory contains the Manifest V3 extension used with Shiori Keeper.
 - `bun run dev`
 - `bun run build`
 
+## API Check Script
+
+`scripts/check-browser-extension-popup-api-contract.sh` runs the same request shapes used by `entrypoints/popup/App.vue` with `curl`.
+It is meant for quick API compatibility checks after backend changes, not for package-managed test runs.
+
+Example:
+
+```bash
+bash scripts/check-browser-extension-popup-api-contract.sh http://localhost:8000
+```
+
 The extension is built with WXT, Vue 3, and PrimeVue.
