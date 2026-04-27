@@ -112,7 +112,7 @@ services:
 
 ## Browser Extension
 
-- The browser extension is currently being prepared for submission
+- [chrome web store](https://chrome.google.com/webstore/detail/dfjcocpbcdlleogghldbdcapomilohia)
 
 ## Notes
 

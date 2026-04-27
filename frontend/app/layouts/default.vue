@@ -29,18 +29,15 @@
             target="_blank"
           />
 
-          <UTooltip :delay-duration="0" text="Preparing...">
-            <UButton
-              :label="collapsed ? undefined : 'Extension'"
-              icon="i-lucide-puzzle"
-              color="neutral"
-              variant="ghost"
-              :block="collapsed"
-              to=""
-              target="_blank"
-              disabled
-            />
-          </UTooltip>
+          <UButton
+            :label="collapsed ? undefined : 'Extension'"
+            icon="i-lucide-puzzle"
+            color="neutral"
+            variant="ghost"
+            :block="collapsed"
+            to="https://chrome.google.com/webstore/detail/dfjcocpbcdlleogghldbdcapomilohia"
+            target="_blank"
+          />
         </div>
       </template>
     </UDashboardSidebar>
