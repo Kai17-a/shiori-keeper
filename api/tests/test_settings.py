@@ -55,20 +55,20 @@ def test_set_and_get_webhook_round_trip(client):
     assert get_resp.json()["webhook_url"] == webhook_url
 
 
-def test_set_webhook_accepts_teams_webhook_url(client):
-    webhook_url = "https://contoso.webhook.office.com/webhookb2/abc/IncomingWebhook/def/ghi"
-    resp = client.put("/settings/webhook", json={"webhook_url": webhook_url})
-    assert resp.status_code == 200
-    assert resp.json()["webhook_url"] == webhook_url
-
-
 def test_set_webhook_rejects_discord_host_with_wrong_path(client):
     resp = client.put(
         "/settings/webhook",
         json={"webhook_url": "https://discord.com/channels/1/2"},
     )
     assert resp.status_code == 422
-    assert resp.json()["detail"] == "Webhook URL must be a Discord or Microsoft Teams webhook URL"
+    assert resp.json()["detail"] == "Webhook URL must be a Discord or Slack webhook URL"
+
+
+def test_set_webhook_accepts_slack_url(client):
+    webhook_url = "https://hooks.slack.com/services/xxx/yyy/zzz"
+    resp = client.put("/settings/webhook", json={"webhook_url": webhook_url})
+    assert resp.status_code == 200
+    assert resp.json()["webhook_url"] == webhook_url
 
 
 def test_ping_webhook_maps_httpx_error_to_502(client, monkeypatch):
@@ -85,7 +85,7 @@ def test_ping_webhook_maps_httpx_error_to_502(client, monkeypatch):
         json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
     )
     assert resp.status_code == 502
-    assert resp.json()["detail"] == "Failed to reach Discord webhook"
+    assert resp.json()["detail"] == "Failed to reach webhook"
 
 
 def test_rss_execution_setting_can_toggle_true_and_false(client):

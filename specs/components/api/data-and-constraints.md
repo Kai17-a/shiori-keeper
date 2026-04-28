@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - ブックマークまたはタグ削除時は `bookmark_tags` を連動削除する
 - SQLite の外部キー制約は `PRAGMA foreign_keys = ON` で有効化する
 - DB 障害は 500 として返す
-- `settings/webhook` は Discord または Microsoft Teams webhook URL のみを保存する
+- `settings/webhook` は Discord または Slack webhook URL を保存する
 - `settings/webhook/ping` は送信前確認用の疎通確認 API である
 - `settings/rss-execution` は RSS 定期実行フラグを保存する
 - `settings/rss-webhook-notification` は RSS 定期実行時の webhook 通知可否を保存する
@@ -171,7 +171,7 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `PUT /settings/rss-execution` は RSS 定期実行の有効/無効を更新する
 - `GET /settings/rss-webhook-notification` は RSS 定期実行時の webhook 通知可否の現在値を返す
 - `PUT /settings/rss-webhook-notification` は RSS 定期実行時の webhook 通知可否を更新する
-- `POST /rss-feeds/{id}/execute` は API プロセスが RSS を実行し、登録済み Discord または Microsoft Teams webhook に通知する
+- `POST /rss-feeds/{id}/execute` は API プロセスが RSS を実行し、登録済み webhook に通知する
 - `POST /rss-feeds/{id}/execute` は webhook URL 未設定時に 400 を返す
 - `POST /rss-feeds/{id}/execute` は新規記事がない場合も `delivered: true` を返し、`message` に "No new articles found." を含める
 - RSS 手動実行の通知送信と `rss_feed_articles` への送信済み記録は API が担当する

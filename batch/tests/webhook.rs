@@ -50,19 +50,18 @@ fn build_payload_matches_expected_shape() {
         }]
     });
 
-    let embeds = vec![webhook::Embed {
+    let _embeds = vec![webhook::Embed {
         title: "Example Article",
         link: "https://example.com/article",
         published: "Wed, 01 Jan 2025 00:00:00 GMT",
         summary: "Example summary",
     }];
-    let articles = vec![webhook::Article {
+    let _articles = vec![webhook::Article {
         url: "https://example.com/article",
         title: "Example Article",
         published: "Wed, 01 Jan 2025 00:00:00 GMT",
     }];
 
-    let _ = (embeds, articles);
     let expected_body = serde_json::json!({
         "username": "Shiori Keeper",
         "content": "**Example Feed** - **New articles** (1 items)",
@@ -74,6 +73,54 @@ fn build_payload_matches_expected_shape() {
     });
 
     assert_eq!(payload, expected_body);
+}
+
+#[test]
+fn build_payload_supports_slack_shape() {
+    let _embeds = vec![webhook::Embed {
+        title: "Example Article",
+        link: "https://example.com/article",
+        published: "Wed, 01 Jan 2025 00:00:00 GMT",
+        summary: "Example summary",
+    }];
+    let _articles = vec![webhook::Article {
+        url: "https://example.com/article",
+        title: "Example Article",
+        published: "Wed, 01 Jan 2025 00:00:00 GMT",
+    }];
+
+    let payload = webhook::build_payload(
+        "slack",
+        "**Example Feed** - **New articles** (1 items)".to_string(),
+        vec![serde_json::json!({
+            "title": "Example Article",
+            "url": "https://example.com/article",
+            "description": "Example summary",
+        })],
+    );
+
+    assert_eq!(
+        payload,
+        serde_json::json!({
+            "username": "Shiori Keeper",
+            "blocks": [
+                {
+                    "type": "header",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "**Example Feed** - **New articles** (1 items)",
+                    }
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "• <https://example.com/article|Example Article>\nExample summary",
+                    }
+                }
+            ],
+        })
+    );
 }
 
 #[test]

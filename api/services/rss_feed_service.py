@@ -101,16 +101,12 @@ class RSSFeedService:
             if response_detail:
                 logger.error(
                     "%s webhook notification failed: %s",
-                    "Microsoft Teams" if webhook_service == "teams" else "Discord",
+                    webhook_service.capitalize(),
                     response_detail,
                 )
         raise HTTPException(
             status_code=502,
-            detail=(
-                "Failed to notify Microsoft Teams webhook"
-                if webhook_service == "teams"
-                else "Failed to notify Discord webhook"
-            ),
+            detail="Failed to notify webhook",
         )
 
     def _parse_rss_feed(self, content: bytes) -> feedparser.FeedParserDict:

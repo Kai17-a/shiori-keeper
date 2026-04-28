@@ -2,6 +2,7 @@ use std::error::Error;
 use std::io;
 use std::time::Duration;
 
+use reqwest::Url;
 use rusqlite::{Connection, params};
 
 #[derive(Debug)]
@@ -54,12 +55,51 @@ fn chunk_embeds<'a>(embeds: &'a [Embed<'a>]) -> Vec<Vec<&'a Embed<'a>>> {
     chunks
 }
 
-fn build_payload(content: String, embeds_payload: Vec<serde_json::Value>) -> serde_json::Value {
-    serde_json::json!({
-        "username": "Shiori Keeper",
-        "content": content,
-        "embeds": embeds_payload,
-    })
+pub(crate) fn build_payload(
+    webhook_service: &str,
+    content: String,
+    embeds_payload: Vec<serde_json::Value>,
+) -> serde_json::Value {
+    match webhook_service {
+        "discord" => serde_json::json!({
+            "username": "Shiori Keeper",
+            "content": content,
+            "embeds": embeds_payload,
+        }),
+        "slack" => {
+            let blocks: Vec<serde_json::Value> = std::iter::once(serde_json::json!({
+                "type": "header",
+                "text": {
+                    "type": "plain_text",
+                    "text": content,
+                }
+            }))
+            .chain(embeds_payload.into_iter().map(|embed| {
+                let title = embed["title"].as_str().unwrap_or("(no title)");
+                let url = embed["url"].as_str().unwrap_or("(no link)");
+                let description = embed["description"].as_str();
+                let mut text = format!("• <{}|{}>", url, title);
+                if let Some(description) = description {
+                    text = format!("{}\n{}", text, description);
+                }
+                serde_json::json!({
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": text,
+                    }
+                })
+            }))
+            .collect();
+            serde_json::json!({
+                "username": "Shiori Keeper",
+                "blocks": blocks,
+            })
+        }
+        _ => serde_json::json!({
+            "text": content,
+        }),
+    }
 }
 
 async fn post_with_retry(
@@ -91,6 +131,7 @@ pub async fn send_rss_webhook(
     articles: &[Article<'_>],
 ) -> Result<(), Box<dyn Error>> {
     let client = reqwest::Client::new();
+    let webhook_service = detect_webhook_service(webhook_url).unwrap_or("discord");
     let embed_chunks = chunk_embeds(embeds);
 
     for (index, chunk) in embed_chunks.iter().enumerate() {
@@ -113,7 +154,7 @@ pub async fn send_rss_webhook(
                 })
             })
             .collect();
-        let payload = build_payload(content, embeds_payload);
+        let payload = build_payload(webhook_service, content, embeds_payload);
 
         let response = match post_with_retry(&client, webhook_url, &payload).await {
             Ok(response) => response,
@@ -186,4 +227,34 @@ pub fn load_sent_article_urls(
     }
 
     Ok(urls)
+}
+fn detect_webhook_service(webhook_url: &str) -> Option<&'static str> {
+    let parsed = Url::parse(webhook_url).ok()?;
+    let hostname = parsed.host_str().unwrap_or("");
+    let path = parsed.path();
+
+    let discord_hosts = [
+        "discord.com",
+        "www.discord.com",
+        "discordapp.com",
+        "www.discordapp.com",
+    ];
+    if (parsed.scheme() == "http" || parsed.scheme() == "https")
+        && discord_hosts.contains(&hostname)
+        && path.starts_with("/api/webhooks/")
+    {
+        return Some("discord");
+    }
+
+    if (parsed.scheme() == "http" || parsed.scheme() == "https")
+        && hostname == "hooks.slack.com"
+        && path.starts_with("/services/")
+    {
+        let parts: Vec<_> = path.split('/').filter(|part| !part.is_empty()).collect();
+        if parts.len() == 4 && parts[0] == "services" {
+            return Some("slack");
+        }
+    }
+
+    None
 }

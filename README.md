@@ -72,11 +72,11 @@ services:
 - Register RSS or Atom feed URLs
 - List, edit, and delete RSS feeds
 - Run a feed manually and connect the result to external notifications
-- Run RSS feeds periodically with the batch process and send new articles to Discord or Microsoft Teams webhooks
+- Run RSS feeds periodically with the batch process and send new articles to Discord, Slack, or Microsoft Teams webhooks
 
 ### Configure notifications
 
-- Set a global Discord or Microsoft Teams webhook used across the app
+- Set a global Discord, Slack, or Microsoft Teams webhook used across the app
 - Test whether the webhook endpoint is reachable
 - Use the webhook as the notification target for RSS execution
 
@@ -118,7 +118,7 @@ services:
 
 - Invalid URL formats cannot be registered
 - Duplicate bookmark URLs, tag names, and RSS feed URLs are not allowed
-- The webhook system supports Discord and Microsoft Teams incoming webhooks
+- The webhook system supports Discord, Slack, and Microsoft Teams incoming webhooks
 
 ## Development Notes
 

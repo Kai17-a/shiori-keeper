@@ -11,7 +11,7 @@
 - ブックマーク、RSS リンク、フォルダ、タグの CRUD
 - `metrics` によるダッシュボード集計の取得
 - `settings` によるアプリ全体設定の管理
-- RSS 実行 API、RSS 記事の保存済み一覧取得、Discord または Microsoft Teams webhook 通知
+- RSS 実行 API、RSS 記事の保存済み一覧取得、Discord/Slack webhook 通知
 - 手動 RSS 実行は API が直接 RSS 取得と webhook 通知を行う
 - Rust の `batch` は RSS 定期実行が有効な場合のみ巡回処理を担う
 - ブックマークへのタグ付与・解除

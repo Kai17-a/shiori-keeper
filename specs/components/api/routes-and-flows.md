@@ -73,7 +73,7 @@
 
 ### 設定
 
-- Discord または Microsoft Teams webhook URL を保存する
+- Discord webhook URL または Slack webhook URL を保存する
 - webhook の疎通確認を行う
 - 未設定時の webhook 取得は 404 を返す
 - RSS 定期実行の有効/無効を切り替える
@@ -153,7 +153,7 @@
 ### 設定
 
 31. `GET /settings/webhook` は、現在設定済みの webhook URL を返す。
-32. `PUT /settings/webhook` は、Discord または Microsoft Teams webhook URL を保存する。
+32. `PUT /settings/webhook` は、Discord webhook URL または Slack webhook URL を保存する。
 33. `POST /settings/webhook/ping` は、webhook の疎通確認を行い `pong: true` を返す。
 34. `GET /settings/rss-execution` は、RSS 定期実行の有効/無効状態を返す。
 35. `PUT /settings/rss-execution` は、RSS 定期実行の有効/無効状態を更新する。

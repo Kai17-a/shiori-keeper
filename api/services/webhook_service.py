@@ -5,10 +5,6 @@ from urllib.parse import urlparse
 import httpx
 from fastapi import HTTPException
 
-DISCORD_WEBHOOK_ERROR_DETAIL = "Failed to notify Discord webhook"
-TEAMS_WEBHOOK_ERROR_DETAIL = "Failed to notify Microsoft Teams webhook"
-
-
 def detect_webhook_service(webhook_url: str) -> str:
     parsed = urlparse(webhook_url)
     hostname = parsed.hostname or ""
@@ -25,41 +21,36 @@ def detect_webhook_service(webhook_url: str) -> str:
     ):
         return "discord"
 
-    teams_hosts = {"outlook.office.com", "www.outlook.office.com"}
-    if parsed.scheme in {"http", "https"} and (
-        hostname in teams_hosts or hostname.endswith(".webhook.office.com")
+    if (
+        parsed.scheme in {"http", "https"}
+        and hostname == "hooks.slack.com"
+        and path.startswith("/services/")
     ):
-        if path.startswith("/webhook") or "/IncomingWebhook/" in path:
-            return "teams"
+        parts = [part for part in path.split("/") if part]
+        if len(parts) == 4 and parts[0] == "services":
+            return "slack"
 
     raise HTTPException(
         status_code=422,
-        detail="Webhook URL must be a Discord or Microsoft Teams webhook URL",
+        detail="Webhook URL must be a Discord or Slack webhook URL",
     )
 
 
 def build_webhook_payload(webhook_service: str, *, content: str) -> dict[str, object]:
     if webhook_service == "discord":
         return {"username": "Shiori Keeper", "content": content}
-    if webhook_service == "teams":
+    if webhook_service == "slack":
         return {
-            "attachments": [
+            "username": "Shiori Keeper",
+            "blocks": [
                 {
-                    "contentType": "application/vnd.microsoft.card.adaptive",
-                    "content": {
-                        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-                        "type": "AdaptiveCard",
-                        "version": "1.2",
-                        "body": [
-                            {
-                                "type": "TextBlock",
-                                "text": content,
-                                "wrap": True,
-                            }
-                        ],
+                    "type": "header",
+                    "text": {
+                        "type": "plain_text",
+                        "text": content,
                     },
                 }
-            ]
+            ],
         }
     raise ValueError(f"Unsupported webhook service: {webhook_service}")
 
@@ -92,38 +83,37 @@ def build_rss_notification_payload(
             content = f"{content} [{chunk_index}]"
         return {"username": "Shiori Keeper", "content": content, "embeds": embeds}
 
-    if webhook_service == "teams":
-        body: list[dict[str, object]] = [
+    if webhook_service == "slack":
+        article_count = total_articles if total_articles is not None else len(articles)
+        header_text = f"📰 {feed_title} - 新着ニュース ({article_count}件)"
+        if chunk_count > 1:
+            header_text = f"{header_text} [{chunk_index}]"
+        blocks: list[dict[str, object]] = [
             {
-                "type": "TextBlock",
-                "text": f"{feed_title} - 新着ニュース",
-                "weight": "Bolder",
-                "size": "Medium",
-                "wrap": True,
+                "type": "header",
+                "text": {
+                    "type": "plain_text",
+                    "text": header_text,
+                },
             }
         ]
         for article in articles:
-            body.append(
+            title = str(article["title"])
+            url = str(article["url"])
+            summary = article.get("summary")
+            text = f"• <{url}|{title}>"
+            if summary:
+                text = f"{text}\n{str(summary)}"
+            blocks.append(
                 {
-                    "type": "TextBlock",
-                    "text": f"- [{article['title']}]({article['url']})",
-                    "wrap": True,
-                    "markdown": True,
-                }
-            )
-        return {
-            "attachments": [
-                {
-                    "contentType": "application/vnd.microsoft.card.adaptive",
-                    "content": {
-                        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-                        "type": "AdaptiveCard",
-                        "version": "1.2",
-                        "body": body,
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": text,
                     },
                 }
-            ]
-        }
+            )
+        return {"username": "Shiori Keeper", "blocks": blocks}
 
     raise ValueError(f"Unsupported webhook service: {webhook_service}")
 

@@ -59,21 +59,13 @@ class SettingsService:
         except httpx.HTTPError as exc:
             raise HTTPException(
                 status_code=502,
-                detail=(
-                    "Failed to reach Microsoft Teams webhook"
-                    if webhook_service == "teams"
-                    else "Failed to reach Discord webhook"
-                ),
+                detail="Failed to reach webhook",
             ) from exc
 
         if response.status_code >= 400:
             raise HTTPException(
                 status_code=502,
-                detail=(
-                    "Failed to reach Microsoft Teams webhook"
-                    if webhook_service == "teams"
-                    else "Failed to reach Discord webhook"
-                ),
+                detail="Failed to reach webhook",
             )
 
         return SettingsWebhookPingResponse(pong=True)
