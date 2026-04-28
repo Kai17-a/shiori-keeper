@@ -639,6 +639,41 @@ def test_execute_rss_feed_returns_discord_error_detail(client, monkeypatch):
     assert resp.json()["detail"] == "Failed to notify webhook"
 
 
+def test_execute_rss_feed_does_not_record_articles_when_webhook_fails(client, monkeypatch):
+    import api.services.webhook_service as webhook_module
+
+    client.put(
+        "/settings/webhook",
+        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+    )
+    feed_id = create_feed(
+        client, url="https://example.com/feed.xml", title="Example"
+    ).json()["id"]
+
+    def fake_post(url, json, timeout=5.0):
+        class Response:
+            status_code = 500
+            headers = {"content-type": "application/json"}
+
+            def json(self):
+                return {"message": "Invalid payload provided"}
+
+            @property
+            def text(self):
+                return '{"message":"Invalid payload provided"}'
+
+        return Response()
+
+    monkeypatch.setattr(webhook_module.httpx, "post", fake_post)
+
+    resp = client.post(f"/rss-feeds/{feed_id}/execute")
+    assert resp.status_code == 502
+
+    articles_resp = client.get(f"/rss-feeds/{feed_id}/articles")
+    assert articles_resp.status_code == 200
+    assert articles_resp.json()["items"] == []
+
+
 def test_execute_rss_feed_skips_already_sent_articles(client, monkeypatch):
     import api.services.rss_feed_service as rss_module
     import api.services.webhook_service as webhook_module
