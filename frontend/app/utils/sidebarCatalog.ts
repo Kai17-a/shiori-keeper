@@ -26,3 +26,15 @@ export const applySidebarCatalogResults = (
   state.loaded = true;
   return state;
 };
+
+export const refreshSidebarCatalogSafely = async (
+  refresh: (force?: boolean) => Promise<void>,
+  force = false,
+) => {
+  try {
+    await refresh(force);
+    return true;
+  } catch {
+    return false;
+  }
+};

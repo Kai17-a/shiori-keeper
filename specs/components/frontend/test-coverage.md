@@ -13,6 +13,11 @@
   - Empty sidebar state creation
   - Catalog result application
   - RSS フィードを含むサイドバーカタログ反映
+  - 初回カタログ失敗を未処理例外にせず、強制再取得できること
+
+- `frontend/tests/apiHealth.test.ts`
+  - health state の初期値
+  - `/health` の正常、異常、通信失敗を利用可否へ正規化すること
 
 ## E2E テスト
 

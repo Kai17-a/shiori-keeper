@@ -1,8 +1,8 @@
-import { createApiHealthState, type ApiHealthState } from "~/utils/apiHealth";
-
-type HealthResponse = {
-  status?: string;
-};
+import {
+  createApiHealthState,
+  requestApiHealth,
+  type ApiHealthState,
+} from "~/utils/apiHealth";
 
 export const useApiHealth = () => {
   const state = useState<ApiHealthState>("api-health", createApiHealthState);
@@ -10,8 +10,8 @@ export const useApiHealth = () => {
   const checking = ref(false);
   let loadPromise: Promise<boolean> | null = null;
 
-  const check = async () => {
-    if (state.value.checked) {
+  const check = async (force = false) => {
+    if (state.value.checked && !force) {
       return state.value.ok === true;
     }
 
@@ -22,14 +22,9 @@ export const useApiHealth = () => {
     loadPromise = (async () => {
       checking.value = true;
       try {
-        const body = await request<HealthResponse>("/health");
-        state.value.ok = body?.status === "ok";
+        state.value.ok = await requestApiHealth(request);
         state.value.checked = true;
         return state.value.ok === true;
-      } catch {
-        state.value.ok = false;
-        state.value.checked = true;
-        return false;
       } finally {
         checking.value = false;
         loadPromise = null;

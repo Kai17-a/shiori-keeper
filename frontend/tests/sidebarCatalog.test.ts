@@ -1,6 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { applySidebarCatalogResults, createSidebarCatalogState } from "~/utils/sidebarCatalog";
+import {
+  applySidebarCatalogResults,
+  createSidebarCatalogState,
+  refreshSidebarCatalogSafely,
+} from "~/utils/sidebarCatalog";
 
 describe("sidebarCatalog helpers", () => {
   it("creates a predictable empty state", () => {
@@ -25,5 +29,14 @@ describe("sidebarCatalog helpers", () => {
       rssFeeds,
       loaded: true,
     });
+  });
+
+  it("contains initial catalog failures and supports forced retry", async () => {
+    const failedRefresh = vi.fn().mockRejectedValue(new Error("offline"));
+    await expect(refreshSidebarCatalogSafely(failedRefresh)).resolves.toBe(false);
+
+    const recoveredRefresh = vi.fn().mockResolvedValue(undefined);
+    await expect(refreshSidebarCatalogSafely(recoveredRefresh, true)).resolves.toBe(true);
+    expect(recoveredRefresh).toHaveBeenCalledWith(true);
   });
 });
