@@ -139,7 +139,8 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - ブックマークまたはタグ削除時は `bookmark_tags` を連動削除する
 - SQLite の外部キー制約は `PRAGMA foreign_keys = ON` で有効化する
 - DB 障害は 500 として返す
-- `settings/webhook` は Discord または Slack webhook URL を保存する
+- `settings/webhook` は Discord、Slack、または Microsoft Teams webhook URL を保存する
+- Microsoft Teams webhook は Adaptive Card 形式で疎通確認と RSS 通知を送信する
 - `settings/webhook/ping` は送信前確認用の疎通確認 API である
 - `settings/rss-execution` は RSS 定期実行フラグを保存する
 - `settings/rss-webhook-notification` は RSS 定期実行時の webhook 通知可否を保存する

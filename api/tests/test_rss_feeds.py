@@ -107,6 +107,37 @@ def test_set_rss_webhook_accepts_slack_webhook_url(client):
     assert resp.json()["webhook_url"] == "https://hooks.slack.com/services/xxx/yyy/zzz"
 
 
+def test_execute_rss_feed_supports_microsoft_teams_adaptive_cards(client, monkeypatch):
+    import api.services.webhook_service as webhook_module
+
+    payloads = []
+
+    def fake_post(url, json, timeout=5.0):
+        payloads.append(json)
+
+        class Response:
+            status_code = 202
+
+        return Response()
+
+    monkeypatch.setattr(webhook_module.httpx, "post", fake_post)
+    client.put(
+        "/settings/webhook",
+        json={
+            "webhook_url": "https://prod-01.japaneast.logic.azure.com/workflows/id/triggers/manual/paths/invoke?sig=token"
+        },
+    )
+    feed_id = create_feed(client).json()["id"]
+
+    resp = client.post(f"/rss-feeds/{feed_id}/execute")
+
+    assert resp.status_code == 200
+    card = payloads[0]["attachments"][0]["content"]
+    assert card["type"] == "AdaptiveCard"
+    assert card["body"][0]["text"] == "Parsed Example - New articles (2 items)"
+    assert card["body"][1]["items"][-1]["actions"][0]["type"] == "Action.OpenUrl"
+
+
 def test_ping_webhook_returns_200(client, monkeypatch):
     import api.services.webhook_service as webhook_module
 

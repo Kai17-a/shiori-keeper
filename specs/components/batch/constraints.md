@@ -33,8 +33,8 @@
 
 ## webhook
 
-- 現在の batch payload は Discord 形式の `username`、`content`、`embeds` を送る
-- webhook URL のサービス種別検証は batch 側では行わず、DB に保存済みの `default_webhook_url` をそのまま使う
+- batch は webhook URL から Discord、Slack、Microsoft Teams を識別する
+- Discord には `username`、`content`、`embeds`、Slack には Block Kit、Microsoft Teams には Adaptive Card 形式を送る
 - webhook 送信は最大 3 回リトライする
 - リトライ間隔は 500ms とする
 - webhook の 4xx/5xx 応答はフィード単位の失敗として扱う

@@ -124,6 +124,43 @@ fn build_payload_supports_slack_shape() {
 }
 
 #[test]
+fn build_payload_supports_microsoft_teams_adaptive_cards() {
+    let payload = webhook::build_payload(
+        "teams",
+        "Example Feed - New articles (1 items)".to_string(),
+        vec![serde_json::json!({
+            "title": "Example Article",
+            "url": "https://example.com/article",
+            "description": "Example summary",
+        })],
+    );
+
+    assert_eq!(payload["type"], "message");
+    assert_eq!(
+        payload["attachments"][0]["contentType"],
+        "application/vnd.microsoft.card.adaptive"
+    );
+    assert_eq!(
+        payload["attachments"][0]["content"]["body"][1]["items"][2]["actions"][0]["url"],
+        "https://example.com/article"
+    );
+}
+
+#[test]
+fn detects_supported_microsoft_teams_webhook_urls() {
+    assert_eq!(
+        webhook::detect_webhook_service(
+            "https://prod-01.japaneast.logic.azure.com/workflows/id/triggers/manual/paths/invoke?sig=token"
+        ),
+        Some("teams")
+    );
+    assert_eq!(
+        webhook::detect_webhook_service("https://example.webhook.office.com/webhookb2/id/token"),
+        Some("teams")
+    );
+}
+
+#[test]
 fn record_sent_articles_inserts_rows() {
     let conn = create_in_memory_test_db();
     let articles = vec![

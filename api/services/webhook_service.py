@@ -5,6 +5,22 @@ from urllib.parse import urlparse
 import httpx
 from fastapi import HTTPException
 
+
+def _is_teams_webhook(hostname: str, path: str) -> bool:
+    legacy_webhook = hostname.endswith(".webhook.office.com") and path.startswith(
+        "/webhookb2/"
+    )
+    workflow_webhook = hostname.endswith(".logic.azure.com") and path.startswith(
+        "/workflows/"
+    )
+    power_platform_webhook = (
+        hostname.endswith(".api.powerplatform.com")
+        and "/workflows/" in path
+        and "/triggers/" in path
+    )
+    return legacy_webhook or workflow_webhook or power_platform_webhook
+
+
 def detect_webhook_service(webhook_url: str) -> str:
     parsed = urlparse(webhook_url)
     hostname = parsed.hostname or ""
@@ -30,10 +46,31 @@ def detect_webhook_service(webhook_url: str) -> str:
         if len(parts) == 4 and parts[0] == "services":
             return "slack"
 
+    if parsed.scheme == "https" and _is_teams_webhook(hostname, path):
+        return "teams"
+
     raise HTTPException(
         status_code=422,
-        detail="Webhook URL must be a Discord or Slack webhook URL",
+        detail="Webhook URL must be a Discord, Slack, or Microsoft Teams webhook URL",
     )
+
+
+def _build_teams_card(body: list[dict[str, object]]) -> dict[str, object]:
+    return {
+        "type": "message",
+        "attachments": [
+            {
+                "contentType": "application/vnd.microsoft.card.adaptive",
+                "contentUrl": None,
+                "content": {
+                    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                    "type": "AdaptiveCard",
+                    "version": "1.2",
+                    "body": body,
+                },
+            }
+        ],
+    }
 
 
 def build_webhook_payload(webhook_service: str, *, content: str) -> dict[str, object]:
@@ -52,6 +89,10 @@ def build_webhook_payload(webhook_service: str, *, content: str) -> dict[str, ob
                 }
             ],
         }
+    if webhook_service == "teams":
+        return _build_teams_card(
+            [{"type": "TextBlock", "text": content, "weight": "Bolder"}]
+        )
     raise ValueError(f"Unsupported webhook service: {webhook_service}")
 
 
@@ -114,6 +155,59 @@ def build_rss_notification_payload(
                 }
             )
         return {"username": "Shiori Keeper", "blocks": blocks}
+
+    if webhook_service == "teams":
+        article_count = total_articles if total_articles is not None else len(articles)
+        header_text = f"{feed_title} - New articles ({article_count} items)"
+        if chunk_count > 1:
+            header_text = f"{header_text} [{chunk_index}]"
+        body: list[dict[str, object]] = [
+            {
+                "type": "TextBlock",
+                "text": header_text,
+                "size": "Medium",
+                "weight": "Bolder",
+                "wrap": True,
+            }
+        ]
+        for article in articles:
+            article_body: list[dict[str, object]] = [
+                {
+                    "type": "TextBlock",
+                    "text": str(article["title"]),
+                    "weight": "Bolder",
+                    "wrap": True,
+                }
+            ]
+            if article.get("summary"):
+                article_body.append(
+                    {
+                        "type": "TextBlock",
+                        "text": str(article["summary"]),
+                        "wrap": True,
+                        "isSubtle": True,
+                    }
+                )
+            article_body.append(
+                {
+                    "type": "ActionSet",
+                    "actions": [
+                        {
+                            "type": "Action.OpenUrl",
+                            "title": "Open article",
+                            "url": str(article["url"]),
+                        }
+                    ],
+                }
+            )
+            body.append(
+                {
+                    "type": "Container",
+                    "separator": True,
+                    "items": article_body,
+                }
+            )
+        return _build_teams_card(body)
 
     raise ValueError(f"Unsupported webhook service: {webhook_service}")
 

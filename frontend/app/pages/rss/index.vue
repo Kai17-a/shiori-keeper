@@ -9,19 +9,19 @@
         <div class="grid gap-6 lg:grid-cols-[2fr_1fr]">
           <UPageCard
             title="Webhook"
-            description="Configure the global Discord webhook used by RSS execution"
+            description="Configure the global Discord, Slack, or Microsoft Teams webhook used by RSS execution"
             :ui="{ body: 'space-y-5' }"
           >
             <form class="space-y-4" @submit.prevent="saveWebhook">
               <UFormField
-                label="Discord webhook URL"
+                label="Webhook URL"
                 description="This single webhook setting is shared across app integrations."
                 class="w-full"
               >
                 <UInput
                   v-model="webhookForm.webhookUrl"
                   class="w-full"
-                  placeholder="https://discord.com/api/webhooks/..."
+                  placeholder="Discord, Slack, or Microsoft Teams webhook URL"
                 />
               </UFormField>
 

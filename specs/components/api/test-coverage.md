@@ -31,6 +31,7 @@
   - RSS/Atom 以外の URL 拒否
   - webhook 疎通確認
   - Slack webhook URL の保存と疎通確認
+  - Microsoft Teams webhook URL の保存、疎通確認、Adaptive Card 通知
   - RSS 定期実行設定
   - 新規記事なしメッセージ
   - 既送信記事のスキップ
@@ -42,7 +43,7 @@
 - `api/tests/test_settings.py`
   - webhook 未設定時の 404
   - webhook 保存と再取得
-  - Discord と Slack webhook URL 形式検証
+  - Discord、Slack、Microsoft Teams webhook URL 形式検証
   - ping の 422 と 502
   - RSS 定期実行設定の取得と更新
 
@@ -96,7 +97,7 @@
 
 - `GET /settings/webhook` / `PUT /settings/webhook`
   - 取得と更新
-  - Discord と Slack webhook URL の形式検証
+  - Discord、Slack、Microsoft Teams webhook URL の形式検証
 
 - `POST /settings/webhook/ping`
   - 疎通確認

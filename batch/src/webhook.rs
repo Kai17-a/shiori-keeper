@@ -96,6 +96,59 @@ pub(crate) fn build_payload(
                 "blocks": blocks,
             })
         }
+        "teams" => {
+            let mut body = vec![serde_json::json!({
+                "type": "TextBlock",
+                "text": content,
+                "size": "Medium",
+                "weight": "Bolder",
+                "wrap": true,
+            })];
+            body.extend(embeds_payload.into_iter().map(|embed| {
+                let title = embed["title"].as_str().unwrap_or("(no title)");
+                let url = embed["url"].as_str().unwrap_or("(no link)");
+                let summary = embed["description"].as_str().unwrap_or("");
+                serde_json::json!({
+                    "type": "Container",
+                    "separator": true,
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": title,
+                            "weight": "Bolder",
+                            "wrap": true,
+                        },
+                        {
+                            "type": "TextBlock",
+                            "text": summary,
+                            "isSubtle": true,
+                            "wrap": true,
+                        },
+                        {
+                            "type": "ActionSet",
+                            "actions": [{
+                                "type": "Action.OpenUrl",
+                                "title": "Open article",
+                                "url": url,
+                            }],
+                        }
+                    ],
+                })
+            }));
+            serde_json::json!({
+                "type": "message",
+                "attachments": [{
+                    "contentType": "application/vnd.microsoft.card.adaptive",
+                    "contentUrl": null,
+                    "content": {
+                        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                        "type": "AdaptiveCard",
+                        "version": "1.2",
+                        "body": body,
+                    }
+                }]
+            })
+        }
         _ => serde_json::json!({
             "text": content,
         }),
@@ -228,7 +281,7 @@ pub fn load_sent_article_urls(
 
     Ok(urls)
 }
-fn detect_webhook_service(webhook_url: &str) -> Option<&'static str> {
+pub(crate) fn detect_webhook_service(webhook_url: &str) -> Option<&'static str> {
     let parsed = Url::parse(webhook_url).ok()?;
     let hostname = parsed.host_str().unwrap_or("");
     let path = parsed.path();
@@ -254,6 +307,15 @@ fn detect_webhook_service(webhook_url: &str) -> Option<&'static str> {
         if parts.len() == 4 && parts[0] == "services" {
             return Some("slack");
         }
+    }
+
+    let legacy_teams = hostname.ends_with(".webhook.office.com") && path.starts_with("/webhookb2/");
+    let workflow_teams = hostname.ends_with(".logic.azure.com") && path.starts_with("/workflows/");
+    let power_platform_teams = hostname.ends_with(".api.powerplatform.com")
+        && path.contains("/workflows/")
+        && path.contains("/triggers/");
+    if parsed.scheme() == "https" && (legacy_teams || workflow_teams || power_platform_teams) {
+        return Some("teams");
     }
 
     None

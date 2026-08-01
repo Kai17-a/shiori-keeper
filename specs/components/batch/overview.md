@@ -11,7 +11,7 @@ API サーバーとは別プロセスとして動作し、HTTP ルートは持�
 - `rss_feeds.notify_webhook_enabled = 1` の RSS フィードのみを巡回対象にする
 - RSS URL を取得し、RSS channel として解析する
 - `rss_feed_articles` に保存済みの URL を読み、既送信記事を除外する
-- 新着記事を Discord 互換の webhook payload として送信する
+- 新着記事を Discord、Slack、または Microsoft Teams 向けの webhook payload として送信する
 - webhook 送信成功後に `rss_feed_articles` へ送信済み記事を記録する
 - フィード単位の失敗はログ出力してスキップし、他フィードの処理を継続する
 

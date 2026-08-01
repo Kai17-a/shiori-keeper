@@ -35,7 +35,7 @@
 
 ## webhook 送信
 
-- payload は `username`、`content`、`embeds` を含む JSON として送信する
+- payload は Discord では `username`、`content`、`embeds`、Slack では Block Kit、Microsoft Teams では Adaptive Card を含む JSON として送信する
 - `content` はフィードタイトルと新着件数を含む
 - 各 embed は記事タイトル、URL、summary を含む
 - embed は 1 リクエストあたり最大 10 件、または概算 6000 文字以内になるように分割する

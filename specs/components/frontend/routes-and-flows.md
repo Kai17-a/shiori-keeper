@@ -53,7 +53,7 @@
 
 ### RSS
 
-- 画面上部で Discord webhook 設定の読込、疎通確認、保存を行う
+- 画面上部で Discord、Slack、Microsoft Teams webhook 設定の読込、疎通確認、保存を行う
 - RSS 定期実行の有効/無効を切り替える
 - 一覧ページから RSS フィードを作成する
 - モーダルで RSS フィードを編集する

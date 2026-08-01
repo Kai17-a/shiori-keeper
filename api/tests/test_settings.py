@@ -61,7 +61,9 @@ def test_set_webhook_rejects_discord_host_with_wrong_path(client):
         json={"webhook_url": "https://discord.com/channels/1/2"},
     )
     assert resp.status_code == 422
-    assert resp.json()["detail"] == "Webhook URL must be a Discord or Slack webhook URL"
+    assert resp.json()["detail"] == (
+        "Webhook URL must be a Discord, Slack, or Microsoft Teams webhook URL"
+    )
 
 
 def test_set_webhook_accepts_slack_url(client):
@@ -69,6 +71,47 @@ def test_set_webhook_accepts_slack_url(client):
     resp = client.put("/settings/webhook", json={"webhook_url": webhook_url})
     assert resp.status_code == 200
     assert resp.json()["webhook_url"] == webhook_url
+
+
+@pytest.mark.parametrize(
+    "webhook_url",
+    [
+        "https://example.webhook.office.com/webhookb2/id/token",
+        "https://prod-01.japaneast.logic.azure.com/workflows/id/triggers/manual/paths/invoke?sig=token",
+        "https://default.example.api.powerplatform.com/powerautomate/automations/direct/workflows/id/triggers/manual/paths/invoke?sig=token",
+    ],
+)
+def test_set_webhook_accepts_microsoft_teams_urls(client, webhook_url):
+    resp = client.put("/settings/webhook", json={"webhook_url": webhook_url})
+    assert resp.status_code == 200
+    assert resp.json()["webhook_url"] == webhook_url
+
+
+def test_ping_microsoft_teams_webhook_uses_adaptive_card(client, monkeypatch):
+    import api.services.webhook_service as webhook_module
+
+    captured = {}
+
+    def fake_post(url, json, timeout=5.0):
+        captured["json"] = json
+
+        class Response:
+            status_code = 202
+
+        return Response()
+
+    monkeypatch.setattr(webhook_module.httpx, "post", fake_post)
+    resp = client.post(
+        "/settings/webhook/ping",
+        json={
+            "webhook_url": "https://prod-01.japaneast.logic.azure.com/workflows/id/triggers/manual/paths/invoke?sig=token"
+        },
+    )
+    assert resp.status_code == 200
+    assert captured["json"]["type"] == "message"
+    attachment = captured["json"]["attachments"][0]
+    assert attachment["contentType"] == "application/vnd.microsoft.card.adaptive"
+    assert attachment["content"]["body"][0]["text"] == "ping"
 
 
 def test_ping_webhook_maps_httpx_error_to_502(client, monkeypatch):

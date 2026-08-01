@@ -5,7 +5,7 @@
 本ドキュメントは、ブックマーク管理システムの技術設計を定義する。
 Python で API サーバーを実装し、SQLite をデータストアとして使用する。
 加えて、Rust の `batch` で RSS 定期巡回と webhook 通知を担当し、`browser_extension/` でブラウザからのブックマーク登録 UI を提供する。
-ブックマーク・RSS フィード・フォルダ・タグ・設定の CRUD と、ブックマークへのタグ付与・解除、RSS 実行による Discord または Microsoft Teams webhook 通知を提供する。
+ブックマーク・RSS フィード・フォルダ・タグ・設定の CRUD と、ブックマークへのタグ付与・解除、RSS 実行による Discord、Slack、Microsoft Teams webhook 通知を提供する。
 
 ### 技術スタック
 
@@ -263,7 +263,7 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - SQLite の外部キー制約は接続時に `PRAGMA foreign_keys = ON` で有効化する
 - `bookmarks.url`、`rss_feeds.url`、`folders.name`、`tags.name` は DB 一意制約と事前チェックの両方で重複を防ぐ
 - `app_settings` はアプリ全体設定のキーバリューストアとして扱う
-- `default_webhook_url` は Discord または Microsoft Teams webhook URL だけを許可する
+- `default_webhook_url` は Discord、Slack、または Microsoft Teams webhook URL だけを許可する
 - `rss_periodic_execution_enabled` は RSS 定期実行の有効/無効を保持する
 - `rss_webhook_notification_enabled` は RSS 定期実行時に webhook 通知を送るかを保持する
 - `rss_feeds.notify_webhook_enabled` は batch による RSS 定期実行時に webhook 通知するかを保持する
@@ -423,4 +423,4 @@ class DashboardMetricsResponse(BaseModel):
 - 未知の SQLite エラーは 500 に変換する
 - アプリ起動時に初期化処理を実行する
 - RSS 実行は実際の RSS/Atom フィード URL のみ許可する
-- Webhook は現時点では Discord のみを正式対応とする
+- Webhook は Discord、Slack、Microsoft Teams に対応する

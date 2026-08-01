@@ -222,7 +222,7 @@ test.describe("rss feeds", () => {
     await page.reload();
     await expect(page.getByText("Webhook is configured.")).toBeVisible();
 
-    const webhookInput = page.getByPlaceholder("https://discord.com/api/webhooks/...");
+    const webhookInput = page.getByLabel("Webhook URL");
     await expect(webhookInput).toHaveValue(discordWebhookUrl);
     await webhookInput.fill(`${discordWebhookUrl}-updated`);
     await buttonByText(page, "Save webhook").click({ force: true });
