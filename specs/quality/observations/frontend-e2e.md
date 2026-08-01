@@ -2,10 +2,10 @@
 
 | Flow               | What it covers           | Main checks                                            |
 | ------------------ | ------------------------ | ------------------------------------------------------ |
-| Bookmark lifecycle | Integrated bookmark flow | Create, search, edit, delete                           |
-| Folder lifecycle   | Integrated folder flow   | Create, rename, detail view, delete                    |
-| Tag lifecycle      | Integrated tag flow      | Create, rename, detail view, delete                    |
-| RSS lifecycle      | Integrated RSS flow      | Create, edit, execute, delete                          |
+| Bookmark lifecycle | Integrated bookmark flow | UI create, search, edit, delete                        |
+| Folder lifecycle   | Integrated folder flow   | UI create, rename, detail view, delete                 |
+| Tag lifecycle      | Integrated tag flow      | UI create, rename, detail view, delete                 |
+| RSS lifecycle      | Integrated RSS flow      | UI create, edit, detail view, delete                   |
 | Settings flow      | App settings flow        | Load webhook setting, test/save webhook, theme toggle |
 | API integration    | Frontend + API together  | Requests reach live API and reflect in UI              |
 | Routing            | Browser navigation       | Page transitions stay functional                       |

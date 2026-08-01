@@ -22,17 +22,13 @@
 ## E2E テスト
 
 - `frontend/tests/e2e/bookmark-manager.spec.ts`
-  - Bookmark create, edit, search, delete
-  - Bookmark の folder/tag 割り当てと絞り込み
+  - Bookmark の画面上での create, edit, search, delete
   - Favorites page load and favorite toggle
-  - Folder create, rename, detail, delete
-  - Folder detail 上での関連 bookmark 編集、削除、お気に入り切り替え
-  - Tag create, rename, detail, delete
-  - Tag detail 上での関連 bookmark 編集、削除、お気に入り切り替え
-  - RSS feed create, edit, detail navigation, delete
-  - RSS webhook load, ping, save
+  - Folder の画面上での create, rename, detail navigation, delete
+  - Tag の画面上での create, rename, detail navigation, delete
+  - RSS feed の画面上での create, edit, detail navigation, delete
+  - RSS webhook load, save
   - RSS periodic execution toggle
-  - RSS detail articles paging
   - Settings page theme toggle
 
 ## 未カバー範囲
@@ -40,6 +36,9 @@
 - ページ/コンポーネント単体のテストはない
 - API 初回疎通失敗時のダッシュボードシェル継続描画は明示的に検証していない
 - RSS 実行後のサイドバー再同期は明示的に検証していない
+- Bookmark 作成時の folder/tag 割り当ては明示的に検証していない
+- Folder/Tag 詳細上の関連 bookmark 編集、削除、お気に入り切り替えは明示的に検証していない
+- RSS webhook ping、手動実行、記事一覧の paging は明示的に検証していない
 - オフラインやバックエンド停止時の描画を、手動のエラー処理以外で明示的に検証するテストはない
 
 ## 実装候補

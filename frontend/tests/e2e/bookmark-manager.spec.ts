@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { createServer } from "node:http";
 import process from "node:process";
 
@@ -6,6 +6,10 @@ const apiBaseUrl = process.env.PLAYWRIGHT_API_BASE_URL ?? "http://127.0.0.1:8000
 const discordWebhookUrl = "https://discord.com/api/webhooks/1234567890/test-token";
 const buttonByText = (page: Page, label: string) => page.locator(`button:has-text("${label}")`).first();
 const headingByText = (page: Page, text: string) => page.locator("h1").filter({ hasText: text }).last();
+const activate = async (locator: Locator) => {
+  await locator.focus();
+  await locator.press("Enter");
+};
 
 const createBookmark = async (
   page: Page,
@@ -89,18 +93,23 @@ test.describe("bookmarks", () => {
     const title = `Example Bookmark ${suffix}`;
     const updatedTitle = `${title} Updated`;
     const updatedDescription = "Updated description";
-    await createBookmark(page, suffix, { title, url });
-
     await page.goto("/bookmarks");
     await expect(page).toHaveURL(/\/bookmarks\/?$/);
-    await buttonByText(page, "Refresh").click({ force: true });
+    await activate(buttonByText(page, "Register"));
+    await expect(page.getByRole("dialog")).toContainText("Register bookmark");
+    await page.getByRole("textbox", { name: "Title" }).fill(title);
+    await page.getByRole("textbox", { name: "URL" }).fill(url);
+    await page.getByRole("textbox", { name: "Description" }).fill("Original description");
+    await buttonByText(page, "Save bookmark").click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(page.getByText(title, { exact: true })).toBeVisible();
 
     const bookmarkCard = page.locator("article").filter({ has: page.getByText(title, { exact: true }) });
-    await bookmarkCard.getByRole("button", { name: "Edit" }).click({ force: true });
+    await activate(bookmarkCard.locator("button").nth(1));
     await page.getByRole("textbox", { name: "Title" }).fill(updatedTitle);
     await page.getByRole("textbox", { name: "Description" }).fill(updatedDescription);
     await buttonByText(page, "Save bookmark").click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(page.getByText(updatedTitle, { exact: true })).toBeVisible();
 
     const searchInput = page.getByPlaceholder("Search by title or URL");
@@ -123,85 +132,122 @@ test.describe("bookmarks", () => {
 });
 
 test.describe("folders", () => {
-  test("opens folder detail pages and shows related bookmarks", async ({ page }) => {
+  test("creates, edits, opens, and deletes folders from the UI", async ({ page }) => {
     const suffix = `${Date.now()}-${test.info().workerIndex}`;
-    const created = await page.request.post(`${apiBaseUrl}/folders`, {
-      data: { name: `Folder ${suffix}`, description: "Folder description" },
-    });
-    expect(created.status()).toBe(201);
-    const createdBody = (await created.json()) as { id: number };
+    const name = `Folder ${suffix}`;
+    const updatedName = `${name} Updated`;
+    const folderPanel = page.locator("#dashboard-panel-folders");
 
-    const bookmarked = await page.request.post(`${apiBaseUrl}/bookmarks`, {
-      data: {
-        url: `https://example.com/folder-${suffix}`,
-        title: `Folder Bookmark ${suffix}`,
-        description: "Folder related bookmark",
-        folder_id: createdBody.id,
-        tag_ids: [],
-      },
-    });
-    expect(bookmarked.status()).toBe(201);
+    await page.goto("/folders");
+    await page.getByPlaceholder("New folder name").fill(name);
+    await page.getByPlaceholder("Optional folder description").first().fill("Folder description");
+    await activate(buttonByText(page, "Add folder"));
+    await expect(folderPanel.getByText(name, { exact: true })).toBeVisible();
 
-    await page.goto(`/folders/${createdBody.id}`);
-    await expect(page).toHaveURL(new RegExp(`/folders/${createdBody.id}/?$`));
-    await expect(headingByText(page, `Folder ${suffix}`)).toBeVisible();
-    await expect(page.getByText(`Folder Bookmark ${suffix}`, { exact: true })).toBeVisible();
+    let folderCard = folderPanel
+      .getByText(name, { exact: true })
+      .locator("xpath=ancestor::*[.//button][1]");
+    await activate(folderCard.locator("button").first());
+    await page.getByRole("textbox", { name: "Folder name" }).fill(updatedName);
+    await page.getByRole("textbox", { name: "Description" }).fill("Updated folder description");
+    await buttonByText(page, "Save changes").click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(folderPanel.getByText(updatedName, { exact: true })).toBeVisible();
+
+    await activate(folderPanel.locator("a").filter({ hasText: updatedName }).first());
+    await expect(page).toHaveURL(/\/folders\/\d+\/?$/);
+    await expect(headingByText(page, updatedName)).toBeVisible();
+
+    await page.goto("/folders");
+    folderCard = folderPanel
+      .getByText(updatedName, { exact: true })
+      .locator("xpath=ancestor::*[.//button][1]");
+    await activate(folderCard.locator("button").nth(1));
+    await buttonByText(page, "Delete folder").click();
+    await expect(folderPanel.getByText(updatedName, { exact: true })).toHaveCount(0);
   });
 });
 
 test.describe("tags", () => {
-  test("opens tag detail pages and shows related bookmarks", async ({ page }) => {
+  test("creates, edits, opens, and deletes tags from the UI", async ({ page }) => {
     const suffix = `${Date.now()}-${test.info().workerIndex}`;
-    const created = await page.request.post(`${apiBaseUrl}/tags`, {
-      data: { name: `Tag ${suffix}`, description: "Tag description" },
-    });
-    expect(created.status()).toBe(201);
-    const createdBody = (await created.json()) as { id: number };
+    const name = `Tag ${suffix}`;
+    const updatedName = `${name} Updated`;
+    const tagPanel = page.locator("#dashboard-panel-tags");
 
-    const bookmarked = await page.request.post(`${apiBaseUrl}/bookmarks`, {
-      data: {
-        url: `https://example.com/tag-${suffix}`,
-        title: `Tag Bookmark ${suffix}`,
-        description: "Tag related bookmark",
-        folder_id: null,
-        tag_ids: [createdBody.id],
-      },
-    });
-    expect(bookmarked.status()).toBe(201);
+    await page.goto("/tags");
+    await page.getByPlaceholder("New tag name").fill(name);
+    await page.getByPlaceholder("Optional tag description").first().fill("Tag description");
+    await activate(buttonByText(page, "Add tag"));
+    await expect(tagPanel.getByText(name, { exact: true })).toBeVisible();
 
-    await page.goto(`/tags/${createdBody.id}`);
-    await expect(page).toHaveURL(new RegExp(`/tags/${createdBody.id}/?$`));
-    await expect(headingByText(page, `Tag ${suffix}`)).toBeVisible();
-    await expect(page.getByText(`Tag Bookmark ${suffix}`, { exact: true })).toBeVisible();
+    let tagCard = tagPanel
+      .getByText(name, { exact: true })
+      .locator("xpath=ancestor::*[.//button][1]");
+    await activate(tagCard.locator("button").first());
+    await page.getByRole("textbox", { name: "Tag name" }).fill(updatedName);
+    await page.getByRole("textbox", { name: "Description" }).fill("Updated tag description");
+    await buttonByText(page, "Save changes").click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(tagPanel.getByText(updatedName, { exact: true })).toBeVisible();
+
+    await activate(tagPanel.locator("a").filter({ hasText: updatedName }).first());
+    await expect(page).toHaveURL(/\/tags\/\d+\/?$/);
+    await expect(headingByText(page, updatedName)).toBeVisible();
+
+    await page.goto("/tags");
+    tagCard = tagPanel
+      .getByText(updatedName, { exact: true })
+      .locator("xpath=ancestor::*[.//button][1]");
+    await activate(tagCard.locator("button").nth(1));
+    await buttonByText(page, "Delete tag").click();
+    await expect(tagPanel.getByText(updatedName, { exact: true })).toHaveCount(0);
   });
 });
 
 test.describe("rss feeds", () => {
-  test("loads, opens, and deletes rss feeds from the UI", async ({ page }) => {
+  test("creates, edits, opens, and deletes rss feeds from the UI", async ({ page }) => {
     const suffix = `${Date.now()}-${test.info().workerIndex}`;
     const rssServer = await startRssServer(suffix);
     try {
       const title = `RSS Feed ${suffix}`;
-      const created = await page.request.post(`${apiBaseUrl}/rss-feeds`, {
-        data: {
-          url: rssServer.url,
-          title,
-          description: "RSS description",
-        },
-      });
-      expect(created.status()).toBe(201);
-      const createdBody = (await created.json()) as { id: number };
+      const updatedTitle = `${title} Updated`;
+      const rssPanel = page.locator("#dashboard-panel-rss");
 
       await page.goto("/rss");
       await expect(page).toHaveURL(/\/rss\/?$/);
-      await page.goto(`/rss/${createdBody.id}`);
+      await activate(buttonByText(page, "Register"));
+      await expect(page.getByRole("dialog")).toContainText("Register RSS feed");
+      await page.getByRole("textbox", { name: "Title" }).fill(title);
+      await page.getByRole("textbox", { name: "URL" }).fill(rssServer.url);
+      await page.getByRole("textbox", { name: "Description" }).fill("RSS description");
+      await buttonByText(page, "Save feed").click();
+      await expect(page.getByRole("dialog")).toHaveCount(0);
+      await expect(rssPanel.getByText(title, { exact: true })).toBeVisible();
+
+      let feedCard = page.locator("article").filter({ has: page.getByText(title, { exact: true }) });
+      await activate(feedCard.locator("button").nth(2));
+      await page.getByRole("textbox", { name: "Title" }).fill(updatedTitle);
+      await page.getByRole("textbox", { name: "Description" }).fill("Updated RSS description");
+      await buttonByText(page, "Save feed").click();
+      await expect(page.getByRole("dialog")).toHaveCount(0);
+      await expect(rssPanel.getByText(updatedTitle, { exact: true })).toBeVisible();
+
+      feedCard = page
+        .locator("article")
+        .filter({ has: page.getByText(updatedTitle, { exact: true }) });
+      await activate(feedCard.locator("a").filter({ hasText: updatedTitle }).first());
       await expect(page).toHaveURL(/\/rss\/\d+\/?$/);
-      await expect(headingByText(page, title)).toBeVisible();
+      await expect(headingByText(page, updatedTitle)).toBeVisible();
       await page.goto("/rss");
       await expect(page).toHaveURL(/\/rss\/?$/);
 
-      const deleted = await page.request.delete(`${apiBaseUrl}/rss-feeds/${createdBody.id}`);
-      expect(deleted.status()).toBe(204);
+      feedCard = page
+        .locator("article")
+        .filter({ has: page.getByText(updatedTitle, { exact: true }) });
+      await activate(feedCard.locator("button").nth(3));
+      await buttonByText(page, "Delete feed").click();
+      await expect(rssPanel.getByText(updatedTitle, { exact: true })).toHaveCount(0);
     } finally {
       await rssServer.close();
     }
