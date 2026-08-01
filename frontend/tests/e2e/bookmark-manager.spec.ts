@@ -318,6 +318,7 @@ test.describe("rss feeds", () => {
           },
         });
         expect(created.status()).toBe(201);
+        await created.dispose();
       }
       await rssPanel.getByRole("button", { name: "Refresh" }).click();
       await expect(page.getByText("Total 21 feeds · Page 1 of 2")).toBeVisible();
