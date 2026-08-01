@@ -8,7 +8,7 @@ __pycache__/
 frontend/.nuxt/
 frontend/.output/
 frontend/.artifacts/
-frontend/dist/
+frontend/dist
 frontend/test-results/
 api/.venv/
 api/.pytest_cache/

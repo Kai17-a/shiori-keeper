@@ -7,7 +7,7 @@ RUN apk add --no-cache bash
 
 COPY frontend/package.json frontend/bun.lock ./
 RUN --mount=type=cache,target=/root/.bun \
-    bun install
+    bun install --frozen-lockfile
 
 COPY frontend/nuxt.config.ts ./nuxt.config.ts
 COPY frontend/tsconfig.json ./tsconfig.json

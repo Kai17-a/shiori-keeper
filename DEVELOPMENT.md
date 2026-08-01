@@ -137,7 +137,7 @@ GitHub Packages の Docker image 公開機能を使う場合は、別途ワー�
 - `fix`, `perf`, `revert` も同じ形式で載る
 - `docs`, `test`, `chore`, `ci`, `style`, `refactor` は載せない
 
-push 前に API / frontend / E2E をまとめて手動実行したい場合は次を使う。
+push 前に API、batch、frontend、ブラウザ拡張、E2E の lint・型検査・テスト・配布ビルドをまとめて手動実行したい場合は次を使う。
 
 ```bash
 ./scripts/run-all-tests.sh
@@ -159,6 +159,7 @@ python -m pytest -q
 ```bash
 cd frontend
 bun run test
+bun run typecheck
 bun run e2e
 bun run e2e:run
 bun run e2e:headed
@@ -167,6 +168,16 @@ bun run e2e:headed
 `e2e:run` は結果ログを `.artifacts/playwright-e2e.log` に保存する。
 `e2e:headed` はブラウザを開いて実行する。
 `e2e:run` は API と frontend を個別に起動し、`http://127.0.0.1:8001` と `http://127.0.0.1:3001` を使って E2E を実行する。
+初回だけ Playwright の OS 依存ライブラリを `cd frontend && bunx playwright install --with-deps chromium` で導入する。各 E2E スクリプトは、現在の Playwright が要求する Chromium 本体を実行前に確認・導入する。
+
+### Browser Extension
+
+```bash
+cd browser_extension
+bun run test
+bun run compile
+bun run build
+```
 
 ## ローカル URL
 

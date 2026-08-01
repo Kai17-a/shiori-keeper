@@ -49,10 +49,10 @@ start_frontend_server() {
     frontend_pid=$!
 }
 
-if [ ! -d "$HOME/.cache/ms-playwright" ] || [ -z "$(find "$HOME/.cache/ms-playwright" -mindepth 1 -maxdepth 1 2>/dev/null | head -n 1)" ]; then
-    cd "$repo_root/frontend"
-    bunx playwright install --with-deps chromium
-fi
+cd "$repo_root/frontend"
+# This is idempotent and installs the exact browser revision required by the
+# current Playwright package, even when an older revision is already cached.
+bunx playwright install chromium
 
 start_api_server
 wait_for_url "http://127.0.0.1:$api_port/health"

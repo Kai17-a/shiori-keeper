@@ -27,17 +27,28 @@ start_frontend_server() {
 
 cd "$repo_root/api"
 uv run ruff check .
+uv run pyright
 uv run pytest -q
 
 cd "$repo_root/batch"
+cargo fmt --check
+cargo check
 cargo test
 
 cd "$repo_root/frontend"
+bun run typecheck
 bun run test
+bun run generate
 
-if [ ! -d "$HOME/.cache/ms-playwright" ] || [ -z "$(find "$HOME/.cache/ms-playwright" -mindepth 1 -maxdepth 1 2>/dev/null | head -n 1)" ]; then
-    bunx playwright install --with-deps chromium
-fi
+cd "$repo_root/browser_extension"
+bun run compile
+bun run test
+bun run build
+
+# This is idempotent and installs the exact browser revision required by the
+# current Playwright package, even when an older revision is already cached.
+cd "$repo_root/frontend"
+bunx playwright install chromium
 
 start_api_server
 start_frontend_server
