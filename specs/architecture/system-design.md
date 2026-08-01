@@ -67,7 +67,7 @@ SQLite Database
 
 - `batch` は RSS 定期実行が有効な場合だけ RSS フィードを読み込み、未送信の記事だけを webhook に通知する
 - `batch` は送信済み記事を `rss_feed_articles` に記録し、重複通知を避ける
-- `batch` は webhook 送信失敗時に最大 3 回までリトライし、最終失敗時は当該フィードをスキップして次へ進む
+- `batch` は webhook の接続エラー、HTTP 429、HTTP 5xx を最大 3 回までリトライし、最終失敗時は当該フィードをスキップして次へ進む
 - `batch` は API サーバーとは別プロセスとして動作し、HTTP ルートは持たない
 
 ### Chrome Extension
@@ -275,7 +275,7 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `batch` は `rss_webhook_notification_enabled` が無効な場合、RSS 巡回自体を行わない
 - `batch` は `rss_feeds.notify_webhook_enabled` が無効な RSS フィードを通知対象から除外する
 - `batch` は `rss_feed_articles` を参照して既送信記事を除外し、送信成功後に同テーブルへ記録する
-- `batch` は webhook 送信失敗時に最大 3 回までリトライし、失敗したフィードはスキップする
+- `batch` は webhook の接続エラー、HTTP 429、HTTP 5xx を最大 3 回までリトライし、失敗したフィードはスキップする
 
 ### Pydantic スキーマ
 

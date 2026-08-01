@@ -35,6 +35,6 @@
 
 - batch は webhook URL から Discord、Slack、Microsoft Teams を識別する
 - Discord には `username`、`content`、`embeds`、Slack には Block Kit、Microsoft Teams には Adaptive Card 形式を送る
-- webhook 送信は最大 3 回リトライする
+- webhook の接続エラー、HTTP 429、HTTP 5xx は最大 3 回リトライする
 - リトライ間隔は 500ms とする
-- webhook の 4xx/5xx 応答はフィード単位の失敗として扱う
+- リトライ後の HTTP 429/5xx と、それ以外の HTTP 4xx はフィード単位の失敗として扱う

@@ -11,6 +11,7 @@
   - `record_sent_articles` による送信済み記事の記録
   - `load_sent_article_urls` による送信済み URL の読み込み
   - webhook 送信失敗時の 3 回リトライ
+  - webhook の HTTP 429/5xx 応答時の 3 回リトライと途中回復
 
 ## 追加で確認したい観点
 

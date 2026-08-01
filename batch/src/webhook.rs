@@ -163,6 +163,13 @@ async fn post_with_retry(
     let mut last_error: Option<String> = None;
     for attempt in 1..=3 {
         match client.post(webhook_url).json(payload).send().await {
+            Ok(response)
+                if attempt < 3
+                    && (response.status().is_server_error()
+                        || response.status() == reqwest::StatusCode::TOO_MANY_REQUESTS) =>
+            {
+                tokio::time::sleep(Duration::from_millis(500)).await;
+            }
             Ok(response) => return Ok(response),
             Err(err) => {
                 last_error = Some(err.to_string());

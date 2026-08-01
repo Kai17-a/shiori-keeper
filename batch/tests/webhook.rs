@@ -2,6 +2,26 @@
 mod webhook;
 
 use rusqlite::Connection;
+use std::sync::{
+    Arc,
+    atomic::{AtomicUsize, Ordering},
+};
+use wiremock::{Mock, MockServer, Request, Respond, ResponseTemplate, matchers::method};
+
+#[derive(Clone)]
+struct FailTwiceThenSucceed {
+    attempts: Arc<AtomicUsize>,
+}
+
+impl Respond for FailTwiceThenSucceed {
+    fn respond(&self, _request: &Request) -> ResponseTemplate {
+        if self.attempts.fetch_add(1, Ordering::SeqCst) < 2 {
+            ResponseTemplate::new(500)
+        } else {
+            ResponseTemplate::new(204)
+        }
+    }
+}
 
 fn create_in_memory_test_db() -> Connection {
     let conn = Connection::open_in_memory().expect("open in-memory db");
@@ -214,4 +234,56 @@ async fn post_with_retry_retries_three_times() {
 
     let err = result.expect_err("webhook should fail");
     assert!(err.to_string().contains("after 3 attempts"));
+}
+
+#[tokio::test]
+async fn transient_http_errors_are_retried_three_times() {
+    for status in [429, 500] {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .respond_with(ResponseTemplate::new(status))
+            .mount(&server)
+            .await;
+
+        let result = send_example_webhook(&server.uri()).await;
+
+        assert!(result.is_err());
+        assert_eq!(server.received_requests().await.unwrap().len(), 3);
+    }
+}
+
+#[tokio::test]
+async fn webhook_succeeds_when_a_retry_recovers() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .respond_with(FailTwiceThenSucceed {
+            attempts: Arc::new(AtomicUsize::new(0)),
+        })
+        .mount(&server)
+        .await;
+
+    let result = send_example_webhook(&server.uri()).await;
+
+    assert!(result.is_ok());
+    assert_eq!(server.received_requests().await.unwrap().len(), 3);
+}
+
+async fn send_example_webhook(webhook_url: &str) -> Result<(), Box<dyn std::error::Error>> {
+    webhook::send_rss_webhook(
+        webhook_url,
+        "Example Feed",
+        "https://example.com/feed",
+        &[webhook::Embed {
+            title: "Example Article",
+            link: "https://example.com/article",
+            published: "Wed, 01 Jan 2025 00:00:00 GMT",
+            summary: "Example summary",
+        }],
+        &[webhook::Article {
+            url: "https://example.com/article",
+            title: "Example Article",
+            published: "Wed, 01 Jan 2025 00:00:00 GMT",
+        }],
+    )
+    .await
 }
