@@ -349,7 +349,7 @@ test.describe("rss feeds", () => {
 });
 
 test.describe("favorites", () => {
-  test("loads favorite bookmarks and removes them through the favorite toggle", async ({ page }) => {
+  test("paginates favorite bookmarks and removes them through the favorite toggle", async ({ page }) => {
     const suffix = `${Date.now()}-${test.info().workerIndex}`;
     await createBookmark(page, `${suffix}-regular`, {
       title: `Regular Bookmark ${suffix}`,
@@ -359,12 +359,27 @@ test.describe("favorites", () => {
       title: `Favorite Bookmark ${suffix}`,
       is_favorite: true,
     });
+    const pagedFavoriteTitles = Array.from(
+      { length: 20 },
+      (_, index) => `Paged Favorite Bookmark ${suffix} ${index}`,
+    );
+    for (const [index, title] of pagedFavoriteTitles.entries()) {
+      await createBookmark(page, `${suffix}-favorite-page-${index}`, {
+        title,
+        is_favorite: true,
+      });
+    }
 
     await page.goto("/favorites");
     await expect(page).toHaveURL(/\/favorites\/?$/);
     await buttonByText(page, "Refresh").click({ force: true });
-    await expect(page.getByText(`Favorite Bookmark ${suffix}`, { exact: true })).toBeVisible();
+    await expect(page.getByText("21 favorites")).toBeVisible();
+    await expect(page.getByText("Page 1 of 2")).toBeVisible();
     await expect(page.getByText(`Regular Bookmark ${suffix}`, { exact: true })).toHaveCount(0);
+
+    await buttonByText(page, "Next").click();
+    await expect(page.getByText("Page 2 of 2")).toBeVisible();
+    await expect(page.getByText(`Favorite Bookmark ${suffix}`, { exact: true })).toBeVisible();
 
     const favoriteCard = page
       .locator("article")

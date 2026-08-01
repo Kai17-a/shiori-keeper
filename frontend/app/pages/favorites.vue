@@ -21,10 +21,10 @@
             class="flex flex-col gap-3 border-b border-default pb-4 md:flex-row md:items-center md:justify-between"
           >
             <p class="text-xs uppercase tracking-[0.08em] text-muted">
-              {{ favoriteBookmarks.length }} favorites
+              {{ favoriteList.total }} favorites
             </p>
             <p class="text-xs uppercase tracking-[0.08em] text-muted">
-              {{ favoriteBookmarks.length }} loaded
+              {{ favoriteBookmarks.length }} shown
             </p>
           </div>
 
@@ -56,6 +56,27 @@
               @remove="removeBookmark"
               @favorite="toggleFavorite"
             />
+          </div>
+          <div v-if="pageCount > 1" class="flex items-center justify-between gap-3">
+            <p class="text-sm text-muted">Page {{ favoriteList.page }} of {{ pageCount }}</p>
+            <div class="flex gap-2">
+              <UButton
+                color="neutral"
+                variant="soft"
+                :disabled="favoriteList.page <= 1 || loading"
+                @click="setPage(favoriteList.page - 1)"
+              >
+                Previous
+              </UButton>
+              <UButton
+                color="neutral"
+                variant="soft"
+                :disabled="favoriteList.page >= pageCount || loading"
+                @click="setPage(favoriteList.page + 1)"
+              >
+                Next
+              </UButton>
+            </div>
           </div>
           <div
             v-else
@@ -106,7 +127,14 @@ const toast = useSingleToast();
 
 const loading = ref(false);
 const loadError = ref("");
-const favoriteBookmarks = ref<BookmarkResponse[]>([]);
+const favoriteList = ref<BookmarkListResponse>({
+  items: [],
+  total: 0,
+  page: 1,
+  per_page: 20,
+  total_pages: 0,
+});
+const favoriteBookmarks = computed(() => favoriteList.value.items);
 const folders = computed<FolderResponse[]>(() => sidebarCatalog.folders.value);
 const tags = computed<TagResponse[]>(() => sidebarCatalog.tags.value);
 const bookmarkFolderOptions = computed(() => [
@@ -117,6 +145,7 @@ const bookmarkFolderOptions = computed(() => [
 const favoriteBookmarksWithFolderNames = computed(() =>
   mapBookmarksWithFolderNames(favoriteBookmarks.value, folders.value),
 );
+const pageCount = computed(() => Math.max(favoriteList.value.total_pages, 1));
 
 const bookmarkTagOptions = computed(() =>
   tags.value.map((tag) => ({ label: tag.name, value: String(tag.id) })),
@@ -124,10 +153,12 @@ const bookmarkTagOptions = computed(() =>
 
 const loadFavoriteBookmarks = async () => {
   const [bookmarkRes] = await Promise.all([
-    request<BookmarkListResponse>("/bookmarks?is_favorite=true&per_page=100&page=1"),
+    request<BookmarkListResponse>(
+      `/bookmarks?is_favorite=true&page=${favoriteList.value.page}`,
+    ),
     sidebarCatalog.refresh(),
   ]);
-  favoriteBookmarks.value = bookmarkRes.items;
+  favoriteList.value = bookmarkRes;
 };
 
 type LoadToastKind = "loaded" | "refreshed";
@@ -159,6 +190,14 @@ async function loadFavorites(showToast = true, toastKind: LoadToastKind = "loade
 
 const refreshFavorites = async () => {
   await loadFavorites(true, "refreshed");
+};
+
+const setPage = async (page: number) => {
+  const nextPage = Math.min(Math.max(page, 1), pageCount.value);
+  if (nextPage === favoriteList.value.page) return;
+
+  favoriteList.value.page = nextPage;
+  await loadFavorites(false);
 };
 
 const {
@@ -196,12 +235,7 @@ const toggleFavorite = async (bookmark: BookmarkResponse) => {
       }),
     });
 
-    const index = favoriteBookmarks.value.findIndex((item) => item.id === updated.id);
-    if (index >= 0 && updated.is_favorite) {
-      favoriteBookmarks.value[index] = updated;
-    } else if (index >= 0) {
-      favoriteBookmarks.value.splice(index, 1);
-    }
+    await loadFavorites(false);
 
     toast.show({
       title: updated.is_favorite ? "Added to favorites." : "Removed from favorites.",

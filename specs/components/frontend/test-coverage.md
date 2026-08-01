@@ -24,7 +24,7 @@
 - `frontend/tests/e2e/bookmark-manager.spec.ts`
   - Bookmark の画面上での create, edit、description の解除, search, delete
   - 範囲外の bookmark page を有効なページへ正規化し、検索後に URL と表示を同期すること
-  - Favorites page load and favorite toggle
+  - Favorites page load, 21件以上のページング閲覧, and favorite toggle
   - Folder の画面上での create, rename, detail navigation, detail delete
   - Tag の画面上での create, rename, detail navigation, detail delete
   - RSS feed の画面上での create, edit, detail navigation, delete
@@ -56,7 +56,7 @@
   - 初回失敗時でも UI 側で致命的エラーにしない前提の state を確認する
 
 - `frontend/tests/e2e/bookmark-manager.spec.ts`
-  - `/favorites` で favorite のみが表示され、解除で一覧から消えることを確認する
+  - `/favorites` で favorite のみが表示され、21件以上をページング閲覧でき、解除で一覧から消えることを確認する
   - bookmark 作成時の folder/tag 割り当てが detail/filter と整合することを確認する
   - `/folders/[id]` と `/tags/[id]` で関連 bookmark の編集、削除、お気に入り切り替え、21件以上のページング閲覧を確認する
   - `/rss` で webhook の load, ping, save と RSS periodic execution toggle を確認する
