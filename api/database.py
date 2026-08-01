@@ -3,7 +3,8 @@ import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 
-DATABASE_URL = os.getenv("DATABASE_URL", "/data/data.db")
+DEFAULT_DATABASE_PATH = Path(__file__).resolve().parents[1] / "data" / "data.db"
+DATABASE_URL = os.getenv("DATABASE_URL", str(DEFAULT_DATABASE_PATH))
 DEFAULT_MIGRATIONS_DIR = Path(__file__).resolve().parents[1] / "db" / "migrations"
 
 

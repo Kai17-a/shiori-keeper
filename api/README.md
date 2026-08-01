@@ -10,6 +10,7 @@ api-dev
 
 `api-dev` は `fastapi dev` を使って起動する。
 起動時に `../db/migrations` の未適用 migration を自動適用する。別の場所から migration を読み込む場合は `MIGRATIONS_DIR` を指定する。
+`DATABASE_URL` を省略した場合はリポジトリ直下の `data/data.db` を使う。
 
 ## テスト
 

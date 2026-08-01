@@ -23,7 +23,7 @@ bun install
 bun run dev
 ```
 
-`bun` は `mise.toml` で `1.1.38` に固定している。ローカルで `bun run build` を実行する場合も `mise exec bun@1.1.38 -- bun run build` のように同じ版を使う。
+`bun` は `mise.toml`、CI、Dockerfile で `1.3.12` に固定している。
 
 ### 両方まとめて起動
 
@@ -31,26 +31,27 @@ bun run dev
 ./run-local.sh
 ```
 
+API は `http://127.0.0.1:8000`、frontend は `http://127.0.0.1:3000` で起動し、どちらもリポジトリ直下の `data/data.db` を使う。`API_PORT`、`FRONTEND_PORT`、`DATABASE_URL` で変更できる。
+
 ### GitHub Actions をローカル実行
 
 GitHub Actions のワークフローをローカルで再現する場合は `mise exec act -- ...` を使う。
 
 ```bash
-./scripts/run-github-actions.sh
+mise exec -- act pull_request -W .github/workflows/pr-tests.yml
 ```
 
 `act` は `mise.toml` で管理しているので、先に `mise install` を実行しておく。
-デフォルトでは `.github/workflows/pr-tests.yml` の `pull_request` イベントを実行する。
-別のワークフローを試す場合は、ワークフローパスとイベント名を渡す。
+別のワークフローを試す場合は、`-W` のパスとイベント名を変える。
 
 ```bash
-./scripts/run-github-actions.sh .github/workflows/release-on-tag.yml push
+mise exec -- act push -W .github/workflows/release-on-tag.yml
 ```
 
 ### Docker を使う場合
 
 ```bash
-./scripts/docker-compose-up-fresh.sh
+docker compose up --build
 ```
 
 `docker-compose.yml` はローカル開発向けのサンプルで、`Dockerfile` をビルドして起動する。
@@ -63,7 +64,7 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: /data/bookmark.db
+      DATABASE_URL: /data/data.db
     ports:
       - "3001:3000"
       - "8005:8000"
@@ -181,5 +182,7 @@ bun run build
 
 ## ローカル URL
 
-- フロントエンド: `http://127.0.0.1:3001`
-- API: `http://127.0.0.1:8001`
+- 通常起動のフロントエンド: `http://127.0.0.1:3000`
+- 通常起動の API: `http://127.0.0.1:8000`
+- E2E のフロントエンド: `http://127.0.0.1:3001`
+- E2E の API: `http://127.0.0.1:8001`

@@ -85,7 +85,7 @@ COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
 # Runtime defaults; users can override these with `docker run -e` or compose
-ENV DATABASE_URL=/data/bookmark.db
+ENV DATABASE_URL=/data/data.db
 ENV API_PORT=8000
 
 EXPOSE 3000 8000
