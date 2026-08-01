@@ -284,6 +284,15 @@ async function loadData(showToast = true, toastKind: LoadToastKind = "loaded") {
 
     if (requestId !== loadRequestId) return;
 
+    const resolvedPage = Math.min(
+      Math.max(bookmarkRes.page, 1),
+      Math.max(bookmarkRes.total_pages, 1),
+    );
+    if (resolvedPage !== page.value) {
+      page.value = resolvedPage;
+      return;
+    }
+
     bookmarkList.value = bookmarkRes;
 
     if (showToast) {

@@ -23,6 +23,7 @@
 
 - `frontend/tests/e2e/bookmark-manager.spec.ts`
   - Bookmark の画面上での create, edit, search, delete
+  - 範囲外の bookmark page を有効なページへ正規化し、検索後に URL と表示を同期すること
   - Favorites page load and favorite toggle
   - Folder の画面上での create, rename, detail navigation, delete
   - Tag の画面上での create, rename, detail navigation, delete

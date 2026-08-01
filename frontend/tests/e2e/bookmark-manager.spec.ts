@@ -129,6 +129,30 @@ test.describe("bookmarks", () => {
     await buttonByText(page, "Delete bookmark").click();
     await expect(page.getByText(updatedTitle, { exact: true })).toHaveCount(0);
   });
+
+  test("normalizes an out-of-range page after narrowing results", async ({ page }) => {
+    const suffix = `${Date.now()}-${test.info().workerIndex}`;
+    const titles = Array.from(
+      { length: 21 },
+      (_, index) => `Paged Bookmark ${suffix} ${index}`,
+    );
+
+    for (const [index, title] of titles.entries()) {
+      await createBookmark(page, `${suffix}-${index}`, { title });
+    }
+
+    await page.goto("/bookmarks?page=999");
+    await expect(page).toHaveURL((url) => url.searchParams.get("page") === "2");
+    await expect(page.getByText("Page 2 of 2")).toBeVisible();
+
+    const searchInput = page.getByPlaceholder("Search by title or URL");
+    await searchInput.fill(titles[0]!);
+    await expect(page).toHaveURL(
+      (url) => url.searchParams.get("q") === titles[0] && !url.searchParams.has("page"),
+    );
+    await expect(page.getByText(titles[0]!, { exact: true })).toBeVisible();
+    await expect(page.getByText("Page 1 of 1")).toBeVisible();
+  });
 });
 
 test.describe("folders", () => {
