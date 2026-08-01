@@ -12,11 +12,19 @@
 - Close ボタンでポップアップが閉じること
 - 保存成功時と削除成功時に完了メッセージが表示されること
 
+## 自動テスト
+
+- `browser_extension/tests/popupBookmark.test.ts`
+  - 登録 payload に数値の `folder_id` と `tag_ids` を含める
+  - URL 指定 PATCH が成功した場合は POST しない
+  - URL 指定 PATCH が 404 の場合だけ POST へフォールバックする
+  - 接続成功時の登録、フォルダ取得、タグ取得を各一度だけ実行する
+
 ## 実装候補
 
 - popup 初期化テスト
-  - `chrome.tabs.query`
-  - `chrome.storage.local.get` と `chrome.storage.local.set`
+  - `browser.tabs.query`
+  - `browser.storage.local.get` と `browser.storage.local.set`
   - `/health` 成功時の既存ブックマーク取得試行
   - `/folders` と `/tags` の取得
   - `/bookmarks/by-url?url=...` の取得と初期値反映

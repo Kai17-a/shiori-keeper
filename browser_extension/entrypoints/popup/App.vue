@@ -119,6 +119,11 @@
 
 <script setup lang="ts">
 import { onMounted, reactive, ref, watch } from "vue";
+import {
+  createBookmark,
+  initializeConnectedPopup,
+  upsertBookmark,
+} from "../../utils/popupBookmark";
 
 // health check
 const isHealthChecking = ref(false);
@@ -129,7 +134,6 @@ const apiUrl = ref("http://localhost:8000");
 
 // api
 const pending = ref(false);
-const isRemoving = ref(false);
 const responseMessage = ref("");
 const responseMessageColor = ref("warn");
 
@@ -147,14 +151,14 @@ const folderItems = ref<{ label: string; value: number }[]>([]);
 const tagItems = ref<{ label: string; value: number }[]>([]);
 
 const getActiveTab = async () => {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   return tab;
 };
 
 const API_URL_STORAGE_KEY = "popup_api_url";
 
 const loadApiUrl = async () => {
-  const result = await chrome.storage.local.get(API_URL_STORAGE_KEY);
+  const result = await browser.storage.local.get(API_URL_STORAGE_KEY);
   const storedApiUrl = result[API_URL_STORAGE_KEY];
   if (typeof storedApiUrl === "string" && storedApiUrl.trim()) {
     apiUrl.value = storedApiUrl;
@@ -162,7 +166,7 @@ const loadApiUrl = async () => {
 };
 
 const saveApiUrl = async (value: string) => {
-  await chrome.storage.local.set({ [API_URL_STORAGE_KEY]: value });
+  await browser.storage.local.set({ [API_URL_STORAGE_KEY]: value });
 };
 
 const closePopup = () => {
@@ -202,8 +206,7 @@ const connectApiServer = async () => {
       apiStatusMessageColor.value = "success";
     }
     isApiServerConnect.value = true;
-    register();
-    Promise.all([register(), getFolders(), getTags()]);
+    await initializeConnectedPopup({ register, getFolders, getTags });
   } catch (error) {
     apiStatusMessage.value = "Failed to Connect to API";
     apiStatusMessageColor.value = "error";
@@ -243,19 +246,7 @@ const register = async () => {
   pending.value = true;
 
   try {
-    const response = await fetch(new URL("/bookmarks", apiUrl.value), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        url: state.url,
-        title: state.title,
-        description: state.description,
-        folder_id: state.folder ?? null,
-        tag_ids: state.tag.map((e) => e.value),
-      }),
-    });
+    const response = await createBookmark(apiUrl.value, state);
 
     if (!response.ok) {
       const body = await response.json().catch(() => null);
@@ -282,52 +273,14 @@ const save = async () => {
   responseMessage.value = "Running...";
 
   try {
-    const requestBody = {
-      title: state.title,
-      description: state.description,
-      folder_id: state.folder ?? null,
-      tag_ids: state.tag,
-    };
-    const url = new URL("/bookmarks/by-url", apiUrl.value);
-    url.searchParams.set("url", state.url);
-
-    const updateResponse = await fetch(url, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    if (updateResponse.ok) {
-      responseMessageColor.value = "success";
-      responseMessage.value = "Updated";
-      return;
-    }
-
-    if (updateResponse.status !== 404) {
-      const body = await updateResponse.json().catch(() => null);
-      throw new Error(formatApiError(body, updateResponse.status));
-    }
-
-    const createResponse = await fetch(new URL("/bookmarks", apiUrl.value), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        url: state.url,
-        ...requestBody,
-      }),
-    });
-
-    if (!createResponse.ok) {
-      const body = await createResponse.json().catch(() => null);
-      throw new Error(formatApiError(body, createResponse.status));
+    const result = await upsertBookmark(apiUrl.value, state);
+    if (!result.response.ok) {
+      const body = await result.response.json().catch(() => null);
+      throw new Error(formatApiError(body, result.response.status));
     }
 
     responseMessageColor.value = "success";
-    responseMessage.value = "Registered";
+    responseMessage.value = result.operation === "updated" ? "Updated" : "Registered";
   } catch (error) {
     responseMessageColor.value = "error";
     responseMessage.value = error instanceof Error ? error.message : String(error);
@@ -430,8 +383,6 @@ onMounted(async () => {
   await connectApiServer();
 
   if (isApiServerConnect.value) {
-    await Promise.all([getFolders(), getTags()]);
-    await register();
     await loadExistingBookmark();
   }
 });

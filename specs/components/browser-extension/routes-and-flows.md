@@ -8,10 +8,10 @@
 
 1. ポップアップを開く
 2. 現在アクティブなタブのタイトルと URL を取得する
-3. `chrome.storage.local` から API サーバー URL を読み込む
+3. `browser.storage.local` から API サーバー URL を読み込む
 4. `/health` を呼び出して接続状態を表示する
-5. 接続成功時は `/bookmarks` への登録を即時に試みる
-6. `/folders` と `/tags` を取得して選択 UI を初期化する
+5. 接続成功時は `/bookmarks` への登録を一度だけ試みる
+6. 自動登録と並行して `/folders` と `/tags` を各一度取得し、選択 UI を初期化する
 7. `/bookmarks/by-url?url=...` で既存ブックマークを取得し、あればフォームへ反映する
 
 ### 保存
@@ -21,6 +21,8 @@
 3. `/bookmarks/by-url?url=...` に PATCH を送る
 4. `404` の場合は `/bookmarks` に POST して新規作成する
 5. 成功した場合は完了メッセージを表示する
+
+保存 payload の `folder_id` は数値または `null`、`tag_ids` は選択済みタグ ID の数値配列とする。
 
 ### 削除
 

@@ -6,7 +6,7 @@ This directory contains the Manifest V3 extension used with Shiori Keeper.
 
 - Reads the current tab title and URL from the popup
 - Sends bookmarks to a Shiori Keeper API server
-- Stores the API server URL in `chrome.storage.local`
+- Stores the API server URL with the WebExtension `browser.storage.local` API
 - Checks API connectivity from the popup
 - Loads folders and tags for bookmark organization
 - Updates existing bookmarks by URL and falls back to creation when needed
@@ -29,3 +29,4 @@ bash scripts/check-browser-extension-popup-api-contract.sh http://localhost:8000
 ```
 
 The extension is built with WXT, Vue 3, and PrimeVue.
+It is popup-only and does not inject content scripts or run a background worker.
