@@ -112,6 +112,18 @@ test.describe("bookmarks", () => {
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(page.getByText(updatedTitle, { exact: true })).toBeVisible();
 
+    const updatedBookmarkCard = page
+      .locator("article")
+      .filter({ has: page.getByText(updatedTitle, { exact: true }) });
+    await activate(updatedBookmarkCard.locator("button").nth(1));
+    await page.getByRole("textbox", { name: "Description" }).fill("");
+    await buttonByText(page, "Save bookmark").click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+
+    await activate(updatedBookmarkCard.locator("button").nth(1));
+    await expect(page.getByRole("textbox", { name: "Description" })).toHaveValue("");
+    await buttonByText(page, "Cancel").click();
+
     const searchInput = page.getByPlaceholder("Search by title or URL");
     await searchInput.fill(updatedTitle);
     await expect(page.getByText(updatedTitle, { exact: true })).toBeVisible();

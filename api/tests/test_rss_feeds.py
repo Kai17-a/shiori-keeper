@@ -216,6 +216,22 @@ def test_update_rss_feed_returns_200(client):
     assert resp.json()["title"] == "New"
 
 
+def test_update_rss_feed_can_clear_description(client):
+    feed_id = client.post(
+        "/rss-feeds",
+        json={
+            "url": "https://example.com/feed.xml",
+            "title": "Example",
+            "description": "Original description",
+        },
+    ).json()["id"]
+
+    resp = client.patch(f"/rss-feeds/{feed_id}", json={"description": None})
+
+    assert resp.status_code == 200
+    assert resp.json()["description"] is None
+
+
 def test_update_rss_feed_can_disable_webhook_notification(client):
     feed_id = create_feed(client).json()["id"]
     resp = client.patch(

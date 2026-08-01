@@ -340,21 +340,26 @@ class RSSFeedService:
             repo = RSSFeedRepository(conn)
             if repo.find_by_id(feed_id) is None:
                 raise HTTPException(status_code=404, detail="RSS feed not found")
+            payload = data.model_dump(exclude_unset=True)
             fields: dict[str, object] = {}
-            if data.url is not None:
-                existing = repo.find_by_url(str(data.url))
+            if "url" in payload and payload["url"] is not None:
+                url = str(payload["url"])
+                existing = repo.find_by_url(url)
                 if existing is not None and existing["id"] != feed_id:
                     raise HTTPException(
                         status_code=409, detail="RSS feed URL already exists"
                     )
-                self._validate_rss_feed_url(str(data.url))
-                fields["url"] = str(data.url)
-            if data.title is not None:
-                fields["title"] = data.title
-            if data.description is not None:
-                fields["description"] = data.description
-            if data.notify_webhook_enabled is not None:
-                fields["notify_webhook_enabled"] = int(data.notify_webhook_enabled)
+                self._validate_rss_feed_url(url)
+                fields["url"] = url
+            if "title" in payload and payload["title"] is not None:
+                fields["title"] = payload["title"]
+            if "description" in payload:
+                fields["description"] = payload["description"]
+            if (
+                "notify_webhook_enabled" in payload
+                and payload["notify_webhook_enabled"] is not None
+            ):
+                fields["notify_webhook_enabled"] = int(payload["notify_webhook_enabled"])
             row = repo.update(feed_id, fields)
             assert row is not None
             return RSSFeedResponse(**row)

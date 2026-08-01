@@ -171,25 +171,33 @@ class BookmarkService(BookmarkServiceBase):
         if repo.find_by_id(bookmark_id) is None:
             self._raise_not_found("Bookmark")
 
+        payload = data.model_dump(exclude_unset=True)
         fields: dict[str, object] = {}
-        if data.url is not None:
-            fields["url"] = str(data.url)
-        if data.title is not None:
-            fields["title"] = data.title
-        if data.description is not None:
-            fields["description"] = data.description
-        if data.folder_id is not None:
-            self._verify_folder(conn, data.folder_id)
-            fields["folder_id"] = data.folder_id
-        if data.url is not None:
-            existing = repo.find_by_url(str(data.url))
+        if "url" in payload:
+            url = payload["url"]
+            if url is not None:
+                fields["url"] = str(url)
+        if "title" in payload:
+            title = payload["title"]
+            if title is not None:
+                fields["title"] = title
+        if "description" in payload:
+            fields["description"] = payload["description"]
+        if "folder_id" in payload:
+            folder_id = payload["folder_id"]
+            if folder_id is not None:
+                self._verify_folder(conn, folder_id)
+            fields["folder_id"] = folder_id
+        if "url" in fields:
+            existing = repo.find_by_url(str(fields["url"]))
             if existing is not None and existing["id"] != bookmark_id:
                 raise HTTPException(
                     status_code=409, detail="Bookmark URL already exists"
                 )
 
         repo.update(bookmark_id, fields)
-        self._sync_tags(repo, bookmark_id, data.tag_ids)
+        if "tag_ids" in payload:
+            self._sync_tags(repo, bookmark_id, payload["tag_ids"])
         row = repo.find_by_id(bookmark_id)
         assert row is not None
         return self._build_bookmark_response(repo, repo.normalize_row(row))

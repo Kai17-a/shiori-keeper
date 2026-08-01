@@ -17,6 +17,7 @@
   - タグ付与・解除
   - バリデーションと重複エラー
   - タグ集合の置き換え
+  - description と folder の明示的な解除
 
 - `api/tests/test_folders.py`
   - 作成、一覧、更新、削除
@@ -37,6 +38,7 @@
   - 新規記事なしメッセージ
   - 既送信記事のスキップ
   - article paging
+  - description の明示的な解除
 
 - `api/tests/test_metrics.py`
   - ダッシュボード集計

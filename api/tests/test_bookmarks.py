@@ -233,6 +233,24 @@ def test_update_bookmark_can_clear_tags(client):
     assert resp.json()["tags"] == []
 
 
+def test_update_bookmark_can_clear_description_and_folder(client):
+    folder_id = create_folder(client).json()["id"]
+    bm_id = create_bookmark(
+        client,
+        description="Original description",
+        folder_id=folder_id,
+    ).json()["id"]
+
+    resp = client.patch(
+        f"/bookmarks/{bm_id}",
+        json={"description": None, "folder_id": None},
+    )
+
+    assert resp.status_code == 200
+    assert resp.json()["description"] is None
+    assert resp.json()["folder_id"] is None
+
+
 def test_update_bookmark_changes_updated_at(client):
     bm = create_bookmark(client).json()
     bm_id = bm["id"]

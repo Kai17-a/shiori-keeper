@@ -101,6 +101,11 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `DashboardMetricsResponse`
 - `ErrorResponse`
 
+## 部分更新
+
+- `PATCH /bookmarks/{id}`、`PATCH /bookmarks/by-url`、`PATCH /rss-feeds/{id}` は、リクエストに含まれないフィールドを変更しない。
+- nullable な `description` と bookmark の `folder_id` は、明示した `null` で保存済みの値を解除できる。
+
 ## レスポンススキーマ
 
 | Schema                      | Fields                                                                               |
