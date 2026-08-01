@@ -269,6 +269,7 @@ test.describe("tags", () => {
 
 test.describe("rss feeds", () => {
   test("creates, edits, opens, and deletes rss feeds from the UI", async ({ page }) => {
+    test.setTimeout(60_000);
     const suffix = `${Date.now()}-${test.info().workerIndex}`;
     const rssServer = await startRssServer(suffix);
     try {
@@ -303,6 +304,27 @@ test.describe("rss feeds", () => {
       await expect(headingByText(page, updatedTitle)).toBeVisible();
       await page.goto("/rss");
       await expect(page).toHaveURL(/\/rss\/?$/);
+      await expect(rssPanel.getByText(updatedTitle, { exact: true })).toBeVisible();
+
+      const pagedFeedTitles = Array.from(
+        { length: 20 },
+        (_, index) => `Paged RSS Feed ${suffix} ${index}`,
+      );
+      for (const [index, pagedTitle] of pagedFeedTitles.entries()) {
+        const created = await page.request.post(`${apiBaseUrl}/rss-feeds`, {
+          data: {
+            title: pagedTitle,
+            url: `${rssServer.url}?page=${index}`,
+            description: "Paged RSS description",
+          },
+        });
+        expect(created.status()).toBe(201);
+      }
+      await buttonByText(page, "Refresh").click();
+      await expect(page.getByText("Total 21 feeds · Page 1 of 2")).toBeVisible();
+      await page.getByRole("button", { name: "2", exact: true }).click();
+      await expect(page.getByText("Total 21 feeds · Page 2 of 2")).toBeVisible();
+      await expect(rssPanel.getByText(updatedTitle, { exact: true })).toBeVisible();
 
       feedCard = page
         .locator("article")
@@ -310,6 +332,7 @@ test.describe("rss feeds", () => {
       await activate(feedCard.locator("button").nth(3));
       await buttonByText(page, "Delete feed").click();
       await expect(rssPanel.getByText(updatedTitle, { exact: true })).toHaveCount(0);
+      await expect(page.getByText("Total 20 feeds · Page 1 of 1")).toBeVisible();
     } finally {
       await rssServer.close();
     }

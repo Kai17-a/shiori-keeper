@@ -27,7 +27,7 @@
   - Favorites page load, 21件以上のページング閲覧, and favorite toggle
   - Folder の画面上での create, rename, detail navigation, detail delete
   - Tag の画面上での create, rename, detail navigation, detail delete
-  - RSS feed の画面上での create, edit, detail navigation, delete
+  - RSS feed の画面上での create, edit, detail navigation, 最終ページ削除後のページ正規化, delete
   - RSS webhook load, save
   - RSS periodic execution toggle
   - Settings page theme toggle

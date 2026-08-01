@@ -99,7 +99,7 @@
             class="flex flex-col gap-3 border-b border-default pb-4 md:flex-row md:items-center md:justify-between"
           >
             <p class="text-xs uppercase tracking-[0.08em] text-muted">
-              Total {{ feedList.total }} feeds
+              Total {{ feedList.total }} feeds · Page {{ feedList.page }} of {{ pageCount }}
             </p>
             <div class="flex items-center gap-2">
               <UButton
@@ -470,7 +470,9 @@ const loadFeeds = async (showToast = true, toastKind: LoadToastKind = "loaded") 
   loading.value = true;
   loadError.value = "";
   try {
-    feedList.value = await request<RSSFeedListResponse>(`/rss-feeds?page=${page.value}`);
+    const response = await request<RSSFeedListResponse>(`/rss-feeds?page=${page.value}`);
+    feedList.value = response;
+    page.value = response.page;
     if (showToast) {
       toast.show({
         title: toastKind === "loaded" ? "RSS feeds loaded." : "RSS feeds refreshed.",
