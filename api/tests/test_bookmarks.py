@@ -251,6 +251,15 @@ def test_update_bookmark_can_clear_description_and_folder(client):
     assert resp.json()["folder_id"] is None
 
 
+@pytest.mark.parametrize("payload", [{"url": None}, {"title": None}, {"tag_ids": None}])
+def test_update_bookmark_rejects_null_for_non_nullable_fields(client, payload):
+    bm_id = create_bookmark(client).json()["id"]
+
+    resp = client.patch(f"/bookmarks/{bm_id}", json=payload)
+
+    assert resp.status_code == 422
+
+
 def test_update_bookmark_changes_updated_at(client):
     bm = create_bookmark(client).json()
     bm_id = bm["id"]

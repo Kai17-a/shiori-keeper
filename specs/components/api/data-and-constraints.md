@@ -105,6 +105,7 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 
 - `PATCH /bookmarks/{id}`、`PATCH /bookmarks/by-url`、`PATCH /rss-feeds/{id}` は、リクエストに含まれないフィールドを変更しない。
 - nullable な `description` と bookmark の `folder_id` は、明示した `null` で保存済みの値を解除できる。
+- URL、title、bookmark の `tag_ids`、RSS の `notify_webhook_enabled` は明示した `null` を受け付けず、422 を返す。
 
 ## レスポンススキーマ
 

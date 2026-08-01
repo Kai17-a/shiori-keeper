@@ -18,6 +18,7 @@
   - バリデーションと重複エラー
   - タグ集合の置き換え
   - description と folder の明示的な解除
+  - URL、title、tag_ids への null 指定を 422 で拒否
 
 - `api/tests/test_folders.py`
   - 作成、一覧、更新、削除
@@ -39,6 +40,7 @@
   - 既送信記事のスキップ
   - article paging
   - description の明示的な解除
+  - URL、title、通知有効フラグへの null 指定を 422 で拒否
 
 - `api/tests/test_metrics.py`
   - ダッシュボード集計

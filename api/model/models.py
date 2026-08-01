@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import ClassVar
 
-from pydantic import AnyHttpUrl, BaseModel, Field as PydField, field_validator
+from pydantic import AnyHttpUrl, BaseModel, Field as PydField, field_validator, model_validator
 from sqlalchemy import (
     Boolean,
     Column,
@@ -229,6 +229,13 @@ class BookmarkUpdate(BaseModel):
             raise ValueError("tag_ids must not contain duplicates")
         return value
 
+    @model_validator(mode="after")
+    def reject_null_non_nullable_fields(self) -> "BookmarkUpdate":
+        for field_name in ("url", "title", "tag_ids"):
+            if field_name in self.model_fields_set and getattr(self, field_name) is None:
+                raise ValueError(f"{field_name} cannot be null")
+        return self
+
 
 class FolderCreate(BaseModel):
     name: str = PydField(min_length=1)
@@ -321,6 +328,13 @@ class RSSFeedUpdate(BaseModel):
         if not value:
             raise ValueError("Title cannot be empty")
         return value
+
+    @model_validator(mode="after")
+    def reject_null_non_nullable_fields(self) -> "RSSFeedUpdate":
+        for field_name in ("url", "title", "notify_webhook_enabled"):
+            if field_name in self.model_fields_set and getattr(self, field_name) is None:
+                raise ValueError(f"{field_name} cannot be null")
+        return self
 
 
 # --- Response schemas ---

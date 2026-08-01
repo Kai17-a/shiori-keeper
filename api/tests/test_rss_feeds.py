@@ -232,6 +232,18 @@ def test_update_rss_feed_can_clear_description(client):
     assert resp.json()["description"] is None
 
 
+@pytest.mark.parametrize(
+    "payload",
+    [{"url": None}, {"title": None}, {"notify_webhook_enabled": None}],
+)
+def test_update_rss_feed_rejects_null_for_non_nullable_fields(client, payload):
+    feed_id = create_feed(client).json()["id"]
+
+    resp = client.patch(f"/rss-feeds/{feed_id}", json=payload)
+
+    assert resp.status_code == 422
+
+
 def test_update_rss_feed_can_disable_webhook_notification(client):
     feed_id = create_feed(client).json()["id"]
     resp = client.patch(
