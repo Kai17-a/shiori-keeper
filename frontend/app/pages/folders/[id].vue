@@ -55,7 +55,7 @@
                 />
                 <IconButton
                   size="sm"
-                  label="Edit"
+                  label="Delete"
                   icon="i-lucide-trash-2"
                   color="error"
                   variant="soft"

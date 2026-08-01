@@ -194,12 +194,9 @@ test.describe("folders", () => {
     await expect(page).toHaveURL(/\/folders\/\d+\/?$/);
     await expect(headingByText(page, updatedName)).toBeVisible();
 
-    await page.goto("/folders");
-    folderCard = folderPanel
-      .getByText(updatedName, { exact: true })
-      .locator("xpath=ancestor::*[.//button][1]");
-    await activate(folderCard.locator("button").nth(1));
+    await page.getByRole("button", { name: "Delete" }).click();
     await buttonByText(page, "Delete folder").click();
+    await expect(page).toHaveURL(/\/folders\/?$/);
     await expect(folderPanel.getByText(updatedName, { exact: true })).toHaveCount(0);
   });
 });
@@ -231,12 +228,9 @@ test.describe("tags", () => {
     await expect(page).toHaveURL(/\/tags\/\d+\/?$/);
     await expect(headingByText(page, updatedName)).toBeVisible();
 
-    await page.goto("/tags");
-    tagCard = tagPanel
-      .getByText(updatedName, { exact: true })
-      .locator("xpath=ancestor::*[.//button][1]");
-    await activate(tagCard.locator("button").nth(1));
+    await page.getByRole("button", { name: "Delete" }).click();
     await buttonByText(page, "Delete tag").click();
+    await expect(page).toHaveURL(/\/tags\/?$/);
     await expect(tagPanel.getByText(updatedName, { exact: true })).toHaveCount(0);
   });
 });

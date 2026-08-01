@@ -25,8 +25,8 @@
   - Bookmark の画面上での create, edit、description の解除, search, delete
   - 範囲外の bookmark page を有効なページへ正規化し、検索後に URL と表示を同期すること
   - Favorites page load and favorite toggle
-  - Folder の画面上での create, rename, detail navigation, delete
-  - Tag の画面上での create, rename, detail navigation, delete
+  - Folder の画面上での create, rename, detail navigation, detail delete
+  - Tag の画面上での create, rename, detail navigation, detail delete
   - RSS feed の画面上での create, edit, detail navigation, delete
   - RSS webhook load, save
   - RSS periodic execution toggle
