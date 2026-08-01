@@ -65,3 +65,21 @@ export const initializeConnectedPopup = async (tasks: {
 }) => {
   await Promise.all([tasks.register(), tasks.getFolders(), tasks.getTags()]);
 };
+
+export const createConnectedPopupInitializer = () => {
+  const initializedApiOrigins = new Set<string>();
+
+  return async (
+    apiUrl: string,
+    tasks: Parameters<typeof initializeConnectedPopup>[0],
+  ) => {
+    const apiOrigin = new URL(apiUrl).origin;
+    if (initializedApiOrigins.has(apiOrigin)) {
+      return false;
+    }
+
+    await initializeConnectedPopup(tasks);
+    initializedApiOrigins.add(apiOrigin);
+    return true;
+  };
+};

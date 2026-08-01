@@ -1,6 +1,7 @@
 import { describe, expect, mock, test } from "bun:test";
 
 import {
+  createConnectedPopupInitializer,
   createBookmark,
   initializeConnectedPopup,
   upsertBookmark,
@@ -80,4 +81,34 @@ test("connected popup runs each initialization task once", async () => {
   expect(register).toHaveBeenCalledTimes(1);
   expect(getFolders).toHaveBeenCalledTimes(1);
   expect(getTags).toHaveBeenCalledTimes(1);
+});
+
+test("connected popup initializes only once for the same API origin", async () => {
+  const initialize = createConnectedPopupInitializer();
+  const register = mock(async () => undefined);
+  const getFolders = mock(async () => undefined);
+  const getTags = mock(async () => undefined);
+  const tasks = { register, getFolders, getTags };
+
+  expect(await initialize("http://localhost:8000", tasks)).toBe(true);
+  expect(await initialize("http://localhost:8000/", tasks)).toBe(false);
+
+  expect(register).toHaveBeenCalledTimes(1);
+  expect(getFolders).toHaveBeenCalledTimes(1);
+  expect(getTags).toHaveBeenCalledTimes(1);
+});
+
+test("connected popup initializes a newly selected API origin", async () => {
+  const initialize = createConnectedPopupInitializer();
+  const register = mock(async () => undefined);
+  const getFolders = mock(async () => undefined);
+  const getTags = mock(async () => undefined);
+  const tasks = { register, getFolders, getTags };
+
+  await initialize("http://localhost:8000", tasks);
+  expect(await initialize("http://localhost:9000", tasks)).toBe(true);
+
+  expect(register).toHaveBeenCalledTimes(2);
+  expect(getFolders).toHaveBeenCalledTimes(2);
+  expect(getTags).toHaveBeenCalledTimes(2);
 });

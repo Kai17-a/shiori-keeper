@@ -120,8 +120,8 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref, watch } from "vue";
 import {
+  createConnectedPopupInitializer,
   createBookmark,
-  initializeConnectedPopup,
   upsertBookmark,
 } from "../../utils/popupBookmark";
 
@@ -169,6 +169,8 @@ const saveApiUrl = async (value: string) => {
   await browser.storage.local.set({ [API_URL_STORAGE_KEY]: value });
 };
 
+const initializeConnectedApi = createConnectedPopupInitializer();
+
 const closePopup = () => {
   window.close();
 };
@@ -206,7 +208,7 @@ const connectApiServer = async () => {
       apiStatusMessageColor.value = "success";
     }
     isApiServerConnect.value = true;
-    await initializeConnectedPopup({ register, getFolders, getTags });
+    await initializeConnectedApi(apiUrl.value, { register, getFolders, getTags });
   } catch (error) {
     apiStatusMessage.value = "Failed to Connect to API";
     apiStatusMessageColor.value = "error";
