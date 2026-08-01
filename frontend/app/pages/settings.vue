@@ -41,13 +41,15 @@
 </template>
 
 <script setup lang="ts">
+import type { TabsItem } from "@nuxt/ui";
+
 const colorMode = useColorMode();
 
-const themeOptions = [
+const themeOptions: TabsItem[] = [
   { label: "System", value: "system", icon: "i-lucide-monitor" },
   { label: "Light", value: "light", icon: "i-lucide-sun-medium" },
   { label: "Dark", value: "dark", icon: "i-lucide-moon-star" },
-] as const;
+];
 
 const selectedTheme = computed({
   get: () => colorMode.preference,

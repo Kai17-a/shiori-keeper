@@ -97,7 +97,12 @@
                   />
 
                   <template #content>
-                    <UCalendar v-model="selectedPublishedRange" class="p-2" :number-of-months="2" range />
+                    <UCalendar
+                      v-model="calendarPublishedRange"
+                      class="p-2"
+                      :number-of-months="2"
+                      range
+                    />
                   </template>
                 </UPopover>
               </template>
@@ -134,7 +139,7 @@
               </UButton>
               <template
                 v-for="(item, index) in articlePaginationItems"
-                :key="`${item.type}-${index}-${item.value ?? 'ellipsis'}`"
+                :key="`${item.type}-${index}-${item.type === 'page' ? item.value : 'ellipsis'}`"
               >
                 <UButton
                   v-if="item.type === 'page'"
@@ -184,7 +189,7 @@
             class="rounded-2xl border border-dashed border-default p-6 text-sm text-muted"
           >
             <p v-if="articlesLoading">Loading articles...</p>
-            <p v-else-if="searchTitle || selectedPublishedRange.start || selectedPublishedRange.end">
+            <p v-else-if="searchTitle || selectedPublishedRange?.start || selectedPublishedRange?.end">
               No articles match your search.
             </p>
             <p v-else>No articles recorded for this feed yet.</p>
@@ -219,7 +224,7 @@
 </template>
 
 <script setup lang="ts">
-import type { DateValue } from "@internationalized/date";
+import type { DateRange } from "reka-ui";
 import type { RSSFeedArticleListResponse, RSSFeedExecuteResponse, RSSFeedResponse } from "~/types";
 import { formatDateTime } from "~/utils/dateTime";
 
@@ -240,7 +245,13 @@ const executing = ref(false);
 const articlesLoading = ref(false);
 const searchTitle = ref("");
 const inputDate = useTemplateRef("inputDate");
-const selectedPublishedRange = shallowRef<{ start?: DateValue; end?: DateValue }>({});
+const selectedPublishedRange = shallowRef<DateRange>();
+const calendarPublishedRange = computed<DateRange | null>({
+  get: () => selectedPublishedRange.value ?? null,
+  set: (value) => {
+    selectedPublishedRange.value = value ?? undefined;
+  },
+});
 const modalOpen = ref(false);
 const deleteOpen = ref(false);
 const feed = ref<RSSFeedResponse | null>(null);
@@ -260,8 +271,8 @@ const buildArticleQuery = () => {
   const params = new URLSearchParams({ page: String(articlePage.value) });
   const q = searchTitle.value.trim();
   if (q) params.set("q", q);
-  const publishedFrom = selectedPublishedRange.value.start?.toString();
-  const publishedTo = selectedPublishedRange.value.end?.toString();
+  const publishedFrom = selectedPublishedRange.value?.start?.toString();
+  const publishedTo = selectedPublishedRange.value?.end?.toString();
   if (publishedFrom) params.set("published_from", publishedFrom);
   if (publishedTo) params.set("published_to", publishedTo);
   return params.toString();

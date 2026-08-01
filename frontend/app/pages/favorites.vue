@@ -180,7 +180,7 @@ const {
 
 const selectedBookmarkFolder = computed({
   get: () =>
-    bookmarkFolderOptions.value.find((option) => option.value === bookmarkForm.folder_id) || null,
+    bookmarkFolderOptions.value.find((option) => option.value === bookmarkForm.folder_id),
   set: (value) => {
     bookmarkForm.folder_id = value?.value || "";
   },

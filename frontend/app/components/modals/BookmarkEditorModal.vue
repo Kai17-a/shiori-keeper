@@ -58,7 +58,7 @@
 import type { BookmarkFormState, SelectOption } from "~/utils/bookmarkList";
 
 const openModel = defineModel<boolean>("open", { required: true });
-const selectedFolderModel = defineModel<SelectOption | null>("selectedFolder", {
+const selectedFolderModel = defineModel<SelectOption | undefined>("selectedFolder", {
   required: true,
 });
 

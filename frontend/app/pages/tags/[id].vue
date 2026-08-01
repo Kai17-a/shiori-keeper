@@ -243,7 +243,7 @@ const loadTagCore = async (showToast = false) => {
 const loadTagRelations = async () => {
   try {
     const [bookmarksRes] = await Promise.all([
-      request(`/bookmarks?tag_id=${route.params.id}`),
+      request<BookmarkListResponse>(`/bookmarks?tag_id=${route.params.id}`),
       refreshSidebarCatalog(),
     ]);
 
@@ -290,9 +290,9 @@ const bookmarkTagOptions = computed<SelectOption[]>(() =>
   ),
 );
 
-const selectedBookmarkFolder = computed<SelectOption | null>({
+const selectedBookmarkFolder = computed<SelectOption | undefined>({
   get: () =>
-    bookmarkFolderOptions.value.find((option) => option.value === bookmarkForm.folder_id) || null,
+    bookmarkFolderOptions.value.find((option) => option.value === bookmarkForm.folder_id),
   set: (value) => {
     bookmarkForm.folder_id = normalizeSelectValue(value);
   },

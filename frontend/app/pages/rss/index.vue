@@ -113,7 +113,7 @@
               </UButton>
               <template
                 v-for="(item, index) in paginationItems"
-                :key="`${item.type}-${index}-${item.value ?? 'ellipsis'}`"
+                :key="`${item.type}-${index}-${item.type === 'page' ? item.value : 'ellipsis'}`"
               >
                 <UButton
                   v-if="item.type === 'page'"

@@ -57,7 +57,7 @@
               </UButton>
               <template
                 v-for="(item, index) in paginationItems"
-                :key="`${item.type}-${index}-${item.value ?? 'ellipsis'}`"
+                :key="`${item.type}-${index}-${item.type === 'page' ? item.value : 'ellipsis'}`"
               >
                 <UButton
                   v-if="item.type === 'page'"
@@ -193,16 +193,16 @@ const filterTagOptions = computed(() => [
   ),
 ]);
 
-const selectedFilterFolder = computed<SelectOption | null>({
+const selectedFilterFolder = computed<SelectOption | undefined>({
   get: () =>
-    filterFolderOptions.value.find((option) => option.value === filterFolder.value) || null,
+    filterFolderOptions.value.find((option) => option.value === filterFolder.value),
   set: (value) => {
     filterFolder.value = normalizeSelectValue(value);
   },
 });
 
-const selectedFilterTag = computed<SelectOption | null>({
-  get: () => filterTagOptions.value.find((option) => option.value === filterTag.value) || null,
+const selectedFilterTag = computed<SelectOption | undefined>({
+  get: () => filterTagOptions.value.find((option) => option.value === filterTag.value),
   set: (value) => {
     filterTag.value = normalizeSelectValue(value);
   },
@@ -232,6 +232,7 @@ const {
   loadBookmarkForm,
   modalOpen,
   openCreateModal,
+  pendingDeleteBookmark,
   removeBookmark,
   saveBookmark,
   saving,
@@ -241,9 +242,9 @@ const {
   findBookmarkById: (id) => bookmarkCards.value.find((bookmark) => bookmark.id === id) || null,
 });
 
-const selectedBookmarkFolder = computed<SelectOption | null>({
+const selectedBookmarkFolder = computed<SelectOption | undefined>({
   get: () =>
-    bookmarkFolderOptions.value.find((option) => option.value === bookmarkForm.folder_id) || null,
+    bookmarkFolderOptions.value.find((option) => option.value === bookmarkForm.folder_id),
   set: (value) => {
     bookmarkForm.folder_id = value?.value || "";
   },

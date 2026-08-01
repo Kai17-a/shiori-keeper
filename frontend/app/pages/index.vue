@@ -143,7 +143,7 @@ const stats = computed(() => [
 onMounted(async () => {
   try {
     const [bookmarksRes, metricsRes] = await Promise.all([
-      request("/bookmarks"),
+      request<BookmarkListResponse>("/bookmarks"),
       request<DashboardMetricsResponse>("/metrics/dashboard"),
     ]);
 

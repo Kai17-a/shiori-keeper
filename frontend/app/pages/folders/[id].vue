@@ -244,7 +244,7 @@ const loadFolderCore = async (showToast = false) => {
 const loadFolderRelations = async () => {
   try {
     const [bookmarksRes] = await Promise.all([
-      request(`/bookmarks?folder_id=${route.params.id}`),
+      request<BookmarkListResponse>(`/bookmarks?folder_id=${route.params.id}`),
       refreshSidebarCatalog(),
     ]);
 
@@ -283,9 +283,9 @@ const bookmarkTagOptions = computed<SelectOption[]>(() =>
   ),
 );
 
-const selectedBookmarkFolder = computed<SelectOption | null>({
+const selectedBookmarkFolder = computed<SelectOption | undefined>({
   get: () =>
-    bookmarkFolderOptions.value.find((option) => option.value === bookmarkForm.folder_id) || null,
+    bookmarkFolderOptions.value.find((option) => option.value === bookmarkForm.folder_id),
   set: (value) => {
     bookmarkForm.folder_id = normalizeSelectValue(value);
   },
@@ -410,7 +410,7 @@ const toggleFavorite = async (bookmark: BookmarkResponse) => {
 
 const saveFolder = async () => {
   if (!folder.value) return;
-  const name = (editForm.title || editForm.name).trim();
+  const name = editForm.name.trim();
   if (!name) {
     toast.show({
       title: "Folder name is required.",

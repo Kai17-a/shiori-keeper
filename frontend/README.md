@@ -13,6 +13,7 @@ bun run dev
 
 ```bash
 bun run test
+bun run typecheck
 bun run e2e
 bun run e2e:run
 bun run e2e:headed
