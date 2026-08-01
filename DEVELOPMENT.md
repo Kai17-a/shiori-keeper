@@ -162,8 +162,6 @@ mise run api-test
 mise run frontend-test
 mise run frontend-typecheck
 mise run e2e
-mise run e2e-run
-mise run e2e-headed
 ```
 
 `e2e:run` は結果ログを `.artifacts/playwright-e2e.log` に保存する。

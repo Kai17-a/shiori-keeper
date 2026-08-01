@@ -22,10 +22,6 @@ run = "uv sync --directory api --frozen"
 description = "Start the API development server"
 run = "uv run --directory api api-dev"
 
-[tasks.api-run]
-description = "Start the API production server"
-run = "uv run --directory api api-run"
-
 [tasks.api-lint]
 description = "Lint the API"
 run = "uv run --directory api ruff check ."
@@ -46,10 +42,6 @@ run = "bun --cwd frontend run dev"
 description = "Install the frontend dependencies"
 run = "bun --cwd frontend install --frozen-lockfile"
 
-[tasks.frontend-build]
-description = "Build the frontend"
-run = "bun --cwd frontend run build"
-
 [tasks.frontend-generate]
 description = "Generate the frontend static distribution"
 run = "bun --cwd frontend run generate"
@@ -65,14 +57,6 @@ run = "bun --cwd frontend run typecheck"
 [tasks.e2e]
 description = "Run frontend end-to-end tests"
 run = "./scripts/run-e2e-tests.sh"
-
-[tasks.e2e-run]
-description = "Run end-to-end tests and save the Playwright log"
-run = "bun --cwd frontend run e2e:run"
-
-[tasks.e2e-headed]
-description = "Run end-to-end tests in headed mode"
-run = "bun --cwd frontend run e2e:headed"
 
 [tasks.batch-check]
 description = "Check the batch application"
@@ -98,25 +82,9 @@ run = "bun --cwd browser_extension run dev"
 description = "Install the browser extension dependencies"
 run = "bun --cwd browser_extension install --frozen-lockfile"
 
-[tasks.extension-dev-firefox]
-description = "Start Firefox extension development mode"
-run = "bun --cwd browser_extension run dev:firefox"
-
 [tasks.extension-build]
 description = "Build the Chrome extension"
 run = "bun --cwd browser_extension run build"
-
-[tasks.extension-build-firefox]
-description = "Build the Firefox extension"
-run = "bun --cwd browser_extension run build:firefox"
-
-[tasks.extension-zip]
-description = "Package the Chrome extension"
-run = "bun --cwd browser_extension run zip"
-
-[tasks.extension-zip-firefox]
-description = "Package the Firefox extension"
-run = "bun --cwd browser_extension run zip:firefox"
 
 [tasks.extension-test]
 description = "Test the browser extension"
@@ -149,10 +117,6 @@ run = "./scripts/check-browser-extension-popup-api-contract.sh"
 [tasks.act-pr]
 description = "Run the pull request workflow locally with act"
 run = "act pull_request -W .github/workflows/pr-tests.yml"
-
-[tasks.act-release]
-description = "Run the release workflow locally with act"
-run = "act push -W .github/workflows/release-on-tag.yml"
 
 [tasks.test-all]
 description = "Run all repository checks"
