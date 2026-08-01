@@ -14,6 +14,7 @@ from api.routers.metrics import router as metrics_router
 from api.routers.rss_feeds import router as rss_feeds_router
 from api.routers.settings import router as settings_router
 from api.routers.tags import router as tags_router
+from api.database import initialize_database
 
 logging.basicConfig(
     level=logging.ERROR,
@@ -23,6 +24,7 @@ logging.basicConfig(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    initialize_database()
     yield
 
 

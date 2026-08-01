@@ -2,6 +2,7 @@ import sqlite3
 import tempfile
 from contextlib import contextmanager
 
+from api.database import initialize_database
 from api.tests.test_support import build_test_db
 
 
@@ -24,11 +25,44 @@ def test_build_test_db_creates_all_tables():
         assert "tags" in tables
         assert "bookmark_tags" in tables
         assert "rss_feeds" in tables
+        assert "rss_feed_articles" in tables
         assert "app_settings" in tables
+        assert "schema_migrations" in tables
     finally:
         import os
 
         os.unlink(db_path)
+
+
+def test_initialize_database_applies_every_migration_idempotently(tmp_path):
+    db_path = str(tmp_path / "fresh.db")
+
+    initialize_database(db_path)
+    initialize_database(db_path)
+
+    with sqlite3.connect(db_path) as conn:
+        versions = {
+            row[0]
+            for row in conn.execute("SELECT version FROM schema_migrations").fetchall()
+        }
+        article_columns = {
+            row[1]
+            for row in conn.execute("PRAGMA table_info(rss_feed_articles)").fetchall()
+        }
+        feed_columns = {
+            row[1] for row in conn.execute("PRAGMA table_info(rss_feeds)").fetchall()
+        }
+
+    assert versions == {
+        "010",
+        "011",
+        "012",
+        "013",
+        "202604251114",
+        "202604251124",
+    }
+    assert "published" in article_columns
+    assert "notify_webhook_enabled" in feed_columns
 
 
 def test_db_error_returns_500(tmp_path, monkeypatch):

@@ -148,6 +148,8 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 
 ## 実装上の補足
 
+- API は lifespan の開始時に `db/migrations` の未適用 migration を実行し、`schema_migrations` へ適用済みバージョンを記録する。
+- API 起動時の migration 適用は冪等で、Docker 起動時に先行する dbmate と同じ適用履歴を共有する。
 - `/bookmarks` の一覧は `folder_id`、`tag_id`、`q`、`is_favorite`、`sort`、`page`、`per_page` を受け付ける
 - `/bookmarks` の `sort` は `id`、`url`、`title`、`description`、`folder_id`、`is_favorite`、`created_at`、`updated_at` を受け付ける
 - `/bookmarks` の `sort` は複数指定でき、左から右へ優先度が高い

@@ -5,6 +5,7 @@
 - `api/tests/test_database.py`
   - 全テーブルの自動作成
   - 初期化の冪等性
+  - 全 migration の適用履歴と追加カラム
   - DB 障害時の 500 応答
 
 - `api/tests/test_bookmarks.py`
