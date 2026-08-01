@@ -269,7 +269,6 @@ test.describe("tags", () => {
 
 test.describe("rss feeds", () => {
   test("creates, edits, opens, and deletes rss feeds from the UI", async ({ page }) => {
-    test.setTimeout(60_000);
     const suffix = `${Date.now()}-${test.info().workerIndex}`;
     const rssServer = await startRssServer(suffix);
     try {
