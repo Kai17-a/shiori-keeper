@@ -3,6 +3,8 @@
 このドキュメントはローカル開発向けの手順をまとめる。
 OSS 利用者向けの案内は [README.md](./README.md) を参照する。
 
+すべての開発コマンドは `mise run <task>` として定義している。利用可能な一覧と説明は `mise tasks` で確認できる。
+
 ## ローカル起動
 
 ### API
@@ -28,7 +30,7 @@ bun run dev
 ### 両方まとめて起動
 
 ```bash
-./run-local.sh
+mise run dev
 ```
 
 API は `http://127.0.0.1:8000`、frontend は `http://127.0.0.1:3000` で起動し、どちらもリポジトリ直下の `data/data.db` を使う。`API_PORT`、`FRONTEND_PORT`、`DATABASE_URL` で変更できる。
@@ -141,7 +143,7 @@ GitHub Packages の Docker image 公開機能を使う場合は、別途ワー�
 push 前に API、batch、frontend、ブラウザ拡張、E2E の lint・型検査・テスト・配布ビルドをまとめて手動実行したい場合は次を使う。
 
 ```bash
-./scripts/run-all-tests.sh
+mise run test-all
 ```
 
 この workspace でコードやテストを修正したら、最後に変更を commit する。
@@ -151,19 +153,17 @@ push 前に API、batch、frontend、ブラウザ拡張、E2E の lint・型検�
 ### API
 
 ```bash
-cd api
-python -m pytest -q
+mise run api-test
 ```
 
 ### Frontend
 
 ```bash
-cd frontend
-bun run test
-bun run typecheck
-bun run e2e
-bun run e2e:run
-bun run e2e:headed
+mise run frontend-test
+mise run frontend-typecheck
+mise run e2e
+mise run e2e-run
+mise run e2e-headed
 ```
 
 `e2e:run` は結果ログを `.artifacts/playwright-e2e.log` に保存する。
@@ -174,10 +174,9 @@ bun run e2e:headed
 ### Browser Extension
 
 ```bash
-cd browser_extension
-bun run test
-bun run compile
-bun run build
+mise run extension-test
+mise run extension-typecheck
+mise run extension-build
 ```
 
 ## ローカル URL
