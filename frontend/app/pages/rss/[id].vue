@@ -444,6 +444,7 @@ const executeFeed = async () => {
     const result = await request<RSSFeedExecuteResponse>(`/rss-feeds/${feed.value.id}/execute`, {
       method: "POST",
     });
+    await loadFeedArticles();
     toast.show({
       title: result.delivered ? "RSS feed executed." : "RSS feed execution finished.",
       description: result.message || undefined,
