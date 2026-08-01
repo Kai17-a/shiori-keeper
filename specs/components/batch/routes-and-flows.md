@@ -25,6 +25,8 @@
 13. webhook へ payload を送信する
 14. webhook 送信成功後に `rss_feed_articles` へ送信済み記事を追記する
 
+RSS 取得と webhook の各送信試行には10秒のタイムアウトを適用し、応答しない外部サービスでbatch全体を無期限に停止させない。
+
 ## DB 依存
 
 | Table | Purpose |

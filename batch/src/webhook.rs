@@ -190,7 +190,9 @@ pub async fn send_rss_webhook(
     embeds: &[Embed<'_>],
     articles: &[Article<'_>],
 ) -> Result<(), Box<dyn Error>> {
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(10))
+        .build()?;
     let webhook_service = detect_webhook_service(webhook_url).unwrap_or("discord");
     let embed_chunks = chunk_embeds(embeds);
 

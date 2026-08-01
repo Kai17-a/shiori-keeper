@@ -18,6 +18,7 @@
 ## RSS と記事記録
 
 - RSS URL は `reqwest::Url::parse` で解釈できる必要がある
+- RSS 取得は10秒でタイムアウトし、当該フィードだけをスキップする
 - 取得結果は `rss::Channel::read_from` で RSS channel として解析できる必要がある
 - item の `link` がない場合は `"(no link)"` を URL として扱う
 - item の `title` がない場合は `"(no title)"` をタイトルとして扱う
@@ -35,6 +36,7 @@
 
 - batch は webhook URL から Discord、Slack、Microsoft Teams を識別する
 - Discord には `username`、`content`、`embeds`、Slack には Block Kit、Microsoft Teams には Adaptive Card 形式を送る
+- webhook の各送信試行は10秒でタイムアウトする
 - webhook の接続エラー、HTTP 429、HTTP 5xx は最大 3 回リトライする
 - リトライ間隔は 500ms とする
 - リトライ後の HTTP 429/5xx と、それ以外の HTTP 4xx はフィード単位の失敗として扱う

@@ -68,6 +68,7 @@ SQLite Database
 - `batch` は RSS 定期実行が有効な場合だけ RSS フィードを読み込み、未送信の記事だけを webhook に通知する
 - `batch` は送信済み記事を `rss_feed_articles` に記録し、重複通知を避ける
 - `batch` は webhook の接続エラー、HTTP 429、HTTP 5xx を最大 3 回までリトライし、最終失敗時は当該フィードをスキップして次へ進む
+- `batch` の RSS 取得と webhook の各送信試行は10秒でタイムアウトする
 - `batch` は API サーバーとは別プロセスとして動作し、HTTP ルートは持たない
 
 ### Chrome Extension

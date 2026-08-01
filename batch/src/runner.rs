@@ -3,6 +3,7 @@ use rss::Channel;
 use rusqlite::Connection;
 use std::collections::HashSet;
 use std::error::Error;
+use std::time::Duration;
 
 use crate::{
     fetch_app_settings, fetch_rss_feeds, rss_periodic_execution_enabled,
@@ -32,6 +33,9 @@ pub async fn run_batch(conn: &Connection) -> Result<(), Box<dyn Error>> {
     }
 
     let webhook_url = &app_settings[0].value;
+    let http_client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(10))
+        .build()?;
 
     for rss_feed in rss_feeds {
         if rss_feed.notify_webhook_enabled == 0 {
@@ -44,7 +48,7 @@ pub async fn run_batch(conn: &Connection) -> Result<(), Box<dyn Error>> {
                 continue;
             }
         };
-        let content = match reqwest::get(url).await {
+        let content = match http_client.get(url).send().await {
             Ok(response) => match response.bytes().await {
                 Ok(content) => content,
                 Err(err) => {
