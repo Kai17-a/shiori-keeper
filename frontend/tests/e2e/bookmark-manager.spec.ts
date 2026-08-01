@@ -319,7 +319,7 @@ test.describe("rss feeds", () => {
         });
         expect(created.status()).toBe(201);
       }
-      await buttonByText(page, "Refresh").click();
+      await rssPanel.getByRole("button", { name: "Refresh" }).click();
       await expect(page.getByText("Total 21 feeds · Page 1 of 2")).toBeVisible();
       await page.getByRole("button", { name: "2", exact: true }).click();
       await expect(page.getByText("Total 21 feeds · Page 2 of 2")).toBeVisible();
