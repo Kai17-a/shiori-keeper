@@ -5,6 +5,7 @@
 - `batch/tests/run_batch.rs`
   - RSS 定期実行が無効な場合に成功扱いで終了する
   - RSS webhook 通知が無効な場合に成功扱いで終了する
+  - RSS 定期実行と webhook 通知の有効設定を、それぞれ対応する設定行から取得する
 
 - `batch/tests/webhook.rs`
   - webhook payload の基本形

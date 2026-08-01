@@ -1,5 +1,7 @@
 use rusqlite::Connection;
-use shiori_keeper_batch::run_batch;
+use shiori_keeper_batch::{
+    rss_periodic_execution_enabled, rss_webhook_notification_enabled, run_batch,
+};
 
 fn create_in_memory_test_db(enabled: i64) -> Connection {
     let conn = Connection::open_in_memory().expect("open in-memory db");
@@ -33,8 +35,14 @@ fn create_in_memory_test_db(enabled: i64) -> Connection {
     .expect("create schema");
 
     conn.execute(
-        "INSERT INTO app_settings (key, value, rss_periodic_execution_enabled) VALUES ('default_webhook_url', ?, ?)",
-        ("https://discord.com/api/webhooks/1/token", enabled),
+        "INSERT INTO app_settings (key, value) VALUES ('default_webhook_url', ?)",
+        ["https://discord.com/api/webhooks/1/token"],
+    )
+    .expect("insert webhook setting");
+
+    conn.execute(
+        "INSERT INTO app_settings (key, value, rss_periodic_execution_enabled) VALUES ('rss_periodic_execution_enabled', ?, ?)",
+        (if enabled != 0 { "1" } else { "0" }, enabled),
     )
     .expect("insert settings");
 
@@ -70,4 +78,17 @@ async fn disabled_rss_webhook_notification_returns_ok_without_fetching() {
 
     let result = run_batch(&conn).await;
     assert!(result.is_ok());
+}
+
+#[test]
+fn rss_execution_settings_read_their_own_rows() {
+    let conn = create_in_memory_test_db(1);
+    conn.execute(
+        "INSERT INTO app_settings (key, value, rss_periodic_execution_enabled) VALUES ('rss_webhook_notification_enabled', '1', 1)",
+        [],
+    )
+    .expect("insert notification setting");
+
+    assert!(rss_periodic_execution_enabled(&conn).expect("read periodic setting"));
+    assert!(rss_webhook_notification_enabled(&conn).expect("read webhook notification setting"));
 }
