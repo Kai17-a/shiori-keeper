@@ -73,6 +73,8 @@ services:
 
 Docker 起動時は API を `fastapi run api/main.py` で起動し、1 つのコンテナでフロントエンドと API を利用できる。
 フロントエンドは `/api` を使い、nginx がそれをコンテナ内の FastAPI (`127.0.0.1:8000`) に転送する。
+同じコンテナでは Supercronic がバッチを毎時実行する。API、nginx、Supercronic のいずれかが停止した場合は、残りのプロセスも終了してコンテナを失敗終了させる。
+公開イメージの対象アーキテクチャは `linux/amd64` と `linux/arm64` で、dbmate と Supercronic も各アーキテクチャ向けのバイナリを組み込む。
 そのため、ホスト側の公開ポートを変えても、ブラウザからは `http://localhost:3001/api/...` のようにアクセスできる。
 `docker compose` で `3001:3000` と `8005:8000` に変えた場合も、ブラウザからの API 呼び出しは `http://localhost:3001/api/...` のまま動作する。
 API 直アクセスは `http://localhost:8005/...` で行える。

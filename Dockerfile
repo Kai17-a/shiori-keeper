@@ -39,6 +39,8 @@ RUN --mount=type=cache,id=cargo-registry-${TARGETPLATFORM},target=/usr/local/car
 # Runtime stage
 FROM python:3.14-slim
 
+ARG TARGETARCH
+
 WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -48,18 +50,24 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends nginx curl \
   && rm -rf /var/lib/apt/lists/*
 
-RUN curl -fsSL -o ./dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
+RUN case "$TARGETARCH" in \
+      amd64|arm64) ;; \
+      *) echo "Unsupported architecture: $TARGETARCH" >&2; exit 1 ;; \
+    esac \
+  && curl -fsSL -o ./dbmate "https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-${TARGETARCH}"
 RUN chmod +x dbmate
 
-ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.44/supercronic-linux-amd64 \
-    SUPERCRONIC_SHA1SUM=6eb0a8e1e6673675dc67668c1a9b6409f79c37bc \
-    SUPERCRONIC=supercronic-linux-amd64
-
-RUN curl -fsSLO "$SUPERCRONIC_URL" \
-  && echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - \
-  && chmod +x "$SUPERCRONIC" \
-  && mv "$SUPERCRONIC" "/usr/local/bin/${SUPERCRONIC}" \
-  && ln -s "/usr/local/bin/${SUPERCRONIC}" /usr/local/bin/supercronic
+ARG SUPERCRONIC_VERSION=v0.2.44
+RUN case "$TARGETARCH" in \
+      amd64) supercronic_sha1=6eb0a8e1e6673675dc67668c1a9b6409f79c37bc ;; \
+      arm64) supercronic_sha1=6c6cba4cde1dd4a1dd1e7fb23498cde1b57c226c ;; \
+      *) echo "Unsupported architecture: $TARGETARCH" >&2; exit 1 ;; \
+    esac \
+  && supercronic="supercronic-linux-${TARGETARCH}" \
+  && curl -fsSLO "https://github.com/aptible/supercronic/releases/download/${SUPERCRONIC_VERSION}/${supercronic}" \
+  && echo "${supercronic_sha1}  ${supercronic}" | sha1sum -c - \
+  && chmod +x "$supercronic" \
+  && mv "$supercronic" /usr/local/bin/supercronic
 
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
