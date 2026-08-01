@@ -58,7 +58,7 @@
 - `frontend/tests/e2e/bookmark-manager.spec.ts`
   - `/favorites` で favorite のみが表示され、解除で一覧から消えることを確認する
   - bookmark 作成時の folder/tag 割り当てが detail/filter と整合することを確認する
-  - `/folders/[id]` と `/tags/[id]` で関連 bookmark の編集、削除、お気に入り切り替えを確認する
+  - `/folders/[id]` と `/tags/[id]` で関連 bookmark の編集、削除、お気に入り切り替え、21件以上のページング閲覧を確認する
   - `/rss` で webhook の load, ping, save と RSS periodic execution toggle を確認する
   - `/rss/[id]` で article list と paging を確認する
   - `/settings` で theme change が reload 後も維持されることを確認する

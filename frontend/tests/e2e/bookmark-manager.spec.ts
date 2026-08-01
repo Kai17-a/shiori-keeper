@@ -194,7 +194,23 @@ test.describe("folders", () => {
     await expect(page).toHaveURL(/\/folders\/\d+\/?$/);
     await expect(headingByText(page, updatedName)).toBeVisible();
 
-    await page.getByRole("button", { name: "Delete" }).click();
+    const folderId = Number(page.url().match(/\/folders\/(\d+)/)?.[1]);
+    expect(folderId).toBeGreaterThan(0);
+    const relatedTitles = Array.from(
+      { length: 21 },
+      (_, index) => `Folder bookmark ${suffix} ${index}`,
+    );
+    for (const [index, title] of relatedTitles.entries()) {
+      await createBookmark(page, `${suffix}-folder-${index}`, { folder_id: folderId, title });
+    }
+    await buttonByText(page, "Refresh").click();
+    await expect(page.getByText("21 bookmarks")).toBeVisible();
+    await expect(page.getByText("Page 1 of 2")).toBeVisible();
+    await buttonByText(page, "Next").click();
+    await expect(page.getByText("Page 2 of 2")).toBeVisible();
+    await expect(page.getByText(relatedTitles[0]!, { exact: true })).toBeVisible();
+
+    await page.getByRole("button", { name: "Delete" }).first().click();
     await buttonByText(page, "Delete folder").click();
     await expect(page).toHaveURL(/\/folders\/?$/);
     await expect(folderPanel.getByText(updatedName, { exact: true })).toHaveCount(0);
@@ -228,7 +244,23 @@ test.describe("tags", () => {
     await expect(page).toHaveURL(/\/tags\/\d+\/?$/);
     await expect(headingByText(page, updatedName)).toBeVisible();
 
-    await page.getByRole("button", { name: "Delete" }).click();
+    const tagId = Number(page.url().match(/\/tags\/(\d+)/)?.[1]);
+    expect(tagId).toBeGreaterThan(0);
+    const relatedTitles = Array.from(
+      { length: 21 },
+      (_, index) => `Tag bookmark ${suffix} ${index}`,
+    );
+    for (const [index, title] of relatedTitles.entries()) {
+      await createBookmark(page, `${suffix}-tag-${index}`, { tag_ids: [tagId], title });
+    }
+    await buttonByText(page, "Refresh").click();
+    await expect(page.getByText("21 bookmarks")).toBeVisible();
+    await expect(page.getByText("Page 1 of 2")).toBeVisible();
+    await buttonByText(page, "Next").click();
+    await expect(page.getByText("Page 2 of 2")).toBeVisible();
+    await expect(page.getByText(relatedTitles[0]!, { exact: true })).toBeVisible();
+
+    await page.getByRole("button", { name: "Delete" }).first().click();
     await buttonByText(page, "Delete tag").click();
     await expect(page).toHaveURL(/\/tags\/?$/);
     await expect(tagPanel.getByText(updatedName, { exact: true })).toHaveCount(0);

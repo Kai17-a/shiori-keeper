@@ -40,7 +40,7 @@
 
               <div class="flex flex-wrap items-center gap-2 pt-1">
                 <span class="text-sm text-muted">
-                  {{ bookmarks.length }} bookmark{{ bookmarks.length === 1 ? "" : "s" }}
+                  {{ bookmarkTotal }} bookmark{{ bookmarkTotal === 1 ? "" : "s" }}
                 </span>
               </div>
 
@@ -86,6 +86,27 @@
               @remove="askDeleteBookmark"
               @favorite="toggleFavorite"
             />
+          </div>
+          <div v-if="bookmarkPageCount > 1" class="flex items-center justify-between gap-3">
+            <p class="text-sm text-muted">Page {{ bookmarkPage }} of {{ bookmarkPageCount }}</p>
+            <div class="flex gap-2">
+              <UButton
+                color="neutral"
+                variant="soft"
+                :disabled="bookmarkPage <= 1 || refreshing"
+                @click="setBookmarkPage(bookmarkPage - 1)"
+              >
+                Previous
+              </UButton>
+              <UButton
+                color="neutral"
+                variant="soft"
+                :disabled="bookmarkPage >= bookmarkPageCount || refreshing"
+                @click="setBookmarkPage(bookmarkPage + 1)"
+              >
+                Next
+              </UButton>
+            </div>
           </div>
           <div
             v-else
@@ -207,6 +228,10 @@ const state = ref<"loading" | "ready" | "error" | "not-found">("loading");
 const errorMessage = ref("");
 const folder = ref<FolderResponse | null>(null);
 const bookmarks = ref<BookmarkListResponse["items"]>([]);
+const bookmarkTotal = ref(0);
+const bookmarkPage = ref(1);
+const bookmarkTotalPages = ref(0);
+const bookmarkPageCount = computed(() => Math.max(bookmarkTotalPages.value, 1));
 const folders = computed<FolderResponse[]>(() => sidebarCatalog.folders.value);
 const tags = computed<TagResponse[]>(() => sidebarCatalog.tags.value);
 const editOpen = ref(false);
@@ -244,15 +269,35 @@ const loadFolderCore = async (showToast = false) => {
 const loadFolderRelations = async () => {
   try {
     const [bookmarksRes] = await Promise.all([
-      request<BookmarkListResponse>(`/bookmarks?folder_id=${route.params.id}`),
+      request<BookmarkListResponse>(
+        `/bookmarks?folder_id=${route.params.id}&page=${bookmarkPage.value}`,
+      ),
       refreshSidebarCatalog(),
     ]);
 
     bookmarks.value = bookmarksRes.items || [];
+    bookmarkTotal.value = bookmarksRes.total;
+    bookmarkPage.value = bookmarksRes.page;
+    bookmarkTotalPages.value = bookmarksRes.total_pages;
   } catch (err) {
     bookmarks.value = [];
+    bookmarkTotal.value = 0;
+    bookmarkTotalPages.value = 0;
     errorMessage.value = err instanceof Error ? err.message : "Failed to load folder relations.";
     state.value = "error";
+  }
+};
+
+const setBookmarkPage = async (page: number) => {
+  const nextPage = Math.min(Math.max(page, 1), bookmarkPageCount.value);
+  if (nextPage === bookmarkPage.value) return;
+
+  bookmarkPage.value = nextPage;
+  refreshing.value = true;
+  try {
+    await loadFolderRelations();
+  } finally {
+    refreshing.value = false;
   }
 };
 
@@ -477,6 +522,7 @@ const deleteFolder = async () => {
 watch(
   () => route.params.id,
   () => {
+    bookmarkPage.value = 1;
     void loadFolder();
   },
 );
