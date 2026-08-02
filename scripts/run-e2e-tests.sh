@@ -36,6 +36,8 @@ wait_for_url() {
 start_api_server() {
     mkdir -p "$(dirname "$database_path")"
     cd "$repo_root"
+    # Tests assert absolute record counts, so every run needs a clean database.
+    rm -f "$database_path"
     mise x -- dbmate -u "sqlite:$database_path" up
     DATABASE_URL="$database_path" \
         uv run --directory "$repo_root/api" uvicorn api.main:app --app-dir "$repo_root" --host 127.0.0.1 --port "$api_port" > /tmp/bookmark-manager-api-e2e.log 2>&1 &
