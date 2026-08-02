@@ -109,6 +109,7 @@
 - LLM 設定が存在する場合だけ URL を登録する
 - URL の HTML を取得し、LLM が CSS selector を生成した後、実際に記事を抽出できることを確認して保存する
 - URL 更新時は新しい URL でも HTML 解析と抽出テストを再実行する
+- 登録・URL 更新の失敗は、対象 site 取得、LLM 接続、LLM upstream rejection、LLM response、selector 抽出のどこで失敗したかを区別し、server log と照合できる reference ID を返す
 - 一覧、詳細、記事履歴を確認し、通知先 webhook と定期通知可否を編集する
 - 手動実行では保存済み selector を使って未通知記事を抽出し、webhook 成功後に記事 URL を記録する
 
@@ -208,6 +209,8 @@
 53. `GET /news-sites/{id}/articles` は保存済み記事一覧とページング情報を返す。
 54. `POST /news-sites/{id}/execute` は未通知記事を選択対象 webhook へ通知し、1 件以上成功した場合だけ記事を記録する。
 55. `DELETE /news-sites/{id}` はサイト、記事、webhook 関連を連動削除して 204 を返す。
+56. 対象 site が 401/403 を返す場合は、LLM 解析前に認証または自動取得拒否の可能性を含む 422 を返す。
+57. LLM 解析の 502 は接続失敗、upstream HTTP rejection、protocol response 不正、message content 欠落、scraping JSON 不正を区別し、reference ID を含む。
 
 ### `GET /metrics/dashboard`
 

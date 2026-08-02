@@ -60,11 +60,14 @@
 - `api/tests/test_llm_service.py`
   - Ollama、vLLM、OpenAI 互換 chat completion の endpoint と応答形式
   - LLM scraping analysis JSON の optional summary selector
+  - LLM upstream rejection の原因別エラー、reference ID、API key 非記録
+  - scraping JSON 不正時の対象 site 取得済みメッセージと安全な診断 log
 
 - `api/tests/test_news_sites.py`
   - LLM 未設定時の登録拒否
   - HTML 解析と実抽出テスト成功後の登録
   - 記事を抽出できない selector の登録拒否と DB 未保存
+  - 対象 site の 403/automation block と selector 抽出 0 件の原因別メッセージ・診断 log
   - 手動実行、相対 URL 解決、Webhook 通知、記事履歴、重複通知防止
   - URL 重複拒否
 

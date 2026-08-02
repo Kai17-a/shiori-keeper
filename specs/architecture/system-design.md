@@ -305,6 +305,7 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `batch` は `rss_feeds.notify_webhook_enabled` が無効な RSS フィードを通知対象から除外する
 - `batch` は `rss_feed_articles` を参照して既送信記事を除外し、送信成功後に同テーブルへ記録する
 - custom news site 登録は LLM 設定必須で、HTML 取得、selector 生成、実抽出テストの成功後だけ `news_sites` へ保存する
+- custom news site 解析失敗は全段階で共通 reference ID を使い、利用者向け error と、secret/HTML 全文を含まない server log を対応付ける
 - API と batch は `news_sites.scrape_config` を共有し、`news_site_articles` で重複通知を防止する
 - `batch` は webhook の接続エラー、HTTP 429、HTTP 5xx を最大 3 回までリトライし、失敗したフィードはスキップする
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import sqlite3
 from datetime import datetime
 from email.utils import parsedate_to_datetime
@@ -24,7 +25,11 @@ from api.model.models import (
 from api.repositories.news_site_repo import NewsSiteRepository
 from api.repositories.settings_repo import SettingsRepository
 from api.repositories.webhook_endpoint_repo import WebhookEndpointRepository
-from api.services.llm_service import analyze_news_page, load_llm_config
+from api.services.llm_service import (
+    analyze_news_page,
+    load_llm_config,
+    new_diagnostic_reference,
+)
 from api.services.webhook_service import (
     build_rss_notification_payload,
     detect_webhook_service,
@@ -34,6 +39,21 @@ from api.services.webhook_service import (
 logger = logging.getLogger(__name__)
 
 MAX_ARTICLES_PER_RUN = 100
+LOG_PREVIEW_CHARS = 300
+
+
+def _safe_target_url(value: str) -> str:
+    parsed = urlparse(value)
+    hostname = parsed.hostname or "unknown-host"
+    try:
+        port = f":{parsed.port}" if parsed.port else ""
+    except ValueError:
+        port = ""
+    return f"{parsed.scheme}://{hostname}{port}{parsed.path}"
+
+
+def _response_preview(value: str) -> str:
+    return re.sub(r"\s+", " ", value).strip()[:LOG_PREVIEW_CHARS]
 
 
 def _read_element_value(element, selector: object, attribute: object) -> str | None:
@@ -64,15 +84,28 @@ def _normalize_published(value: str | None) -> str | None:
 
 
 def extract_news_articles(
-    *, html: str, page_url: str, scrape_config: dict[str, object]
+    *,
+    html: str,
+    page_url: str,
+    scrape_config: dict[str, object],
+    reference_id: str | None = None,
 ) -> list[dict[str, object]]:
     """Extract normalized articles from HTML using a validated LLM recipe."""
     soup = BeautifulSoup(html, "html.parser")
     try:
         items = soup.select(str(scrape_config["item_selector"]))
     except Exception as exc:
+        logger.error(
+            "news_selector_invalid reference_id=%s target_url=%s item_selector=%r",
+            reference_id or "none",
+            _safe_target_url(page_url),
+            scrape_config.get("item_selector"),
+            exc_info=True,
+        )
+        reference = f" Reference ID: {reference_id}." if reference_id else ""
         raise HTTPException(
-            status_code=422, detail="The generated scraping configuration is invalid"
+            status_code=422,
+            detail=f"Selector validation error: The LLM generated invalid CSS.{reference}",
         ) from exc
 
     articles: list[dict[str, object]] = []
@@ -96,8 +129,17 @@ def extract_news_articles(
                 item, scrape_config.get("summary_selector"), None
             )
         except Exception as exc:
+            logger.error(
+                "news_selector_invalid reference_id=%s target_url=%s item_selector=%r",
+                reference_id or "none",
+                _safe_target_url(page_url),
+                scrape_config.get("item_selector"),
+                exc_info=True,
+            )
+            reference = f" Reference ID: {reference_id}." if reference_id else ""
             raise HTTPException(
-                status_code=422, detail="The generated scraping configuration is invalid"
+                status_code=422,
+                detail=f"Selector validation error: The LLM generated invalid CSS.{reference}",
             ) from exc
 
         if not title or not link:
@@ -123,20 +165,67 @@ def extract_news_articles(
 
 
 class NewsSiteService:
-    def _fetch_page(self, url: str) -> str:
+    def _fetch_page(self, url: str, *, reference_id: str | None = None) -> str:
+        reference_id = reference_id or new_diagnostic_reference()
         try:
             response = httpx.get(url, timeout=15.0, follow_redirects=True)
         except httpx.HTTPError as exc:
+            logger.error(
+                "news_site_fetch_failed reference_id=%s target_url=%s exception=%s",
+                reference_id,
+                _safe_target_url(url),
+                type(exc).__name__,
+            )
             raise HTTPException(
-                status_code=422, detail="News site URL is not reachable"
+                status_code=422,
+                detail=(
+                    "Target-site fetch error: Shiori Keeper could not connect to the target "
+                    "news site. "
+                    f"This failed before LLM analysis. Reference ID: {reference_id}."
+                ),
             ) from exc
         if response.status_code >= 400:
-            raise HTTPException(status_code=422, detail="News site URL is not reachable")
+            logger.error(
+                "news_site_fetch_rejected reference_id=%s target_url=%s upstream_status=%s "
+                "upstream_server=%r response_preview=%r",
+                reference_id,
+                _safe_target_url(url),
+                response.status_code,
+                response.headers.get("server"),
+                _response_preview(response.text),
+            )
+            if response.status_code in {401, 403}:
+                reason = (
+                    "The site may require authentication or block automated requests."
+                )
+            elif response.status_code == 429:
+                reason = "The site is rate-limiting automated requests."
+            else:
+                reason = "The target page could not be downloaded."
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Target-site fetch error: The site returned HTTP {response.status_code} "
+                    f"before LLM analysis. {reason} Reference ID: {reference_id}."
+                ),
+            )
         if not response.text.strip():
-            raise HTTPException(status_code=422, detail="News site returned empty HTML")
+            logger.error(
+                "news_site_fetch_empty reference_id=%s target_url=%s",
+                reference_id,
+                _safe_target_url(url),
+            )
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "Target-site fetch error: The site returned empty HTML before LLM analysis. "
+                    f"Reference ID: {reference_id}."
+                ),
+            )
         return response.text
 
     def _analyze_and_test(self, url: str) -> tuple[dict[str, object], list[dict[str, object]]]:
+        reference_id = new_diagnostic_reference()
         with get_db() as conn:
             llm_config = load_llm_config(SettingsRepository(conn))
         if llm_config is None:
@@ -144,15 +233,39 @@ class NewsSiteService:
                 status_code=400,
                 detail="LLM settings must be configured before registering a news site",
             )
-        html = self._fetch_page(url)
-        scrape_config = analyze_news_page(llm_config, page_url=url, html=html)
+        html = self._fetch_page(url, reference_id=reference_id)
+        scrape_config = analyze_news_page(
+            llm_config,
+            page_url=url,
+            html=html,
+            reference_id=reference_id,
+        )
         articles = extract_news_articles(
-            html=html, page_url=url, scrape_config=scrape_config
+            html=html,
+            page_url=url,
+            scrape_config=scrape_config,
+            reference_id=reference_id,
         )
         if not articles:
+            logger.error(
+                "news_extraction_empty reference_id=%s provider=%s model=%s target_url=%s "
+                "item_selector=%r title_selector=%r link_selector=%r",
+                reference_id,
+                llm_config.provider,
+                llm_config.model,
+                _safe_target_url(url),
+                scrape_config.get("item_selector"),
+                scrape_config.get("title_selector"),
+                scrape_config.get("link_selector"),
+            )
             raise HTTPException(
                 status_code=422,
-                detail="No news articles could be extracted from the site",
+                detail=(
+                    "Selector extraction error: The target site and LLM request succeeded, "
+                    "but the generated selectors "
+                    "did not extract any article titles and links. This is usually an LLM "
+                    f"selector issue. Reference ID: {reference_id}."
+                ),
             )
         return scrape_config, articles
 

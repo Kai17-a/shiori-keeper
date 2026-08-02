@@ -1,8 +1,16 @@
 """Unit tests for supported LLM wire protocols."""
 
-import pytest
+import logging
 
-from api.services.llm_service import LLMConfig, chat_completion, parse_analysis_reply
+import pytest
+from fastapi import HTTPException
+
+from api.services.llm_service import (
+    LLMConfig,
+    analyze_news_page,
+    chat_completion,
+    parse_analysis_reply,
+)
 
 
 @pytest.mark.parametrize(
@@ -80,3 +88,73 @@ def test_analysis_reply_accepts_optional_summary_selector():
     )
 
     assert parsed["summary_selector"] == ".summary"
+
+
+def test_chat_completion_reports_upstream_rejection_without_logging_api_key(
+    monkeypatch, caplog
+):
+    import api.services.llm_service as llm_module
+
+    class Response:
+        status_code = 413
+        text = "context length exceeded"
+
+    monkeypatch.setattr(llm_module.httpx, "post", lambda *args, **kwargs: Response())
+    config = LLMConfig(
+        provider="ollama",
+        base_url="http://127.0.0.1:11434",
+        api_key="secret-key-must-not-be-logged",
+        model="small-model",
+    )
+
+    with caplog.at_level(logging.ERROR), pytest.raises(HTTPException) as exc_info:
+        chat_completion(
+            config,
+            [{"role": "user", "content": "analyze"}],
+            max_tokens=1024,
+            operation="news_site_analysis",
+            reference_id="upstream123",
+        )
+
+    assert exc_info.value.detail.startswith("LLM upstream error:")
+    assert "context window" in exc_info.value.detail
+    assert "upstream HTTP 413" in exc_info.value.detail
+    assert "Reference ID: upstream123" in exc_info.value.detail
+    assert "llm_request_rejected" in caplog.text
+    assert "context length exceeded" in caplog.text
+    assert "secret-key-must-not-be-logged" not in caplog.text
+
+
+def test_news_analysis_reports_invalid_llm_recipe_with_diagnostics(
+    monkeypatch, caplog
+):
+    import api.services.llm_service as llm_module
+
+    monkeypatch.setattr(
+        llm_module,
+        "chat_completion",
+        lambda *args, **kwargs: "I need more information instead of JSON.",
+    )
+    config = LLMConfig(
+        provider="ollama",
+        base_url="http://127.0.0.1:11434",
+        api_key=None,
+        model="small-model",
+    )
+
+    with caplog.at_level(logging.ERROR), pytest.raises(HTTPException) as exc_info:
+        analyze_news_page(
+            config,
+            page_url="https://example.com/news?secret=query",
+            html="<html><article>News</article></html>",
+            reference_id="analysis123",
+        )
+
+    assert exc_info.value.detail.startswith("LLM analysis error:")
+    assert "target site was fetched successfully" in exc_info.value.detail
+    assert "required JSON scraping configuration" in exc_info.value.detail
+    assert "Reference ID: analysis123" in exc_info.value.detail
+    assert "llm_analysis_invalid" in caplog.text
+    assert "https://example.com/news" in caplog.text
+    assert "secret=query" not in caplog.text
+    assert "I need more information" in caplog.text

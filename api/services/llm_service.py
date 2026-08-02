@@ -3,11 +3,17 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from dataclasses import dataclass
+from typing import Literal
+from urllib.parse import urlparse
+from uuid import uuid4
 
 import httpx
 from fastapi import HTTPException
+
+logger = logging.getLogger(__name__)
 
 LLM_PROVIDER_SETTING_KEY = "llm_provider"
 LLM_BASE_URL_SETTING_KEY = "llm_base_url"
@@ -22,6 +28,9 @@ LLM_SETTING_KEYS = (
 )
 
 MAX_HTML_CHARS = 50000
+LOG_PREVIEW_CHARS = 500
+
+LLMOperation = Literal["connection_test", "news_site_analysis", "chat_completion"]
 
 ANALYSIS_SYSTEM_PROMPT = """You analyze the HTML of a news site and design a scraping recipe.
 Return ONLY a JSON object with these keys:
@@ -50,6 +59,61 @@ class LLMConfig:
     base_url: str
     api_key: str | None
     model: str
+
+
+def new_diagnostic_reference() -> str:
+    return uuid4().hex[:12]
+
+
+def _safe_url(value: str) -> str:
+    parsed = urlparse(value)
+    hostname = parsed.hostname or "unknown-host"
+    try:
+        port = f":{parsed.port}" if parsed.port else ""
+    except ValueError:
+        port = ""
+    return f"{parsed.scheme}://{hostname}{port}{parsed.path}"
+
+
+def _safe_preview(value: str) -> str:
+    return re.sub(r"\s+", " ", value).strip()[:LOG_PREVIEW_CHARS]
+
+
+def _operation_label(operation: LLMOperation) -> str:
+    return {
+        "connection_test": "LLM connection test",
+        "news_site_analysis": "news-site analysis",
+        "chat_completion": "LLM request",
+    }[operation]
+
+
+def _upstream_error_detail(
+    status_code: int, operation: LLMOperation, reference_id: str
+) -> str:
+    label = _operation_label(operation)
+    if status_code in {401, 403}:
+        reason = "LLM authentication failed. Check the saved API key."
+    elif status_code == 404:
+        reason = "The LLM endpoint or model was not found. Check the base URL and model name."
+    elif status_code == 429:
+        reason = "The LLM server is busy or rate-limited. Retry after it becomes available."
+    elif status_code in {400, 413, 422}:
+        if operation == "news_site_analysis":
+            reason = (
+                "The LLM server rejected the request. The HTML may exceed the model "
+                "context window."
+            )
+        else:
+            reason = (
+                "The LLM server rejected the request. Check the provider, model, and "
+                "request settings."
+            )
+    else:
+        reason = "The LLM server failed while processing the request."
+    return (
+        f"LLM upstream error: {reason} Stage: {label}; upstream HTTP {status_code}. "
+        f"Reference ID: {reference_id}."
+    )
 
 
 def load_llm_config(repo) -> LLMConfig | None:
@@ -95,7 +159,10 @@ def chat_completion(
     *,
     max_tokens: int,
     timeout: float = 60.0,
+    operation: LLMOperation = "chat_completion",
+    reference_id: str | None = None,
 ) -> str:
+    reference_id = reference_id or new_diagnostic_reference()
     base_url = config.base_url.rstrip("/")
     if config.provider == "ollama":
         url = f"{base_url}/api/chat"
@@ -117,24 +184,85 @@ def chat_completion(
     try:
         response = httpx.post(url, json=payload, headers=headers, timeout=timeout)
     except httpx.HTTPError as exc:
+        logger.error(
+            "llm_connection_failed reference_id=%s operation=%s provider=%s model=%s "
+            "endpoint=%s exception=%s",
+            reference_id,
+            operation,
+            config.provider,
+            config.model,
+            _safe_url(url),
+            type(exc).__name__,
+        )
         raise HTTPException(
-            status_code=502, detail="Failed to reach LLM server"
+            status_code=502,
+            detail=(
+                f"LLM connection error: Could not connect to the LLM server during "
+                f"{_operation_label(operation)}. "
+                f"Check the base URL and network path. Reference ID: {reference_id}."
+            ),
         ) from exc
 
     if response.status_code >= 400:
-        raise HTTPException(status_code=502, detail="LLM server rejected the request")
+        logger.error(
+            "llm_request_rejected reference_id=%s operation=%s provider=%s model=%s "
+            "endpoint=%s upstream_status=%s response_preview=%r",
+            reference_id,
+            operation,
+            config.provider,
+            config.model,
+            _safe_url(url),
+            response.status_code,
+            _safe_preview(getattr(response, "text", "")),
+        )
+        raise HTTPException(
+            status_code=502,
+            detail=_upstream_error_detail(
+                response.status_code, operation, reference_id
+            ),
+        )
 
     try:
         data = response.json()
     except ValueError as exc:
+        logger.error(
+            "llm_protocol_invalid reference_id=%s operation=%s provider=%s model=%s "
+            "endpoint=%s response_preview=%r",
+            reference_id,
+            operation,
+            config.provider,
+            config.model,
+            _safe_url(url),
+            _safe_preview(getattr(response, "text", "")),
+        )
         raise HTTPException(
-            status_code=502, detail="LLM server returned an invalid response"
+            status_code=502,
+            detail=(
+                f"LLM protocol error: The server returned a non-JSON response during "
+                f"{_operation_label(operation)}. Check the provider type and base URL. "
+                f"Reference ID: {reference_id}."
+            ),
         ) from exc
 
     content = _extract_reply_content(config.provider, data)
     if content is None or not content.strip():
+        logger.error(
+            "llm_content_missing reference_id=%s operation=%s provider=%s model=%s "
+            "endpoint=%s response_preview=%r",
+            reference_id,
+            operation,
+            config.provider,
+            config.model,
+            _safe_url(url),
+            _safe_preview(getattr(response, "text", "")),
+        )
         raise HTTPException(
-            status_code=502, detail="LLM server returned an invalid response"
+            status_code=502,
+            detail=(
+                f"LLM response error: The server returned no usable message content during "
+                f"{_operation_label(operation)}. Check the provider type and model response. "
+                f"Reference ID: {reference_id}."
+            ),
         )
     return content
 
@@ -146,6 +274,7 @@ def test_llm_connection(config: LLMConfig) -> str:
         [{"role": "user", "content": "Reply with: pong"}],
         max_tokens=8,
         timeout=60.0,
+        operation="connection_test",
     )
 
 
@@ -191,8 +320,15 @@ def parse_analysis_reply(reply: str) -> dict:
     return config
 
 
-def analyze_news_page(config: LLMConfig, *, page_url: str, html: str) -> dict:
+def analyze_news_page(
+    config: LLMConfig,
+    *,
+    page_url: str,
+    html: str,
+    reference_id: str | None = None,
+) -> dict:
     """Ask the LLM to design a scraping recipe for a news site HTML page."""
+    reference_id = reference_id or new_diagnostic_reference()
     cleaned_html = sanitize_html_for_analysis(html)
     reply = chat_completion(
         config,
@@ -202,5 +338,31 @@ def analyze_news_page(config: LLMConfig, *, page_url: str, html: str) -> dict:
         ],
         max_tokens=1024,
         timeout=90.0,
+        operation="news_site_analysis",
+        reference_id=reference_id,
     )
-    return parse_analysis_reply(reply)
+    try:
+        return parse_analysis_reply(reply)
+    except HTTPException as exc:
+        logger.error(
+            "llm_analysis_invalid reference_id=%s provider=%s model=%s target_url=%s "
+            "html_chars=%s sanitized_chars=%s reply_chars=%s "
+            "reply_preview=%r",
+            reference_id,
+            config.provider,
+            config.model,
+            _safe_url(page_url),
+            len(html),
+            len(cleaned_html),
+            len(reply),
+            _safe_preview(reply),
+        )
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                "LLM analysis error: The target site was fetched successfully, but the "
+                "LLM did not return the required JSON scraping configuration. Try another "
+                "model or inspect "
+                f"the server log. Reference ID: {reference_id}."
+            ),
+        ) from exc

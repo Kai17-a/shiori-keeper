@@ -198,6 +198,7 @@
           :title="newsForm.id ? 'Edit custom news site' : 'Register custom news site'"
           :description="newsForm.id ? 'Update the selected custom source.' : 'Analyze the site HTML and save a tested scraping configuration.'"
           :saving="newsSaving"
+          :error="newsSaveError"
           @save="saveNewsSite"
         />
 
@@ -260,6 +261,7 @@ const deleteOpen = ref(false);
 const pendingFeed = ref<RSSFeedResponse | null>(null);
 const newsLoading = ref(false);
 const newsSaving = ref(false);
+const newsSaveError = ref("");
 const newsDeleting = ref(false);
 const newsModalOpen = ref(false);
 const newsDeleteOpen = ref(false);
@@ -396,10 +398,12 @@ const resetNewsForm = () => {
 
 const openNewsCreateModal = () => {
   resetNewsForm();
+  newsSaveError.value = "";
   newsModalOpen.value = true;
 };
 
 const openNewsEditModal = (site: NewsSiteResponse) => {
+  newsSaveError.value = "";
   newsForm.id = String(site.id);
   newsForm.title = site.title;
   newsForm.url = site.url;
@@ -412,6 +416,7 @@ const saveNewsSite = async () => {
   const url = newsForm.url.trim();
   const title = newsForm.title.trim();
   if (!url || (newsForm.id && !title)) {
+    newsSaveError.value = newsForm.id ? "URL and title are required." : "URL is required.";
     toast.show({
       title: newsForm.id ? "URL and title are required." : "URL is required.",
       color: "error",
@@ -419,6 +424,7 @@ const saveNewsSite = async () => {
     });
     return;
   }
+  newsSaveError.value = "";
   newsSaving.value = true;
   try {
     const body = {
@@ -432,6 +438,7 @@ const saveNewsSite = async () => {
       body: JSON.stringify(body),
     });
     const wasEditing = Boolean(newsForm.id);
+    newsSaveError.value = "";
     newsModalOpen.value = false;
     resetNewsForm();
     await Promise.all([loadNewsSites(), refreshSidebarCatalog(true)]);
@@ -443,11 +450,13 @@ const saveNewsSite = async () => {
       icon: "i-lucide-check",
     });
   } catch (err) {
+    newsSaveError.value =
+      err instanceof Error ? err.message : "The custom news site could not be analyzed.";
     toast.show({
       title: newsForm.id
         ? "Failed to update custom news site."
         : "Failed to register custom news site.",
-      description: err instanceof Error ? err.message : undefined,
+      description: newsSaveError.value,
       color: "error",
       icon: "i-lucide-circle-alert",
     });

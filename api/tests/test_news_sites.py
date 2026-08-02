@@ -1,5 +1,6 @@
 """Tests for LLM-assisted custom news-site scraping."""
 
+import logging
 import sqlite3
 from contextlib import contextmanager
 
@@ -69,7 +70,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(
         news_module,
         "analyze_news_page",
-        lambda _config, *, page_url, html: scrape_config,
+        lambda _config, *, page_url, html, reference_id: scrape_config,
     )
     monkeypatch.setattr(settings_module, "test_llm_connection", lambda _config: "pong")
 
@@ -113,14 +114,16 @@ def test_registration_analyzes_and_tests_scraping_before_saving(client):
     assert listed.json()["total"] == 1
 
 
-def test_registration_rejects_a_recipe_that_extracts_no_articles(client, monkeypatch):
+def test_registration_rejects_a_recipe_that_extracts_no_articles(
+    client, monkeypatch, caplog
+):
     import api.services.news_site_service as news_module
 
     configure_llm(client)
     monkeypatch.setattr(
         news_module,
         "analyze_news_page",
-        lambda _config, *, page_url, html: {
+        lambda _config, *, page_url, html, reference_id: {
             "site_title": "Broken",
             "item_selector": ".missing",
             "title_selector": "a",
@@ -132,9 +135,14 @@ def test_registration_rejects_a_recipe_that_extracts_no_articles(client, monkeyp
         },
     )
 
-    response = create_site(client)
+    with caplog.at_level(logging.ERROR):
+        response = create_site(client)
 
     assert response.status_code == 422
+    assert response.json()["detail"].startswith("Selector extraction error:")
+    assert "LLM request succeeded" in response.json()["detail"]
+    assert "Reference ID:" in response.json()["detail"]
+    assert "news_extraction_empty" in caplog.text
     assert client.get("/news-sites").json()["total"] == 0
 
 
@@ -145,7 +153,7 @@ def test_registration_requires_extracted_titles(client, monkeypatch):
     monkeypatch.setattr(
         news_module,
         "analyze_news_page",
-        lambda _config, *, page_url, html: {
+        lambda _config, *, page_url, html, reference_id: {
             "site_title": "Broken",
             "item_selector": ".news-item",
             "title_selector": ".missing-title",
@@ -160,7 +168,36 @@ def test_registration_requires_extracted_titles(client, monkeypatch):
     response = create_site(client)
 
     assert response.status_code == 422
+    assert response.json()["detail"].startswith("Selector extraction error:")
     assert client.get("/news-sites").json()["total"] == 0
+
+
+def test_registration_identifies_target_site_automation_block(
+    client, monkeypatch, caplog
+):
+    import api.services.news_site_service as news_module
+
+    class ForbiddenResponse:
+        status_code = 403
+        text = "<html><title>Forbidden</title></html>"
+        headers = {"server": "cloudflare"}
+
+    configure_llm(client)
+    monkeypatch.setattr(
+        news_module.httpx, "get", lambda *args, **kwargs: ForbiddenResponse()
+    )
+
+    with caplog.at_level(logging.ERROR):
+        response = create_site(client)
+
+    assert response.status_code == 422
+    assert response.json()["detail"].startswith("Target-site fetch error:")
+    assert "HTTP 403 before LLM analysis" in response.json()["detail"]
+    assert "block automated requests" in response.json()["detail"]
+    assert "Reference ID:" in response.json()["detail"]
+    assert "news_site_fetch_rejected" in caplog.text
+    assert "cloudflare" in caplog.text
+    assert "Forbidden" in caplog.text
 
 
 def test_manual_execution_notifies_and_records_only_new_articles(client, monkeypatch):

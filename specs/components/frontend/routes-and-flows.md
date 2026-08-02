@@ -67,6 +67,7 @@
 - RSS フィード詳細では取得済み記事一覧をページング付きで表示し、手動実行後は一覧を再読込する
 - LLM 設定済みの場合、RSS を配信しないニュース一覧 URL を登録できる
 - custom news site 登録は LLM 解析と実抽出テストを行い、成功時だけモーダルを閉じる
+- custom news site 登録・URL 更新の失敗時はモーダルを維持し、API の原因別メッセージと log 照合用 reference ID を error alert に表示する
 - custom news site の通知先、定期通知可否、タイトル、説明、URL を編集でき、URL 変更時は再解析する
 - custom news site を手動実行し、詳細画面で保存済み記事を検索・ページング表示する
 

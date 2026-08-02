@@ -142,6 +142,7 @@
           title="Edit custom news site"
           description="Changing the URL triggers a new LLM analysis and extraction test."
           :saving="saving"
+          :error="saveError"
           @save="saveSite"
         />
 
@@ -180,6 +181,7 @@ const site = ref<NewsSiteResponse | null>(null);
 const webhooks = ref<SettingsWebhookResponse[]>([]);
 const executing = ref(false);
 const saving = ref(false);
+const saveError = ref("");
 const deleting = ref(false);
 const articlesLoading = ref(false);
 const modalOpen = ref(false);
@@ -266,6 +268,7 @@ watch(searchTitle, async () => {
 
 const openEditModal = () => {
   if (!site.value) return;
+  saveError.value = "";
   form.id = String(site.value.id);
   form.title = site.value.title;
   form.url = site.value.url;
@@ -275,7 +278,11 @@ const openEditModal = () => {
 };
 
 const saveSite = async () => {
-  if (!form.url.trim() || !form.title.trim()) return;
+  if (!form.url.trim() || !form.title.trim()) {
+    saveError.value = "URL and title are required.";
+    return;
+  }
+  saveError.value = "";
   saving.value = true;
   try {
     site.value = await request<NewsSiteResponse>(`/news-sites/${route.params.id}`, {
@@ -287,6 +294,7 @@ const saveSite = async () => {
         webhook_ids: form.webhookIds,
       }),
     });
+    saveError.value = "";
     modalOpen.value = false;
     await refreshSidebarCatalog(true);
     toast.show({
@@ -295,9 +303,11 @@ const saveSite = async () => {
       icon: "i-lucide-check",
     });
   } catch (err) {
+    saveError.value =
+      err instanceof Error ? err.message : "The custom news site could not be analyzed.";
     toast.show({
       title: "Failed to update custom news site.",
-      description: err instanceof Error ? err.message : undefined,
+      description: saveError.value,
       color: "error",
       icon: "i-lucide-circle-alert",
     });

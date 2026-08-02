@@ -59,6 +59,15 @@
           variant="soft"
         />
 
+        <UAlert
+          v-if="error"
+          title="Analysis or extraction failed"
+          :description="error"
+          color="error"
+          variant="soft"
+          icon="i-lucide-circle-alert"
+        />
+
         <div class="flex justify-end gap-3">
           <UButton type="button" color="neutral" variant="ghost" @click="close">
             Cancel
@@ -88,6 +97,7 @@ const props = defineProps<{
   title: string;
   description: string;
   saving?: boolean;
+  error?: string;
 }>();
 const emit = defineEmits<{ save: [] }>();
 

@@ -147,3 +147,5 @@ API は Python で実装し、データストアには SQLite を使用する。
 6. THE API SHALL custom news site の一覧・詳細・部分更新・削除・記事履歴・手動実行を提供する。
 7. WHEN custom news site を手動実行または batch 巡回するとき、THE SYSTEM SHALL 未通知の記事だけを選択済み webhook（未選択時は全 webhook）へ通知し、1 件以上の送信成功後に記事を記録する。
 8. WHEN custom news site の URL を変更するとき、THE API SHALL 新しい HTML の LLM 解析と抽出テストが成功した場合だけ URL とスクレイピング設定を更新する。
+9. IF custom news site 登録に失敗したとき、THEN THE API SHALL 対象 site 取得、LLM 接続、LLM upstream rejection、LLM response、selector 抽出の失敗段階を区別したメッセージと log 照合用 reference ID を返す。
+10. WHEN custom news site の解析エラーを記録するとき、THE API SHALL provider、model、対象 URL、HTTP status、HTML サイズまたは短い response preview を必要に応じて記録し、API key と HTML 本文全体は記録しない。

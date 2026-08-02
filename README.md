@@ -82,6 +82,7 @@ services:
 - Configure Ollama, vLLM, or an OpenAI-compatible chat-completions endpoint
 - Test the endpoint, model, and credentials before settings are saved
 - Custom news sites cannot be registered until working LLM settings exist
+- Custom-site registration errors identify the failed stage and include a reference ID for matching server logs
 
 ### Configure notifications
 
