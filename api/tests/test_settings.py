@@ -49,29 +49,49 @@ def test_create_and_list_webhooks_round_trip(client):
     first_url = "https://discord.com/api/webhooks/1/token"
     second_url = "https://hooks.slack.com/services/xxx/yyy/zzz"
 
-    first = client.post("/settings/webhooks", json={"webhook_url": first_url})
+    first = client.post(
+        "/settings/webhooks",
+        json={"name": "Discord alerts", "webhook_url": first_url},
+    )
     assert first.status_code == 201
+    assert first.json()["name"] == "Discord alerts"
     assert first.json()["webhook_url"] == first_url
     assert first.json()["id"]
 
-    second = client.post("/settings/webhooks", json={"webhook_url": second_url})
+    second = client.post(
+        "/settings/webhooks",
+        json={"name": "Slack alerts", "webhook_url": second_url},
+    )
     assert second.status_code == 201
+    assert second.json()["name"] == "Slack alerts"
     assert second.json()["webhook_url"] == second_url
 
     listed = client.get("/settings/webhooks")
     assert listed.status_code == 200
+    assert [item["name"] for item in listed.json()["items"]] == [
+        "Discord alerts",
+        "Slack alerts",
+    ]
     assert [item["webhook_url"] for item in listed.json()["items"]] == [
         first_url,
         second_url,
     ]
 
 
+def test_create_webhook_rejects_blank_name(client):
+    resp = client.post(
+        "/settings/webhooks",
+        json={"name": "   ", "webhook_url": "https://discord.com/api/webhooks/1/token"},
+    )
+    assert resp.status_code == 422
+
+
 def test_create_webhook_rejects_duplicate_url(client):
     webhook_url = "https://discord.com/api/webhooks/1/token"
-    created = client.post("/settings/webhooks", json={"webhook_url": webhook_url})
+    created = client.post("/settings/webhooks", json={"name": "Test webhook", "webhook_url": webhook_url})
     assert created.status_code == 201
 
-    duplicate = client.post("/settings/webhooks", json={"webhook_url": webhook_url})
+    duplicate = client.post("/settings/webhooks", json={"name": "Test webhook", "webhook_url": webhook_url})
     assert duplicate.status_code == 409
     assert duplicate.json()["detail"] == "Webhook URL is already registered"
 
@@ -79,7 +99,7 @@ def test_create_webhook_rejects_duplicate_url(client):
 def test_delete_webhook_removes_it_from_the_list(client):
     created = client.post(
         "/settings/webhooks",
-        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+        json={"name": "Test webhook", "webhook_url": "https://discord.com/api/webhooks/1/token"},
     )
     webhook_id = created.json()["id"]
 
@@ -99,7 +119,7 @@ def test_delete_missing_webhook_returns_404(client):
 def test_create_webhook_rejects_discord_host_with_wrong_path(client):
     resp = client.post(
         "/settings/webhooks",
-        json={"webhook_url": "https://discord.com/channels/1/2"},
+        json={"name": "Test webhook", "webhook_url": "https://discord.com/channels/1/2"},
     )
     assert resp.status_code == 422
     assert resp.json()["detail"] == (
@@ -109,7 +129,7 @@ def test_create_webhook_rejects_discord_host_with_wrong_path(client):
 
 def test_create_webhook_accepts_slack_url(client):
     webhook_url = "https://hooks.slack.com/services/xxx/yyy/zzz"
-    resp = client.post("/settings/webhooks", json={"webhook_url": webhook_url})
+    resp = client.post("/settings/webhooks", json={"name": "Test webhook", "webhook_url": webhook_url})
     assert resp.status_code == 201
     assert resp.json()["webhook_url"] == webhook_url
 
@@ -123,7 +143,7 @@ def test_create_webhook_accepts_slack_url(client):
     ],
 )
 def test_create_webhook_accepts_microsoft_teams_urls(client, webhook_url):
-    resp = client.post("/settings/webhooks", json={"webhook_url": webhook_url})
+    resp = client.post("/settings/webhooks", json={"name": "Test webhook", "webhook_url": webhook_url})
     assert resp.status_code == 201
     assert resp.json()["webhook_url"] == webhook_url
 
@@ -166,7 +186,7 @@ def test_ping_webhook_maps_httpx_error_to_502(client, monkeypatch):
 
     resp = client.post(
         "/settings/webhook/ping",
-        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+        json={"name": "Test webhook", "webhook_url": "https://discord.com/api/webhooks/1/token"},
     )
     assert resp.status_code == 502
     assert resp.json()["detail"] == "Failed to reach webhook"

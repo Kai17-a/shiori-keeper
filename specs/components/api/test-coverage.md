@@ -104,8 +104,9 @@
   - 存在しない bookmark/tag の 404
 
 - `GET /settings/webhooks` / `POST /settings/webhooks` / `DELETE /settings/webhooks/{id}`
-  - 一覧取得、複数登録、削除
+  - 一覧取得、名前付き複数登録、削除
   - 重複 URL の 409
+  - 空白名の 422
   - Discord、Slack、Microsoft Teams webhook URL の形式検証
 
 - `POST /settings/webhook/ping`

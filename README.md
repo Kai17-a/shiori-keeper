@@ -76,7 +76,7 @@ services:
 
 ### Configure notifications
 
-- Register multiple Discord, Slack, or Microsoft Teams webhooks used across the app
+- Register multiple Discord, Slack, or Microsoft Teams webhooks with identifying names
 - Test whether each webhook endpoint is reachable
 - Use the registered webhooks as the notification targets for RSS execution
 

@@ -100,10 +100,12 @@ def test_register_webhook_accepts_slack_webhook_url(client):
     resp = client.post(
         "/settings/webhooks",
         json={
+            "name": "Slack alerts",
             "webhook_url": "https://hooks.slack.com/services/xxx/yyy/zzz",
         },
     )
     assert resp.status_code == 201
+    assert resp.json()["name"] == "Slack alerts"
     assert resp.json()["webhook_url"] == "https://hooks.slack.com/services/xxx/yyy/zzz"
 
 
@@ -124,6 +126,7 @@ def test_execute_rss_feed_supports_microsoft_teams_adaptive_cards(client, monkey
     client.post(
         "/settings/webhooks",
         json={
+            "name": "Teams alerts",
             "webhook_url": "https://prod-01.japaneast.logic.azure.com/workflows/id/triggers/manual/paths/invoke?sig=token"
         },
     )
@@ -155,7 +158,7 @@ def test_ping_webhook_returns_200(client, monkeypatch):
     monkeypatch.setattr(webhook_module.httpx, "post", fake_post)
     resp = client.post(
         "/settings/webhook/ping",
-        json={"webhook_url": "https://hooks.slack.com/services/xxx/yyy/zzz"},
+        json={"name": "Test webhook", "webhook_url": "https://hooks.slack.com/services/xxx/yyy/zzz"},
     )
     assert resp.status_code == 200
     assert resp.json()["pong"] is True
@@ -270,7 +273,7 @@ def test_execute_rss_feed_still_sends_when_webhook_notification_disabled(client,
     monkeypatch.setattr(webhook_module.httpx, "post", fake_post)
     client.post(
         "/settings/webhooks",
-        json={"webhook_url": "https://hooks.slack.com/services/xxx/yyy/zzz"},
+        json={"name": "Test webhook", "webhook_url": "https://hooks.slack.com/services/xxx/yyy/zzz"},
     )
     feed_id = client.post(
         "/rss-feeds",
@@ -292,7 +295,7 @@ def test_execute_rss_feed_still_sends_when_webhook_notification_disabled(client,
 def test_execute_rss_feed_returns_200(client):
     client.post(
         "/settings/webhooks",
-        json={"webhook_url": "https://hooks.slack.com/services/xxx/yyy/zzz"},
+        json={"name": "Test webhook", "webhook_url": "https://hooks.slack.com/services/xxx/yyy/zzz"},
     )
     feed_id = client.post(
         "/rss-feeds",
@@ -307,7 +310,7 @@ def test_execute_rss_feed_returns_200(client):
 def test_list_rss_feed_articles_returns_200(client):
     client.post(
         "/settings/webhooks",
-        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+        json={"name": "Test webhook", "webhook_url": "https://discord.com/api/webhooks/1/token"},
     )
     feed_id = create_feed(client).json()["id"]
     client.post(f"/rss-feeds/{feed_id}/execute")
@@ -325,7 +328,7 @@ def test_list_rss_feed_articles_orders_by_published_desc(client, monkeypatch):
 
     client.post(
         "/settings/webhooks",
-        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+        json={"name": "Test webhook", "webhook_url": "https://discord.com/api/webhooks/1/token"},
     )
     feed_id = create_feed(client).json()["id"]
 
@@ -380,7 +383,7 @@ def test_list_rss_feed_articles_accepts_page_and_per_page(client, monkeypatch):
 
     client.post(
         "/settings/webhooks",
-        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+        json={"name": "Test webhook", "webhook_url": "https://discord.com/api/webhooks/1/token"},
     )
     feed_id = create_feed(client).json()["id"]
 
@@ -428,7 +431,7 @@ def test_list_rss_feed_articles_filters_by_published_date_range(client, monkeypa
 
     client.post(
         "/settings/webhooks",
-        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+        json={"name": "Test webhook", "webhook_url": "https://discord.com/api/webhooks/1/token"},
     )
     feed_id = create_feed(client).json()["id"]
 
@@ -483,7 +486,7 @@ def test_list_rss_feed_articles_filters_by_title_query(client, monkeypatch):
 
     client.post(
         "/settings/webhooks",
-        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+        json={"name": "Test webhook", "webhook_url": "https://discord.com/api/webhooks/1/token"},
     )
     feed_id = create_feed(client).json()["id"]
 
@@ -543,7 +546,7 @@ def test_execute_rss_feed_uses_feedparser_content(client, monkeypatch):
 
     client.post(
         "/settings/webhooks",
-        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+        json={"name": "Test webhook", "webhook_url": "https://discord.com/api/webhooks/1/token"},
     )
     feed_id = create_feed(
         client, url="https://example.com/feed.xml", title="Example"
@@ -613,7 +616,7 @@ def test_execute_rss_feed_splits_embeds_into_batches(client, monkeypatch):
 
     client.post(
         "/settings/webhooks",
-        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+        json={"name": "Test webhook", "webhook_url": "https://discord.com/api/webhooks/1/token"},
     )
     feed_id = create_feed(
         client, url="https://example.com/feed.xml", title="Example"
@@ -671,7 +674,7 @@ def test_execute_rss_feed_returns_discord_error_detail(client, monkeypatch):
 
     client.post(
         "/settings/webhooks",
-        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+        json={"name": "Test webhook", "webhook_url": "https://discord.com/api/webhooks/1/token"},
     )
     feed_id = create_feed(
         client, url="https://example.com/feed.xml", title="Example"
@@ -703,7 +706,7 @@ def test_execute_rss_feed_does_not_record_articles_when_webhook_fails(client, mo
 
     client.post(
         "/settings/webhooks",
-        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+        json={"name": "Test webhook", "webhook_url": "https://discord.com/api/webhooks/1/token"},
     )
     feed_id = create_feed(
         client, url="https://example.com/feed.xml", title="Example"
@@ -739,7 +742,7 @@ def test_execute_rss_feed_skips_already_sent_articles(client, monkeypatch):
 
     client.post(
         "/settings/webhooks",
-        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+        json={"name": "Test webhook", "webhook_url": "https://discord.com/api/webhooks/1/token"},
     )
     feed_id = create_feed(
         client, url="https://example.com/feed.xml", title="Example"
@@ -793,7 +796,7 @@ def test_execute_rss_feed_returns_message_when_no_new_articles(client, monkeypat
 
     client.post(
         "/settings/webhooks",
-        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+        json={"name": "Test webhook", "webhook_url": "https://discord.com/api/webhooks/1/token"},
     )
     feed_id = create_feed(
         client, url="https://example.com/feed.xml", title="Example"
@@ -868,11 +871,11 @@ def test_execute_rss_feed_delivers_to_all_registered_webhooks(client, monkeypatc
     monkeypatch.setattr(webhook_module.httpx, "post", fake_post)
     client.post(
         "/settings/webhooks",
-        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+        json={"name": "Test webhook", "webhook_url": "https://discord.com/api/webhooks/1/token"},
     )
     client.post(
         "/settings/webhooks",
-        json={"webhook_url": "https://hooks.slack.com/services/xxx/yyy/zzz"},
+        json={"name": "Test webhook", "webhook_url": "https://hooks.slack.com/services/xxx/yyy/zzz"},
     )
     feed_id = create_feed(client).json()["id"]
 
@@ -899,11 +902,11 @@ def test_execute_rss_feed_succeeds_when_one_webhook_fails(client, monkeypatch):
     monkeypatch.setattr(webhook_module.httpx, "post", fake_post)
     client.post(
         "/settings/webhooks",
-        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+        json={"name": "Test webhook", "webhook_url": "https://discord.com/api/webhooks/1/token"},
     )
     client.post(
         "/settings/webhooks",
-        json={"webhook_url": "https://hooks.slack.com/services/xxx/yyy/zzz"},
+        json={"name": "Test webhook", "webhook_url": "https://hooks.slack.com/services/xxx/yyy/zzz"},
     )
     feed_id = create_feed(client).json()["id"]
 
@@ -934,11 +937,11 @@ def test_execute_rss_feed_returns_502_when_all_webhooks_fail(client, monkeypatch
     monkeypatch.setattr(webhook_module.httpx, "post", fake_post)
     client.post(
         "/settings/webhooks",
-        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+        json={"name": "Test webhook", "webhook_url": "https://discord.com/api/webhooks/1/token"},
     )
     client.post(
         "/settings/webhooks",
-        json={"webhook_url": "https://hooks.slack.com/services/xxx/yyy/zzz"},
+        json={"name": "Test webhook", "webhook_url": "https://hooks.slack.com/services/xxx/yyy/zzz"},
     )
     feed_id = create_feed(client).json()["id"]
 
@@ -967,20 +970,20 @@ def test_create_rss_feed_with_invalid_url_returns_422(client):
 
 def test_register_webhook_with_non_discord_webhook_returns_422(client):
     resp = client.post(
-        "/settings/webhooks", json={"webhook_url": "https://example.com/webhook"}
+        "/settings/webhooks", json={"name": "Test webhook", "webhook_url": "https://example.com/webhook"}
     )
     assert resp.status_code == 422
 
 
 def test_ping_webhook_with_non_discord_url_returns_422(client):
     resp = client.post(
-        "/settings/webhook/ping", json={"webhook_url": "https://example.com/webhook"}
+        "/settings/webhook/ping", json={"name": "Test webhook", "webhook_url": "https://example.com/webhook"}
     )
     assert resp.status_code == 422
 
 
 def test_ping_webhook_with_invalid_url_returns_422(client):
-    resp = client.post("/settings/webhook/ping", json={"webhook_url": "not-a-url"})
+    resp = client.post("/settings/webhook/ping", json={"name": "Test webhook", "webhook_url": "not-a-url"})
     assert resp.status_code == 422
 
 
@@ -997,7 +1000,7 @@ def test_ping_webhook_when_discord_returns_error_returns_502(client, monkeypatch
 
     resp = client.post(
         "/settings/webhook/ping",
-        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+        json={"name": "Test webhook", "webhook_url": "https://discord.com/api/webhooks/1/token"},
     )
     assert resp.status_code == 502
 

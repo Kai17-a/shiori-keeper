@@ -40,6 +40,7 @@ class SettingsService:
     def _to_webhook_response(self, row: dict) -> SettingsWebhookResponse:
         return SettingsWebhookResponse(
             id=int(row["id"]),
+            name=str(row["name"]),
             webhook_url=str(row["url"]),
             created_at=row["created_at"],
             updated_at=row["updated_at"],
@@ -59,7 +60,7 @@ class SettingsService:
             self._validate_webhook_url(webhook_url)
             detect_webhook_service(webhook_url)
             try:
-                row = repo.insert(webhook_url)
+                row = repo.insert(data.name, webhook_url)
             except sqlite3.IntegrityError as exc:
                 raise HTTPException(
                     status_code=409, detail="Webhook URL is already registered"

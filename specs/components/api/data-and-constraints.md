@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS app_settings (
 
 CREATE TABLE IF NOT EXISTS webhook_endpoints (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT    NOT NULL DEFAULT '',
     url         TEXT    NOT NULL,
     created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
     updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
@@ -129,7 +130,7 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 | `RSSFeedArticleResponse`    | `id`, `feed_id`, `url`, `title`, `published`, `created_at`                           |
 | `RSSFeedArticleListResponse`| `items`, `total`, `page`, `per_page`, `total_pages`                                  |
 | `RSSFeedExecuteResponse`    | `feed_id`, `title`, `delivered`, `delivered_count`, `message`                         |
-| `SettingsWebhookResponse`   | `id`, `webhook_url`, `created_at`, `updated_at`                                      |
+| `SettingsWebhookResponse`   | `id`, `name`, `webhook_url`, `created_at`, `updated_at`                              |
 | `SettingsWebhookListResponse` | `items`                                                                            |
 | `SettingsWebhookPingResponse` | `pong`                                                                             |
 | `SettingsRssExecutionResponse` | `enabled`                                                                          |
@@ -157,7 +158,8 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - ブックマークまたはタグ削除時は `bookmark_tags` を連動削除する
 - SQLite の外部キー制約は `PRAGMA foreign_keys = ON` で有効化する
 - DB 障害は 500 として返す
-- `settings/webhooks` は Discord、Slack、または Microsoft Teams webhook URL を複数登録する
+- `settings/webhooks` は Discord、Slack、または Microsoft Teams webhook URL を識別用の名前付きで複数登録する
+- `webhook_endpoints.name` は必須で、空白のみの名前は 422 を返す
 - `webhook_endpoints.url` は一意である
 - Microsoft Teams webhook は Adaptive Card 形式で疎通確認と RSS 通知を送信する
 - `settings/webhook/ping` は送信前確認用の疎通確認 API である
@@ -187,7 +189,7 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `/rss-feeds/{id}/articles` は保存済み RSS 記事を返す
 - `/rss-feeds/{id}/articles` は `q`、`published_from`、`published_to`、`page`、`per_page` を受け付ける
 - `GET /settings/webhooks` は登録済み webhook の一覧を返す
-- `POST /settings/webhooks` は webhook URL を登録し、重複時は 409 を返す
+- `POST /settings/webhooks` は名前付きの webhook URL を登録し、URL 重複時は 409 を返す
 - `DELETE /settings/webhooks/{id}` は登録済み webhook を削除する
 - `POST /settings/webhook/ping` は webhook 到達確認を行う
 - `GET /settings/rss-execution` は RSS 定期実行の現在値を返す

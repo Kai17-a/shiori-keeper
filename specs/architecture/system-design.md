@@ -246,6 +246,7 @@ CREATE TABLE IF NOT EXISTS app_settings (
 
 CREATE TABLE IF NOT EXISTS webhook_endpoints (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT    NOT NULL DEFAULT '',
     url         TEXT    NOT NULL,
     created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
     updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
@@ -274,8 +275,9 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - SQLite の外部キー制約は接続時に `PRAGMA foreign_keys = ON` で有効化する
 - `bookmarks.url`、`rss_feeds.url`、`folders.name`、`tags.name` は DB 一意制約と事前チェックの両方で重複を防ぐ
 - `app_settings` はアプリ全体設定のキーバリューストアとして扱う
-- `webhook_endpoints` は RSS 通知先の webhook URL を複数保持し、URL の一意制約で重複登録を防ぐ
+- `webhook_endpoints` は RSS 通知先の webhook URL を識別用の名前付きで複数保持し、URL の一意制約で重複登録を防ぐ
 - `webhook_endpoints.url` は Discord、Slack、または Microsoft Teams webhook URL だけを許可する
+- `webhook_endpoints.name` は一覧表示で通知先を識別するためのラベルで、空白のみの名前は拒否する
 - `rss_periodic_execution_enabled` は RSS 定期実行の有効/無効を保持する
 - `rss_webhook_notification_enabled` は RSS 定期実行時に webhook 通知を送るかを保持する
 - `rss_feeds.notify_webhook_enabled` は batch による RSS 定期実行時に webhook 通知するかを保持する

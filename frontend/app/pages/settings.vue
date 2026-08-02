@@ -7,11 +7,53 @@
     <template #body>
       <div class="space-y-6">
         <UPageCard
+          title="Theme"
+          description="Switch the app appearance between light, dark, and system"
+          :ui="{ body: 'space-y-5' }"
+        >
+          <div class="space-y-3">
+            <div>
+              <p class="text-sm font-medium text-default">Appearance</p>
+              <p class="text-sm text-muted">
+                Changes apply immediately and are saved in your browser.
+              </p>
+            </div>
+
+            <UTabs
+              v-model="selectedTheme"
+              :items="themeOptions"
+              class="w-full max-w-sm"
+              color="primary"
+              variant="soft"
+              orientation="horizontal"
+              :ui="{
+                list: 'bg-default/60 p-1 rounded-full gap-1',
+                trigger:
+                  'rounded-full px-4 py-2 text-sm font-medium text-muted transition-colors data-[state=active]:bg-primary data-[state=active]:text-inverted data-[state=active]:shadow-sm',
+                indicator: 'hidden',
+              }"
+            />
+          </div>
+        </UPageCard>
+
+        <UPageCard
           title="Webhooks"
           description="Register the Discord, Slack, or Microsoft Teams webhooks used by RSS execution"
           :ui="{ body: 'space-y-5' }"
         >
           <form class="space-y-4" @submit.prevent="addWebhook">
+            <UFormField
+              label="Name"
+              description="A label that tells you which webhook this is at a glance."
+              class="w-full"
+            >
+              <UInput
+                v-model="webhookForm.name"
+                class="w-full"
+                placeholder="e.g. Team alerts (Discord)"
+              />
+            </UFormField>
+
             <UFormField
               label="Webhook URL"
               description="Every registered webhook receives RSS notifications."
@@ -47,7 +89,10 @@
               :key="webhook.id"
               class="flex flex-col gap-3 rounded-xl border border-default p-4 sm:flex-row sm:items-center sm:justify-between"
             >
-              <p class="break-all text-sm text-default">{{ webhook.webhook_url }}</p>
+              <div class="min-w-0">
+                <p class="text-sm font-medium text-default">{{ webhook.name }}</p>
+                <p class="break-all text-xs text-muted">{{ webhook.webhook_url }}</p>
+              </div>
               <div class="flex shrink-0 items-center gap-2">
                 <UButton
                   size="sm"
@@ -77,40 +122,10 @@
           </div>
         </UPageCard>
 
-        <UPageCard
-          title="Theme"
-          description="Switch the app appearance between light, dark, and system"
-          :ui="{ body: 'space-y-5' }"
-        >
-          <div class="space-y-3">
-            <div>
-              <p class="text-sm font-medium text-default">Appearance</p>
-              <p class="text-sm text-muted">
-                Changes apply immediately and are saved in your browser.
-              </p>
-            </div>
-
-            <UTabs
-              v-model="selectedTheme"
-              :items="themeOptions"
-              class="w-full max-w-sm"
-              color="primary"
-              variant="soft"
-              orientation="horizontal"
-              :ui="{
-                list: 'bg-default/60 p-1 rounded-full gap-1',
-                trigger:
-                  'rounded-full px-4 py-2 text-sm font-medium text-muted transition-colors data-[state=active]:bg-primary data-[state=active]:text-inverted data-[state=active]:shadow-sm',
-                indicator: 'hidden',
-              }"
-            />
-          </div>
-        </UPageCard>
-
         <DeleteConfirmModal
           v-model:open="deleteOpen"
           title="Delete webhook"
-          :subject="pendingWebhook?.webhook_url"
+          :subject="pendingWebhook?.name"
           confirm-label="Delete webhook"
           :loading="deleting"
           @cancel="pendingWebhook = null"
@@ -154,7 +169,7 @@ const testingWebhookId = ref<number | null>(null);
 const deleteOpen = ref(false);
 const deleting = ref(false);
 const pendingWebhook = ref<SettingsWebhookResponse | null>(null);
-const webhookForm = reactive({ webhookUrl: "" });
+const webhookForm = reactive({ name: "", webhookUrl: "" });
 
 const loadWebhooks = async () => {
   webhookLoading.value = true;
@@ -174,7 +189,16 @@ const loadWebhooks = async () => {
 };
 
 const addWebhook = async () => {
+  const name = webhookForm.name.trim();
   const webhookUrl = webhookForm.webhookUrl.trim();
+  if (!name) {
+    toast.show({
+      title: "Name is required.",
+      color: "error",
+      icon: "i-lucide-circle-alert",
+    });
+    return;
+  }
   if (!webhookUrl) {
     toast.show({
       title: "Webhook URL is required.",
@@ -188,9 +212,10 @@ const addWebhook = async () => {
   try {
     const response = await request<SettingsWebhookResponse>("/settings/webhooks", {
       method: "POST",
-      body: JSON.stringify({ webhook_url: webhookUrl }),
+      body: JSON.stringify({ name, webhook_url: webhookUrl }),
     });
     webhooks.value = [...webhooks.value, response];
+    webhookForm.name = "";
     webhookForm.webhookUrl = "";
     toast.show({
       title: "Webhook added.",

@@ -354,23 +354,32 @@ test.describe("rss feeds", () => {
     await expect(page.getByText("No webhooks are registered yet.")).toBeVisible();
 
     const slackWebhookUrl = "https://hooks.slack.com/services/xxx/yyy/zzz";
+    const discordWebhookName = "Discord alerts";
+    const slackWebhookName = "Slack alerts";
+    const nameInput = page.getByLabel("Name");
     const webhookInput = page.getByLabel("Webhook URL");
+
+    await nameInput.fill(discordWebhookName);
     await webhookInput.fill(discordWebhookUrl);
     await buttonByText(page, "Add webhook").click({ force: true });
-    await expect(page.getByText(discordWebhookUrl)).toBeVisible();
+    await expect(page.getByText(discordWebhookName)).toBeVisible();
+
+    await nameInput.fill(slackWebhookName);
     await webhookInput.fill(slackWebhookUrl);
     await buttonByText(page, "Add webhook").click({ force: true });
-    await expect(page.getByText(slackWebhookUrl)).toBeVisible();
+    await expect(page.getByText(slackWebhookName)).toBeVisible();
 
     await page.reload();
-    await expect(page.getByText(discordWebhookUrl)).toBeVisible();
-    await expect(page.getByText(slackWebhookUrl)).toBeVisible();
+    await expect(page.getByText(discordWebhookName)).toBeVisible();
+    await expect(page.getByText(slackWebhookName)).toBeVisible();
 
-    const firstWebhookRow = page.getByText(discordWebhookUrl).locator("xpath=..");
+    const firstWebhookRow = page
+      .locator("div.rounded-xl", { hasText: discordWebhookName })
+      .first();
     await firstWebhookRow.getByRole("button", { name: "Delete" }).click({ force: true });
     await buttonByText(page, "Delete webhook").click({ force: true });
-    await expect(page.getByText(discordWebhookUrl)).toHaveCount(0);
-    await expect(page.getByText(slackWebhookUrl)).toBeVisible();
+    await expect(page.getByText(discordWebhookName)).toHaveCount(0);
+    await expect(page.getByText(slackWebhookName)).toBeVisible();
 
     await page.goto("/rss");
     const rssExecutionSwitch = page.getByRole("switch").first();

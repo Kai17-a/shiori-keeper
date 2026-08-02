@@ -62,6 +62,7 @@ def test_initialize_database_applies_every_migration_idempotently(tmp_path):
         "202604251114",
         "202604251124",
         "202608021000",
+        "202608021100",
     }
     assert "published" in article_columns
     assert "notify_webhook_enabled" in feed_columns

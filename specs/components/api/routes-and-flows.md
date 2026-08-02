@@ -74,8 +74,8 @@
 
 ### 設定
 
-- Discord、Slack、または Microsoft Teams webhook URL を複数登録する
-- 登録済み webhook の一覧を取得する
+- Discord、Slack、または Microsoft Teams webhook URL を識別用の名前付きで複数登録する
+- 登録済み webhook の一覧を名前と URL で取得する
 - 不要になった webhook を削除する
 - webhook の疎通確認を行う
 - 重複する webhook URL の登録は 409 を返す
@@ -381,6 +381,7 @@ Response:
   "items": [
     {
       "id": 1,
+      "name": "Discord alerts",
       "webhook_url": "https://discord.com/api/webhooks/1/token",
       "created_at": "2026-08-02 10:00:00",
       "updated_at": "2026-08-02 10:00:00"
@@ -394,7 +395,7 @@ Response:
 Request:
 
 ```json
-{ "webhook_url": "https://discord.com/api/webhooks/1/token" }
+{ "name": "Discord alerts", "webhook_url": "https://discord.com/api/webhooks/1/token" }
 ```
 
 Response (201):
@@ -402,12 +403,14 @@ Response (201):
 ```json
 {
   "id": 1,
+  "name": "Discord alerts",
   "webhook_url": "https://discord.com/api/webhooks/1/token",
   "created_at": "2026-08-02 10:00:00",
   "updated_at": "2026-08-02 10:00:00"
 }
 ```
 
+- `name` は必須で、空白のみの場合は 422 を返す
 - 登録済みと同じ URL は 409 を返す
 
 ### `DELETE /settings/webhooks/{id}`

@@ -154,6 +154,10 @@ class WebhookEndpoint(SQLModel, table=True):
     )
 
     id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(
+        default="",
+        sa_column=Column(String, nullable=False, server_default=text("''")),
+    )
     url: str = Field(sa_column=Column(String, nullable=False))
     created_at: datetime = Field(
         sa_column=Column(
@@ -441,11 +445,21 @@ class RSSFeedExecuteResponse(BaseModel):
 
 
 class SettingsWebhookCreate(BaseModel):
+    name: str = PydField(min_length=1)
     webhook_url: AnyHttpUrl
+
+    @field_validator("name")
+    @classmethod
+    def normalize_name(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Name cannot be empty")
+        return value
 
 
 class SettingsWebhookResponse(BaseModel):
     id: int
+    name: str
     webhook_url: str
     created_at: datetime
     updated_at: datetime

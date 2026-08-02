@@ -15,6 +15,7 @@ fn create_in_memory_test_db(enabled: i64) -> Connection {
         );
         CREATE TABLE webhook_endpoints (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL DEFAULT '',
             url TEXT NOT NULL,
             created_at TEXT NOT NULL DEFAULT (datetime('now')),
             updated_at TEXT NOT NULL DEFAULT (datetime('now'))

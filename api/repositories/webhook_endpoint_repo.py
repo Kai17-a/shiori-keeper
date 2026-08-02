@@ -8,21 +8,21 @@ class WebhookEndpointRepository:
     def find_all(self) -> list[dict]:
         rows = self.conn.execute(
             """
-            SELECT id, url, created_at, updated_at
+            SELECT id, name, url, created_at, updated_at
             FROM webhook_endpoints
             ORDER BY id ASC
             """
         ).fetchall()
         return [dict(row) for row in rows]
 
-    def insert(self, url: str) -> dict:
+    def insert(self, name: str, url: str) -> dict:
         cursor = self.conn.execute(
-            "INSERT INTO webhook_endpoints (url) VALUES (?)",
-            (url,),
+            "INSERT INTO webhook_endpoints (name, url) VALUES (?, ?)",
+            (name, url),
         )
         row = self.conn.execute(
             """
-            SELECT id, url, created_at, updated_at
+            SELECT id, name, url, created_at, updated_at
             FROM webhook_endpoints
             WHERE id = ?
             """,

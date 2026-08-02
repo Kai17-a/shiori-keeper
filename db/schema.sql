@@ -68,7 +68,7 @@ CREATE TABLE webhook_endpoints (
   url TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
+, name TEXT NOT NULL DEFAULT '');
 CREATE UNIQUE INDEX idx_webhook_endpoints_url_unique
   ON webhook_endpoints(url);
 -- Dbmate schema migrations
@@ -79,4 +79,5 @@ INSERT INTO "schema_migrations" (version) VALUES
   ('013'),
   ('202604251114'),
   ('202604251124'),
-  ('202608021000');
+  ('202608021000'),
+  ('202608021100');

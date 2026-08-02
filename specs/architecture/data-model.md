@@ -69,6 +69,7 @@ erDiagram
 
     WEBHOOK_ENDPOINTS {
         INTEGER id PK
+        TEXT name
         TEXT url UK
         TEXT created_at
         TEXT updated_at
