@@ -71,6 +71,7 @@ services:
 
 - Register RSS or Atom feed URLs
 - List, edit, and delete RSS feeds
+- Optionally choose per feed which registered webhooks receive its notifications (unselected feeds notify all webhooks)
 - Run a feed manually and connect the result to external notifications
 - Run RSS feeds periodically with the batch process and send new articles to Discord, Slack, or Microsoft Teams webhooks
 

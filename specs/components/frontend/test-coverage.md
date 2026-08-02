@@ -28,6 +28,7 @@
   - Folder の画面上での create, rename, detail navigation, detail delete
   - Tag の画面上での create, rename, detail navigation, detail delete
   - RSS feed の画面上での create, edit, detail navigation, 最終ページ削除後のページ正規化, delete
+  - RSS feed 作成・編集モーダルでの通知先 webhook 選択（未選択時は全 webhook 通知）
   - Settings page での webhook 複数登録, reload 後の一覧表示, delete
   - RSS periodic execution toggle
   - Settings page theme toggle

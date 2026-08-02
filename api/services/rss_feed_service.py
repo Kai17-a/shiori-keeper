@@ -213,6 +213,25 @@ class RSSFeedService:
                 params if has_published else params[:3],
             )
 
+    def _verify_webhook_endpoints(self, conn, webhook_ids: list[int]) -> None:
+        repo = WebhookEndpointRepository(conn)
+        missing = [
+            webhook_id
+            for webhook_id in webhook_ids
+            if repo.find_by_id(webhook_id) is None
+        ]
+        if missing:
+            raise HTTPException(status_code=404, detail="Webhook endpoint not found")
+
+    def _sync_webhook_endpoints(
+        self, repo: RSSFeedRepository, feed_id: int, webhook_ids: list[int] | None
+    ) -> None:
+        if webhook_ids is None:
+            return
+        unique_webhook_ids = list(dict.fromkeys(webhook_ids))
+        self._verify_webhook_endpoints(repo.conn, unique_webhook_ids)
+        repo.set_webhook_ids(feed_id, unique_webhook_ids)
+
     def create(self, data: RSSFeedCreate) -> RSSFeedResponse:
         with get_db() as conn:
             repo = RSSFeedRepository(conn)
@@ -232,7 +251,10 @@ class RSSFeedService:
                 raise HTTPException(
                     status_code=409, detail="RSS feed URL already exists"
                 )
-            return RSSFeedResponse(**row)
+            self._sync_webhook_endpoints(repo, row["id"], data.webhook_ids)
+            saved_row = repo.find_by_id(row["id"])
+            assert saved_row is not None
+            return RSSFeedResponse(**saved_row)
 
     def list(
         self, q: str | None = None, page: int = 1, per_page: int = 20
@@ -359,6 +381,8 @@ class RSSFeedService:
                 and payload["notify_webhook_enabled"] is not None
             ):
                 fields["notify_webhook_enabled"] = int(payload["notify_webhook_enabled"])
+            if "webhook_ids" in payload:
+                self._sync_webhook_endpoints(repo, feed_id, payload["webhook_ids"])
             row = repo.update(feed_id, fields)
             assert row is not None
             return RSSFeedResponse(**row)
@@ -375,10 +399,15 @@ class RSSFeedService:
             row = repo.find_by_id(feed_id)
             if row is None:
                 raise HTTPException(status_code=404, detail="RSS feed not found")
-            webhook_urls = [
-                str(entry["url"])
-                for entry in WebhookEndpointRepository(conn).find_all()
-            ]
+            webhook_rows = WebhookEndpointRepository(conn).find_all()
+            selected_webhook_ids = set(repo.find_webhook_ids(feed_id))
+            if selected_webhook_ids:
+                webhook_rows = [
+                    entry
+                    for entry in webhook_rows
+                    if int(entry["id"]) in selected_webhook_ids
+                ]
+            webhook_urls = [str(entry["url"]) for entry in webhook_rows]
             if not webhook_urls:
                 raise HTTPException(
                     status_code=400, detail="Webhook URL is not configured"

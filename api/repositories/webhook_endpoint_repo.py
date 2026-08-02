@@ -30,6 +30,17 @@ class WebhookEndpointRepository:
         ).fetchone()
         return dict(row)
 
+    def find_by_id(self, webhook_id: int) -> dict | None:
+        row = self.conn.execute(
+            """
+            SELECT id, name, url, created_at, updated_at
+            FROM webhook_endpoints
+            WHERE id = ?
+            """,
+            (webhook_id,),
+        ).fetchone()
+        return dict(row) if row else None
+
     def delete(self, webhook_id: int) -> bool:
         cursor = self.conn.execute(
             "DELETE FROM webhook_endpoints WHERE id = ?",

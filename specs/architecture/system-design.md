@@ -255,6 +255,12 @@ CREATE TABLE IF NOT EXISTS webhook_endpoints (
 CREATE UNIQUE INDEX idx_webhook_endpoints_url_unique
   ON webhook_endpoints(url);
 
+CREATE TABLE IF NOT EXISTS rss_feed_webhooks (
+    feed_id     INTEGER NOT NULL REFERENCES rss_feeds(id) ON DELETE CASCADE,
+    webhook_id  INTEGER NOT NULL REFERENCES webhook_endpoints(id) ON DELETE CASCADE,
+    PRIMARY KEY (feed_id, webhook_id)
+);
+
 CREATE TABLE IF NOT EXISTS tags (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     name        TEXT NOT NULL UNIQUE,
@@ -278,6 +284,8 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `webhook_endpoints` は RSS 通知先の webhook URL を識別用の名前付きで複数保持し、URL の一意制約で重複登録を防ぐ
 - `webhook_endpoints.url` は Discord、Slack、または Microsoft Teams webhook URL だけを許可する
 - `webhook_endpoints.name` は一覧表示で通知先を識別するためのラベルで、空白のみの名前は拒否する
+- `rss_feed_webhooks` は RSS フィードごとの通知先 webhook 選択を保持し、選択がないフィードは全 webhook へ通知、選択があるフィードは選択先のみへ通知する
+- webhook または RSS フィード削除時は `rss_feed_webhooks` を連動削除する
 - `rss_periodic_execution_enabled` は RSS 定期実行の有効/無効を保持する
 - `rss_webhook_notification_enabled` は RSS 定期実行時に webhook 通知を送るかを保持する
 - `rss_feeds.notify_webhook_enabled` は batch による RSS 定期実行時に webhook 通知するかを保持する

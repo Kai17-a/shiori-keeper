@@ -1,6 +1,7 @@
 use rusqlite::Connection;
 use shiori_keeper_batch::{
-    fetch_webhook_urls, rss_periodic_execution_enabled, rss_webhook_notification_enabled, run_batch,
+    fetch_rss_feeds, fetch_webhook_endpoints, rss_periodic_execution_enabled,
+    rss_webhook_notification_enabled, run_batch,
 };
 
 fn create_in_memory_test_db(enabled: i64) -> Connection {
@@ -19,6 +20,11 @@ fn create_in_memory_test_db(enabled: i64) -> Connection {
             url TEXT NOT NULL,
             created_at TEXT NOT NULL DEFAULT (datetime('now')),
             updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        CREATE TABLE rss_feed_webhooks (
+            feed_id INTEGER NOT NULL REFERENCES rss_feeds(id) ON DELETE CASCADE,
+            webhook_id INTEGER NOT NULL REFERENCES webhook_endpoints(id) ON DELETE CASCADE,
+            PRIMARY KEY (feed_id, webhook_id)
         );
         CREATE TABLE rss_feeds (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -101,7 +107,7 @@ fn rss_execution_settings_read_their_own_rows() {
 }
 
 #[test]
-fn fetch_webhook_urls_reads_multiple_endpoints_in_registration_order() {
+fn fetch_webhook_endpoints_reads_multiple_endpoints_in_registration_order() {
     let conn = create_in_memory_test_db(1);
     conn.execute(
         "INSERT INTO webhook_endpoints (url) VALUES (?)",
@@ -109,7 +115,11 @@ fn fetch_webhook_urls_reads_multiple_endpoints_in_registration_order() {
     )
     .expect("insert second webhook endpoint");
 
-    let urls = fetch_webhook_urls(&conn).expect("read webhook urls");
+    let endpoints = fetch_webhook_endpoints(&conn).expect("read webhook endpoints");
+    let urls: Vec<String> = endpoints
+        .iter()
+        .map(|endpoint| endpoint.url.clone())
+        .collect();
     assert_eq!(
         urls,
         vec![
@@ -117,10 +127,11 @@ fn fetch_webhook_urls_reads_multiple_endpoints_in_registration_order() {
             "https://hooks.slack.com/services/xxx/yyy/zzz".to_string(),
         ]
     );
+    assert!(endpoints.iter().all(|endpoint| endpoint.id > 0));
 }
 
 #[test]
-fn fetch_webhook_urls_falls_back_to_legacy_app_settings_key() {
+fn fetch_webhook_endpoints_falls_back_to_legacy_app_settings_key() {
     let conn = Connection::open_in_memory().expect("open in-memory db");
     conn.execute_batch(
         "
@@ -139,9 +150,35 @@ fn fetch_webhook_urls_falls_back_to_legacy_app_settings_key() {
     )
     .expect("insert legacy webhook setting");
 
-    let urls = fetch_webhook_urls(&conn).expect("read webhook urls");
-    assert_eq!(
-        urls,
-        vec!["https://discord.com/api/webhooks/1/token".to_string()]
-    );
+    let endpoints = fetch_webhook_endpoints(&conn).expect("read webhook endpoints");
+    assert_eq!(endpoints.len(), 1);
+    assert_eq!(endpoints[0].url, "https://discord.com/api/webhooks/1/token");
+}
+
+#[test]
+fn fetch_rss_feeds_loads_selected_webhook_ids() {
+    let conn = create_in_memory_test_db(1);
+    conn.execute(
+        "INSERT INTO webhook_endpoints (url) VALUES (?)",
+        ["https://hooks.slack.com/services/xxx/yyy/zzz"],
+    )
+    .expect("insert second webhook endpoint");
+    conn.execute(
+        "INSERT INTO rss_feed_webhooks (feed_id, webhook_id) VALUES (1, 2)",
+        [],
+    )
+    .expect("insert feed webhook link");
+
+    let feeds = fetch_rss_feeds(&conn).expect("read rss feeds");
+    assert_eq!(feeds.len(), 1);
+    assert_eq!(feeds[0].webhook_ids, vec![2]);
+}
+
+#[test]
+fn fetch_rss_feeds_without_selection_returns_empty_webhook_ids() {
+    let conn = create_in_memory_test_db(1);
+
+    let feeds = fetch_rss_feeds(&conn).expect("read rss feeds");
+    assert_eq!(feeds.len(), 1);
+    assert!(feeds[0].webhook_ids.is_empty());
 }

@@ -71,6 +71,11 @@ CREATE TABLE webhook_endpoints (
 , name TEXT NOT NULL DEFAULT '');
 CREATE UNIQUE INDEX idx_webhook_endpoints_url_unique
   ON webhook_endpoints(url);
+CREATE TABLE rss_feed_webhooks (
+  feed_id INTEGER NOT NULL REFERENCES rss_feeds(id) ON DELETE CASCADE,
+  webhook_id INTEGER NOT NULL REFERENCES webhook_endpoints(id) ON DELETE CASCADE,
+  PRIMARY KEY (feed_id, webhook_id)
+);
 -- Dbmate schema migrations
 INSERT INTO "schema_migrations" (version) VALUES
   ('010'),
@@ -80,4 +85,5 @@ INSERT INTO "schema_migrations" (version) VALUES
   ('202604251114'),
   ('202604251124'),
   ('202608021000'),
-  ('202608021100');
+  ('202608021100'),
+  ('202608021200');

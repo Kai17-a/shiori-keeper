@@ -107,6 +107,9 @@ API は Python で実装し、データストアには SQLite を使用する。
 7. IF Clientが無効な URL 形式を送信したとき、THEN THE API SHALL HTTP ステータス 422 を返す。
 8. IF Clientが RSS または Atom フィードではない URL を送信したとき、THEN THE API SHALL HTTP ステータス 422 を返す。
 9. IF Clientが重複する RSS フィード URL を作成または更新しようとしたとき、THEN THE API SHALL HTTP ステータス 409 を返す。
+10. WHEN Clientが RSS フィードの作成または更新時に `webhook_ids` を指定したとき、THE API SHALL そのフィードの通知先 webhook を指定された webhook のみに限定する。
+11. IF RSS フィードに `webhook_ids` が指定されなかったとき、THEN THE API SHALL そのフィードの通知を登録済みの全 webhook に送信する。
+12. IF Clientが存在しない webhook ID を `webhook_ids` に含めたとき、THEN THE API SHALL HTTP ステータス 404 を返す。
 
 ### 要件7: Webhook 設定、RSS 定期実行、集計
 

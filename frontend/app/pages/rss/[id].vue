@@ -199,6 +199,7 @@
         <RSSFeedEditorModal
           v-model:open="modalOpen"
           :form="feedForm"
+          :webhooks="webhooks"
           :title="feedForm.id ? 'Edit RSS feed' : 'Register RSS feed'"
           :description="feedForm.id ? 'Update the selected feed.' : 'Create a new feed link.'"
           title-placeholder="Feed title"
@@ -225,7 +226,13 @@
 
 <script setup lang="ts">
 import type { DateRange } from "reka-ui";
-import type { RSSFeedArticleListResponse, RSSFeedExecuteResponse, RSSFeedResponse } from "~/types";
+import type {
+  RSSFeedArticleListResponse,
+  RSSFeedExecuteResponse,
+  RSSFeedResponse,
+  SettingsWebhookListResponse,
+  SettingsWebhookResponse,
+} from "~/types";
 import { formatDateTime } from "~/utils/dateTime";
 
 type PaginationItem = { type: "page"; label: string; value: number } | { type: "ellipsis" };
@@ -263,7 +270,14 @@ const articleList = ref<RSSFeedArticleListResponse>({
   total_pages: 0,
 });
 const articlePage = ref(1);
-const feedForm = reactive({ id: "", title: "", url: "", description: "" });
+const webhooks = ref<SettingsWebhookResponse[]>([]);
+const feedForm = reactive({
+  id: "",
+  title: "",
+  url: "",
+  description: "",
+  webhookIds: [] as number[],
+});
 
 const articlePageCount = computed(() => Math.max(articleList.value.total_pages, 1));
 
@@ -299,6 +313,20 @@ const articlePaginationItems = computed<PaginationItem[]>(() => {
       return items;
     }, []);
 });
+
+const loadWebhooks = async () => {
+  try {
+    const response = await request<SettingsWebhookListResponse>("/settings/webhooks");
+    webhooks.value = response.items;
+  } catch (err) {
+    toast.show({
+      title: "Failed to load webhooks.",
+      description: err instanceof Error ? err.message : undefined,
+      color: "error",
+      icon: "i-lucide-circle-alert",
+    });
+  }
+};
 
 const loadFeed = async (showToast = false) => {
   loading.value = true;
@@ -391,6 +419,7 @@ const openEditModal = () => {
   feedForm.title = feed.value.title;
   feedForm.url = feed.value.url;
   feedForm.description = feed.value.description || "";
+  feedForm.webhookIds = [...feed.value.webhook_ids];
   modalOpen.value = true;
 };
 
@@ -400,6 +429,7 @@ const closeModal = () => {
   feedForm.title = "";
   feedForm.url = "";
   feedForm.description = "";
+  feedForm.webhookIds = [];
 };
 
 const saveFeed = async () => {
@@ -415,6 +445,7 @@ const saveFeed = async () => {
         url,
         title,
         description: feedForm.description || null,
+        webhook_ids: feedForm.webhookIds,
       }),
     });
     closeModal();
@@ -490,5 +521,6 @@ const confirmDelete = async () => {
 onMounted(() => {
   void loadFeed();
   void loadFeedArticles();
+  void loadWebhooks();
 });
 </script>

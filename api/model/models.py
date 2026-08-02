@@ -331,6 +331,7 @@ class RSSFeedCreate(BaseModel):
     title: str = PydField(min_length=1)
     description: str | None = None
     notify_webhook_enabled: bool = True
+    webhook_ids: list[int] | None = None
 
     @field_validator("title")
     @classmethod
@@ -340,12 +341,22 @@ class RSSFeedCreate(BaseModel):
             raise ValueError("Title cannot be empty")
         return value
 
+    @field_validator("webhook_ids")
+    @classmethod
+    def validate_webhook_ids(cls, value: list[int] | None) -> list[int] | None:
+        if value is None:
+            return value
+        if len(value) != len(set(value)):
+            raise ValueError("webhook_ids must not contain duplicates")
+        return value
+
 
 class RSSFeedUpdate(BaseModel):
     url: AnyHttpUrl | None = None
     title: str | None = PydField(default=None, min_length=1)
     description: str | None = None
     notify_webhook_enabled: bool | None = None
+    webhook_ids: list[int] | None = None
 
     @field_validator("title")
     @classmethod
@@ -357,9 +368,18 @@ class RSSFeedUpdate(BaseModel):
             raise ValueError("Title cannot be empty")
         return value
 
+    @field_validator("webhook_ids")
+    @classmethod
+    def validate_webhook_ids(cls, value: list[int] | None) -> list[int] | None:
+        if value is None:
+            return value
+        if len(value) != len(set(value)):
+            raise ValueError("webhook_ids must not contain duplicates")
+        return value
+
     @model_validator(mode="after")
     def reject_null_non_nullable_fields(self) -> "RSSFeedUpdate":
-        for field_name in ("url", "title", "notify_webhook_enabled"):
+        for field_name in ("url", "title", "notify_webhook_enabled", "webhook_ids"):
             if field_name in self.model_fields_set and getattr(self, field_name) is None:
                 raise ValueError(f"{field_name} cannot be null")
         return self
@@ -407,6 +427,7 @@ class RSSFeedResponse(BaseModel):
     title: str
     description: str | None
     notify_webhook_enabled: bool
+    webhook_ids: list[int]
     created_at: datetime
     updated_at: datetime
 

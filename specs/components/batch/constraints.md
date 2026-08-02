@@ -14,6 +14,8 @@
 - `rss_webhook_notification_enabled` が無効な場合、RSS 巡回と webhook 通知は行わない
 - `webhook_endpoints` に webhook URL が 1 件も登録されていない場合、RSS 巡回と webhook 通知は行わない
 - フィード単位の `rss_feeds.notify_webhook_enabled` が無効な RSS フィードは通知対象にしない
+- フィードに通知先 webhook の選択がある場合は選択した webhook のみに送信し、選択がない場合は全 webhook に送信する
+- 選択された webhook が 1 件も存在しないフィードはスキップする
 
 ## RSS と記事記録
 
@@ -32,6 +34,7 @@
 - `rss_feeds.notify_webhook_enabled` 列がない DB では、全 RSS フィードを通知対象として扱う
 - `rss_feed_articles.published` 列がない DB では、`published` を除外して送信済み記事を記録する
 - `webhook_endpoints` テーブルがない DB では、`app_settings.default_webhook_url` を通知先として扱う
+- `rss_feed_webhooks` テーブルがない DB では、全 RSS フィードを通知先未選択（全 webhook 通知）として扱う
 
 ## webhook
 

@@ -22,7 +22,7 @@
 10. `rss_feed_articles` から送信済み URL を読み込む
 11. RSS item の URL が送信済みでなければ通知対象に追加する
 12. 通知対象がないフィードはスキップする
-13. 登録済みの全 webhook へ payload を送信する
+13. フィードに通知先 webhook が選択されている場合は選択先のみ、未選択の場合は登録済みの全 webhook へ payload を送信する
 14. 1 件でも webhook 送信に成功した場合に `rss_feed_articles` へ送信済み記事を追記する
 
 RSS 取得と webhook の各送信試行には10秒のタイムアウトを適用し、応答しない外部サービスでbatch全体を無期限に停止させない。
@@ -34,6 +34,7 @@ RSS 取得と webhook の各送信試行には10秒のタイムアウトを適�
 | `app_settings` | `rss_periodic_execution_enabled`、`rss_webhook_notification_enabled` を読む |
 | `webhook_endpoints` | 通知先 webhook URL を全件読む |
 | `rss_feeds` | 巡回対象 RSS フィードを読む |
+| `rss_feed_webhooks` | フィードごとの通知先 webhook 選択を読む |
 | `rss_feed_articles` | 送信済み記事 URL の読み込みと送信成功後の記録を行う |
 
 ## webhook 送信

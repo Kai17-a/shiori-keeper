@@ -9,6 +9,31 @@ class RSSFeedRepository:
         rows = self.conn.execute(f"PRAGMA table_info({table})").fetchall()
         return any(row["name"] == column for row in rows)
 
+    def _with_webhook_ids(self, row: dict) -> dict:
+        row["webhook_ids"] = self.find_webhook_ids(int(row["id"]))
+        return row
+
+    def find_webhook_ids(self, feed_id: int) -> list[int]:
+        rows = self.conn.execute(
+            """
+            SELECT webhook_id FROM rss_feed_webhooks
+            WHERE feed_id = ?
+            ORDER BY webhook_id ASC
+            """,
+            (feed_id,),
+        ).fetchall()
+        return [int(row["webhook_id"]) for row in rows]
+
+    def set_webhook_ids(self, feed_id: int, webhook_ids: list[int]) -> None:
+        self.conn.execute(
+            "DELETE FROM rss_feed_webhooks WHERE feed_id = ?",
+            (feed_id,),
+        )
+        self.conn.executemany(
+            "INSERT INTO rss_feed_webhooks (feed_id, webhook_id) VALUES (?, ?)",
+            [(feed_id, webhook_id) for webhook_id in webhook_ids],
+        )
+
     def insert(
         self,
         url: str,
@@ -26,7 +51,7 @@ class RSSFeedRepository:
         row = self.conn.execute(
             "SELECT * FROM rss_feeds WHERE id = ?", (cursor.lastrowid,)
         ).fetchone()
-        return dict(row)
+        return self._with_webhook_ids(dict(row))
 
     def count_all(self, q: str | None = None) -> int:
         query = "SELECT COUNT(*) AS total FROM rss_feeds"
@@ -48,13 +73,13 @@ class RSSFeedRepository:
         query += " ORDER BY title ASC, id ASC LIMIT ? OFFSET ?"
         params.extend([limit, offset])
         rows = self.conn.execute(query, params).fetchall()
-        return [dict(row) for row in rows]
+        return [self._with_webhook_ids(dict(row)) for row in rows]
 
     def find_by_id(self, feed_id: int) -> dict | None:
         row = self.conn.execute(
             "SELECT * FROM rss_feeds WHERE id = ?", (feed_id,)
         ).fetchone()
-        return dict(row) if row else None
+        return self._with_webhook_ids(dict(row)) if row else None
 
     def find_by_url(self, url: str) -> dict | None:
         row = self.conn.execute(

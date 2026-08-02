@@ -6,7 +6,7 @@ use std::error::Error;
 use std::time::Duration;
 
 use crate::{
-    fetch_rss_feeds, fetch_webhook_urls, rss_periodic_execution_enabled,
+    fetch_rss_feeds, fetch_webhook_endpoints, rss_periodic_execution_enabled,
     rss_webhook_notification_enabled, webhook,
 };
 
@@ -26,8 +26,8 @@ pub async fn run_batch(conn: &Connection) -> Result<(), Box<dyn Error>> {
         return Ok(());
     }
 
-    let webhook_urls = fetch_webhook_urls(conn)?;
-    if webhook_urls.is_empty() {
+    let webhook_endpoints = fetch_webhook_endpoints(conn)?;
+    if webhook_endpoints.is_empty() {
         eprintln!("Not setting webhook URL");
         return Ok(());
     }
@@ -118,10 +118,26 @@ pub async fn run_batch(conn: &Connection) -> Result<(), Box<dyn Error>> {
             continue;
         }
 
+        let targets: Vec<&crate::WebhookEndpoint> = if rss_feed.webhook_ids.is_empty() {
+            webhook_endpoints.iter().collect()
+        } else {
+            webhook_endpoints
+                .iter()
+                .filter(|endpoint| rss_feed.webhook_ids.contains(&endpoint.id))
+                .collect()
+        };
+        if targets.is_empty() {
+            eprintln!(
+                "Skipping RSS feed {}: no matching webhook endpoints",
+                rss_feed.url
+            );
+            continue;
+        }
+
         let mut delivered = false;
-        for webhook_url in &webhook_urls {
+        for endpoint in targets {
             if let Err(err) = webhook::send_rss_webhook(
-                webhook_url,
+                &endpoint.url,
                 &rss_feed.title,
                 &rss_feed.url,
                 &embeds,

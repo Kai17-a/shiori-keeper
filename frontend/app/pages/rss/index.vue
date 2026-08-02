@@ -125,6 +125,7 @@
         <RSSFeedEditorModal
           v-model:open="modalOpen"
           :form="feedForm"
+          :webhooks="webhooks"
           :title="feedForm.id ? 'Edit RSS feed' : 'Register RSS feed'"
           :description="feedForm.id ? 'Update the selected feed.' : 'Create a new feed link.'"
           title-placeholder="Feed title"
@@ -156,6 +157,8 @@ import type {
   RSSFeedResponse,
   SettingsRssExecutionResponse,
   SettingsRssWebhookNotificationResponse,
+  SettingsWebhookListResponse,
+  SettingsWebhookResponse,
 } from "~/types";
 
 type PaginationItem = { type: "page"; label: string; value: number } | { type: "ellipsis" };
@@ -184,7 +187,14 @@ const feedList = ref<RSSFeedListResponse>({
   total_pages: 0,
 });
 const page = ref(1);
-const feedForm = reactive({ id: "", title: "", url: "", description: "" });
+const webhooks = ref<SettingsWebhookResponse[]>([]);
+const feedForm = reactive({
+  id: "",
+  title: "",
+  url: "",
+  description: "",
+  webhookIds: [] as number[],
+});
 const rssExecutionEnabled = ref(false);
 const rssWebhookNotificationEnabled = ref(false);
 
@@ -217,6 +227,7 @@ const openCreateModal = () => {
   feedForm.url = "";
   feedForm.title = "";
   feedForm.description = "";
+  feedForm.webhookIds = [];
   modalOpen.value = true;
 };
 
@@ -225,11 +236,26 @@ const openEditModal = (feed: RSSFeedResponse) => {
   feedForm.url = feed.url;
   feedForm.title = feed.title;
   feedForm.description = feed.description || "";
+  feedForm.webhookIds = [...feed.webhook_ids];
   modalOpen.value = true;
 };
 
 const closeModal = () => {
   modalOpen.value = false;
+};
+
+const loadWebhooks = async () => {
+  try {
+    const response = await request<SettingsWebhookListResponse>("/settings/webhooks");
+    webhooks.value = response.items;
+  } catch (err) {
+    toast.show({
+      title: "Failed to load webhooks.",
+      description: err instanceof Error ? err.message : undefined,
+      color: "error",
+      icon: "i-lucide-circle-alert",
+    });
+  }
 };
 
 const loadRssExecution = async () => {
@@ -385,6 +411,7 @@ const saveFeed = async () => {
       url,
       title,
       description: feedForm.description.trim() || null,
+      webhook_ids: feedForm.webhookIds,
     };
     if (feedForm.id) {
       await request(`/rss-feeds/${feedForm.id}`, { method: "PATCH", body: JSON.stringify(body) });
@@ -505,6 +532,11 @@ const confirmDelete = async () => {
 };
 
 onMounted(async () => {
-  await Promise.all([loadFeeds(), loadRssExecution(), loadRssWebhookNotification()]);
+  await Promise.all([
+    loadFeeds(),
+    loadWebhooks(),
+    loadRssExecution(),
+    loadRssWebhookNotification(),
+  ]);
 });
 </script>

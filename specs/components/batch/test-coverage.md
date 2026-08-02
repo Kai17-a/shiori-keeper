@@ -8,6 +8,8 @@
   - RSS 定期実行と webhook 通知の有効設定を、それぞれ対応する設定行から取得する
   - 複数登録された webhook URL を登録順に全件取得する
   - `webhook_endpoints` テーブルがない DB では `app_settings.default_webhook_url` へフォールバックする
+  - フィードごとの通知先 webhook 選択を取得する
+  - 通知先未選択のフィードは空の選択として扱う
 
 - `batch/tests/webhook.rs`
   - webhook payload の基本形

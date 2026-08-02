@@ -75,6 +75,11 @@ erDiagram
         TEXT updated_at
     }
 
+    RSS_FEED_WEBHOOKS {
+        INTEGER feed_id PK, FK
+        INTEGER webhook_id PK, FK
+    }
+
     SCHEMA_MIGRATIONS {
         varchar version PK
     }
@@ -88,6 +93,8 @@ erDiagram
 | `bookmark_tags.bookmark_id` | `bookmarks.id` | many-to-one | `ON DELETE CASCADE` |
 | `bookmark_tags.tag_id` | `tags.id` | many-to-one | `ON DELETE CASCADE` |
 | `rss_feed_articles.feed_id` | `rss_feeds.id` | many-to-one | `ON DELETE CASCADE` |
+| `rss_feed_webhooks.feed_id` | `rss_feeds.id` | many-to-one | `ON DELETE CASCADE` |
+| `rss_feed_webhooks.webhook_id` | `webhook_endpoints.id` | many-to-one | `ON DELETE CASCADE` |
 
 ## 一意制約と index
 
