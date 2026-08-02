@@ -21,7 +21,6 @@
               :key="webhook.id"
               :model-value="form.webhookIds.includes(webhook.id)"
               :label="webhook.name"
-              :description="webhook.webhook_url"
               @update:model-value="toggleWebhook(webhook.id, $event)"
             />
           </div>
