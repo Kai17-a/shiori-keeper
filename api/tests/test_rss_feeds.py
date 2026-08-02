@@ -1028,3 +1028,25 @@ def test_create_rss_feed_with_non_feed_url_returns_422(client, monkeypatch):
 def test_get_nonexistent_rss_feed_returns_404(client):
     resp = client.get("/rss-feeds/99999")
     assert resp.status_code == 404
+
+def test_validation_exception_handler_serializes_field_validator_errors():
+    """Field validator errors must serialize into a 422 JSON response, not a 500."""
+    import anyio
+    from fastapi.exceptions import RequestValidationError
+    from pydantic import ValidationError
+
+    from api.main import validation_exception_handler
+    from api.model.models import RSSFeedCreate
+
+    with pytest.raises(ValidationError) as exc_info:
+        RSSFeedCreate.model_validate(
+            {"url": "https://example.com/feed.xml", "title": "   "}
+        )
+
+    response = anyio.run(
+        validation_exception_handler,
+        None,
+        RequestValidationError(exc_info.value.errors()),
+    )
+    assert response.status_code == 422
+    assert b"Title cannot be empty" in response.body
