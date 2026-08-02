@@ -54,6 +54,7 @@ def test_dashboard_metrics_returns_zero_counts(client):
         "tags_total": 0,
         "favorites_total": 0,
         "rss_feeds_total": 0,
+        "news_sites_total": 0,
     }
 
 
@@ -90,4 +91,5 @@ def test_dashboard_metrics_counts_resources(client):
         "tags_total": 1,
         "favorites_total": 1,
         "rss_feeds_total": 0,
+        "news_sites_total": 0,
     }

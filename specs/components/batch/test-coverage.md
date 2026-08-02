@@ -18,6 +18,14 @@
   - webhook 送信失敗時の 3 回リトライ
   - webhook の HTTP 429/5xx 応答時の 3 回リトライと途中回復
 
+- `batch/tests/news.rs`
+  - 保存済み CSS selector による title、相対/絶対 link、published、summary の抽出
+  - custom news site の送信済み URL 記録と重複防止
+  - 不正 CSS selector の拒否
+
+- `batch/tests/run_batch.rs`
+  - custom news site の `scrape_config` と選択済み webhook ID の読込
+
 ## 追加で確認したい観点
 
 - `DATABASE_URL` 未指定時に `data/data.db` を選ぶこと

@@ -49,6 +49,32 @@ CREATE TABLE IF NOT EXISTS rss_feed_articles (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_rss_feed_articles_feed_url_unique
     ON rss_feed_articles(feed_id, url);
 
+CREATE TABLE IF NOT EXISTS news_sites (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    url TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    scrape_config TEXT NOT NULL,
+    notify_webhook_enabled INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS news_site_articles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    site_id INTEGER NOT NULL REFERENCES news_sites(id) ON DELETE CASCADE,
+    url TEXT NOT NULL,
+    title TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    published DATETIME
+);
+
+CREATE TABLE IF NOT EXISTS news_site_webhooks (
+    site_id INTEGER NOT NULL REFERENCES news_sites(id) ON DELETE CASCADE,
+    webhook_id INTEGER NOT NULL REFERENCES webhook_endpoints(id) ON DELETE CASCADE,
+    PRIMARY KEY (site_id, webhook_id)
+);
+
 CREATE TABLE IF NOT EXISTS app_settings (
     key         TEXT    PRIMARY KEY,
     value       TEXT    NOT NULL,
@@ -103,6 +129,17 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `SettingsRssExecutionResponse`
 - `SettingsRssWebhookNotificationUpdate`
 - `SettingsRssWebhookNotificationResponse`
+- `LLMSettingsUpdate`
+- `LLMSettingsResponse`
+- `LLMSettingsTestRequest`
+- `LLMSettingsTestResponse`
+- `NewsSiteCreate`
+- `NewsSiteUpdate`
+- `NewsSiteResponse`
+- `NewsSiteListResponse`
+- `NewsSiteArticleResponse`
+- `NewsSiteArticleListResponse`
+- `NewsSiteExecuteResponse`
 - `FolderCreate`
 - `FolderUpdate`
 - `TagCreate`
@@ -121,10 +158,11 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 
 ## 部分更新
 
-- `PATCH /bookmarks/{id}`、`PATCH /bookmarks/by-url`、`PATCH /rss-feeds/{id}` は、リクエストに含まれないフィールドを変更しない。
+- `PATCH /bookmarks/{id}`、`PATCH /bookmarks/by-url`、`PATCH /rss-feeds/{id}`、`PATCH /news-sites/{id}` は、リクエストに含まれないフィールドを変更しない。
 - nullable な `description` と bookmark の `folder_id` は、明示した `null` で保存済みの値を解除できる。
 - URL、title、bookmark の `tag_ids`、RSS の `notify_webhook_enabled`、`webhook_ids` は明示した `null` を受け付けず、422 を返す。
 - RSS の `webhook_ids` に空配列を指定すると通知先選択を解除できる（全 webhook 通知へ戻る）。
+- custom news site の `url` を更新すると LLM 再解析と抽出テストを実行し、成功時だけ URL と `scrape_config` を更新する。
 
 ## レスポンススキーマ
 
@@ -142,9 +180,15 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 | `SettingsWebhookPingResponse` | `pong`                                                                             |
 | `SettingsRssExecutionResponse` | `enabled`                                                                          |
 | `SettingsRssWebhookNotificationResponse` | `enabled`                                                               |
+| `LLMSettingsResponse`       | `provider`, `base_url`, `api_key_configured`, `model`                              |
+| `NewsSiteResponse`          | `id`, `url`, `title`, `description`, `notify_webhook_enabled`, `webhook_ids`, `created_at`, `updated_at` |
+| `NewsSiteListResponse`      | `items`, `total`, `page`, `per_page`, `total_pages`                                |
+| `NewsSiteArticleResponse`   | `id`, `site_id`, `url`, `title`, `published`, `created_at`                         |
+| `NewsSiteArticleListResponse` | `items`, `total`, `page`, `per_page`, `total_pages`                              |
+| `NewsSiteExecuteResponse`   | `site_id`, `title`, `delivered`, `delivered_count`, `message`                       |
 | `FolderResponse`            | `id`, `name`, `description`, `created_at`                                             |
 | `TagResponse`               | `id`, `name`, `description`                                                          |
-| `DashboardMetricsResponse`   | `bookmarks_total`, `folders_total`, `tags_total`, `favorites_total`, `rss_feeds_total` |
+| `DashboardMetricsResponse`   | `bookmarks_total`, `folders_total`, `tags_total`, `favorites_total`, `rss_feeds_total`, `news_sites_total` |
 | `ErrorResponse`             | `detail`                                                                             |
 
 ## 制約
@@ -178,6 +222,15 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `settings/rss-execution` は RSS 定期実行フラグを保存する
 - `settings/rss-webhook-notification` は RSS 定期実行時の webhook 通知可否を保存する
 - `rss_feed_articles.url` は同一 feed 内で一意である
+- LLM provider は `ollama`、`vllm`、`openai`（OpenAI 互換）のいずれかである
+- LLM 設定は接続・model・credential を使った chat completion 成功後だけ保存する
+- LLM API key は `app_settings` に保存するが API レスポンスには含めず、`api_key_configured` のみ返す
+- custom news site 登録には保存済み LLM 設定が必要で、未設定時は 400 を返す
+- custom news site 登録は HTML 取得、LLM selector 生成、実抽出テストの順に行い、記事が 0 件なら 422 を返す
+- `news_sites.url` は一意で、`scrape_config` は batch でも再利用できる JSON として保存する
+- `news_site_articles.url` は同一 site 内で一意である
+- `news_site_webhooks` の選択がない site は全 webhook、選択がある site は選択先だけへ通知する
+- custom news site 手動実行は 1 件以上の webhook 成功後だけ `news_site_articles` を記録する
 
 ## 実装上の補足
 
@@ -196,7 +249,7 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `PATCH /bookmarks/by-url` は URL で対象ブックマークを特定する
 - `PATCH /folders/{id}` と `PATCH /tags/{id}` は partial update として `name` の省略を許可する
 - `/bookmarks/{id}/tags` はタグ付与、`DELETE /bookmarks/{id}/tags/{tag_id}` は解除を担当する
-- `/metrics/dashboard` はブックマーク、フォルダ、タグ、お気に入り、RSS フィードの総数を返す
+- `/metrics/dashboard` はブックマーク、フォルダ、タグ、お気に入り、RSS フィード、custom news site の総数を返す
 - `/rss-feeds` は RSS フィードの CRUD を担当する
 - `/rss-feeds/{id}/articles` は保存済み RSS 記事を返す
 - `/rss-feeds/{id}/articles` は `q`、`published_from`、`published_to`、`page`、`per_page` を受け付ける
@@ -217,4 +270,7 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `batch` は RSS 定期実行が有効な場合だけ巡回し、`rss_feeds.notify_webhook_enabled` が有効な RSS フィードについて未送信記事の通知と `rss_feed_articles` への送信済み記録を担当する
 - `batch` は `rss_feed_articles` の `url` を参照して、既に送信済みの記事を webhook 対象から除外する
 - `batch` は webhook 送信成功後に `rss_feed_articles` へ記事を追記する
+- `/settings/llm` は LLM 設定取得・疎通確認付き保存・削除を担当し、`/settings/llm/test` は保存せず接続を確認する
+- `/news-sites` は custom news site の CRUD、`/{id}/articles` は記事履歴、`/{id}/execute` は手動 scrape と通知を担当する
+- `batch` は保存済み `news_sites.scrape_config` で custom news site も巡回し、成功後に `news_site_articles` へ記録する
 - `BookmarkListResponse.total_pages` はクライアントのページング UI が使えるように返す

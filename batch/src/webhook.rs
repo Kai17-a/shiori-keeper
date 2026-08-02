@@ -206,6 +206,43 @@ pub async fn send_rss_webhook(
     embeds: &[Embed<'_>],
     articles: &[Article<'_>],
 ) -> Result<(), Box<dyn Error>> {
+    send_article_webhook(
+        webhook_url,
+        feed_title,
+        feed_url,
+        "RSS feed",
+        embeds,
+        articles,
+    )
+    .await
+}
+
+pub async fn send_news_webhook(
+    webhook_url: &str,
+    site_title: &str,
+    site_url: &str,
+    embeds: &[Embed<'_>],
+    articles: &[Article<'_>],
+) -> Result<(), Box<dyn Error>> {
+    send_article_webhook(
+        webhook_url,
+        site_title,
+        site_url,
+        "news site",
+        embeds,
+        articles,
+    )
+    .await
+}
+
+async fn send_article_webhook(
+    webhook_url: &str,
+    source_title: &str,
+    source_url: &str,
+    source_kind: &str,
+    embeds: &[Embed<'_>],
+    articles: &[Article<'_>],
+) -> Result<(), Box<dyn Error>> {
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(10))
         .build()?;
@@ -215,7 +252,7 @@ pub async fn send_rss_webhook(
     for (index, chunk) in embed_chunks.iter().enumerate() {
         let mut content = format!(
             "**{}** - **New articles** ({} items)",
-            feed_title,
+            source_title,
             embeds.len()
         );
         if embed_chunks.len() > 1 {
@@ -225,11 +262,15 @@ pub async fn send_rss_webhook(
         let embeds_payload: Vec<_> = chunk
             .iter()
             .map(|embed| {
-                serde_json::json!({
+                let mut payload = serde_json::json!({
                     "title": truncate(embed.title, MAX_EMBED_TITLE_LEN),
                     "url": embed.link,
-                    "description": truncate(embed.summary, MAX_EMBED_SUMMARY_LEN),
-                })
+                });
+                if !embed.summary.is_empty() {
+                    payload["description"] =
+                        serde_json::json!(truncate(embed.summary, MAX_EMBED_SUMMARY_LEN));
+                }
+                payload
             })
             .collect();
         let payload = build_payload(webhook_service, content, embeds_payload);
@@ -238,8 +279,8 @@ pub async fn send_rss_webhook(
             Ok(response) => response,
             Err(err) => {
                 return Err(io::Error::other(format!(
-                    "Skipping RSS feed {}: failed to notify webhook after 3 attempts: {}",
-                    feed_url, err
+                    "Skipping {} {}: failed to notify webhook after 3 attempts: {}",
+                    source_kind, source_url, err
                 ))
                 .into());
             }
@@ -249,8 +290,9 @@ pub async fn send_rss_webhook(
             let status = response.status();
             let body = response.text().await.unwrap_or_else(|_| String::new());
             return Err(io::Error::other(format!(
-                "Skipping RSS feed {}: webhook returned {}{}",
-                feed_url,
+                "Skipping {} {}: webhook returned {}{}",
+                source_kind,
+                source_url,
                 status,
                 if body.is_empty() {
                     String::new()

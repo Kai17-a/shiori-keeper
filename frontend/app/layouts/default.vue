@@ -78,7 +78,7 @@ import type { NavigationMenuItem } from "@nuxt/ui";
 import { refreshSidebarCatalogSafely } from "~/utils/sidebarCatalog";
 
 const route = useRoute();
-const { folders, tags, rssFeeds, refresh } = useSidebarCatalog();
+const { folders, tags, rssFeeds, newsSites, refresh } = useSidebarCatalog();
 const {
   checked: healthChecked,
   ok: healthOk,
@@ -178,7 +178,15 @@ const primaryLinks = computed<NavigationMenuItem[]>(() => [
       exact: true,
       active: isActive(`/rss/${feed.id}`),
       onSelect: closeSidebar,
-    })),
+    })).concat(
+      newsSites.value.map((site) => ({
+        label: `Custom: ${site.title}`,
+        to: `/rss/news/${site.id}`,
+        exact: true,
+        active: isActive(`/rss/news/${site.id}`),
+        onSelect: closeSidebar,
+      })),
+    ),
   },
 ]);
 

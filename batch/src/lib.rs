@@ -1,9 +1,10 @@
 pub mod db;
+pub mod news;
 pub mod runner;
 pub mod webhook;
 
 pub use db::{
-    RSSFeed, WebhookEndpoint, database_path, fetch_rss_feeds, fetch_webhook_endpoints,
-    rss_periodic_execution_enabled, rss_webhook_notification_enabled,
+    NewsSite, RSSFeed, WebhookEndpoint, database_path, fetch_news_sites, fetch_rss_feeds,
+    fetch_webhook_endpoints, rss_periodic_execution_enabled, rss_webhook_notification_enabled,
 };
 pub use runner::run_batch;

@@ -30,6 +30,12 @@ class SettingsRepository:
         assert stored is not None
         return str(stored["value"])
 
+    def delete(self, key: str) -> None:
+        self.conn.execute(
+            "DELETE FROM app_settings WHERE key = ?",
+            (key,),
+        )
+
     def get_bool(self, key: str) -> bool:
         row = self.conn.execute(
             "SELECT rss_periodic_execution_enabled FROM app_settings WHERE key = ?",

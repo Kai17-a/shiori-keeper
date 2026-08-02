@@ -17,6 +17,9 @@ class DashboardService:
             rss_feeds_total = conn.execute(
                 "SELECT COUNT(*) AS total FROM rss_feeds"
             ).fetchone()["total"]
+            news_sites_total = conn.execute(
+                "SELECT COUNT(*) AS total FROM news_sites"
+            ).fetchone()["total"]
             favorites_total = conn.execute(
                 "SELECT COUNT(*) AS total FROM bookmarks WHERE is_favorite = 1"
             ).fetchone()["total"]
@@ -27,4 +30,5 @@ class DashboardService:
                 tags_total=int(tags_total),
                 favorites_total=int(favorites_total),
                 rss_feeds_total=int(rss_feeds_total),
+                news_sites_total=int(news_sites_total),
             )

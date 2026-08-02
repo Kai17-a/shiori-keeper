@@ -74,6 +74,14 @@ services:
 - Optionally choose per feed which registered webhooks receive its notifications (unselected feeds notify all webhooks)
 - Run a feed manually and connect the result to external notifications
 - Run RSS feeds periodically with the batch process and send new articles to Discord, Slack, or Microsoft Teams webhooks
+- Register news-list pages that do not publish RSS; an LLM analyzes and tests reusable CSS selectors before saving
+- Run custom news sites manually or in the same scheduled batch flow, with duplicate delivery prevention and per-site webhook selection
+
+### Configure custom-site analysis
+
+- Configure Ollama, vLLM, or an OpenAI-compatible chat-completions endpoint
+- Test the endpoint, model, and credentials before settings are saved
+- Custom news sites cannot be registered until working LLM settings exist
 
 ### Configure notifications
 
@@ -83,7 +91,7 @@ services:
 
 ### See the overall status at a glance
 
-- View counts for bookmarks, folders, tags, favorites, and RSS feeds on the dashboard
+- View counts for bookmarks, folders, tags, favorites, RSS feeds, and custom news sites on the dashboard
 - See recent bookmarks and saved folders or tags
 
 ### Switch the appearance
@@ -97,8 +105,8 @@ services:
 - `Favorites`: View only bookmarked items marked as favorites
 - `Folders`: Create, edit, and delete folders
 - `Tags`: Create, edit, and delete tags
-- `RSS`: Register, edit, delete, and execute RSS feeds, including periodic batch runs
-- `Settings`: Configure the theme and notification webhooks
+- `RSS`: Register, edit, delete, and execute RSS feeds and custom news sites, including periodic batch runs
+- `Settings`: Configure the theme, notification webhooks, and LLM connection
 
 ## Where Data Is Stored
 
@@ -109,7 +117,7 @@ services:
 
 - A bookmark organizer for individuals or small teams
 - Helps turn an ever-growing list of saved links into something easier to browse with folders and tags
-- Also keeps RSS feeds in the same app
+- Also keeps RSS feeds and non-RSS news sources in the same app
 
 ## Browser Extension
 
@@ -118,7 +126,7 @@ services:
 ## Notes
 
 - Invalid URL formats cannot be registered
-- Duplicate bookmark URLs, tag names, RSS feed URLs, and webhook URLs are not allowed
+- Duplicate bookmark URLs, tag names, RSS feed URLs, custom news-site URLs, and webhook URLs are not allowed
 - The webhook system supports Discord, Slack, and Microsoft Teams incoming webhooks
 
 ## Development Notes

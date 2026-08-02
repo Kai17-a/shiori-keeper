@@ -139,6 +139,13 @@ describe("bookmarkApi helpers", () => {
       { path: "/rss-feeds/123", options: { method: "PATCH", body: JSON.stringify({ title: "Feed 2" }) } },
       { path: "/rss-feeds/123", options: { method: "DELETE" } },
       { path: "/rss-feeds/123/execute", options: { method: "POST" } },
+      { path: "/news-sites", options: { method: "GET" } },
+      { path: "/news-sites", options: { method: "POST", body: JSON.stringify({ url: "https://example.com/news" }) } },
+      { path: "/news-sites/123", options: { method: "GET" } },
+      { path: "/news-sites/123/articles?page=1", options: { method: "GET" } },
+      { path: "/news-sites/123", options: { method: "PATCH", body: JSON.stringify({ title: "News" }) } },
+      { path: "/news-sites/123", options: { method: "DELETE" } },
+      { path: "/news-sites/123/execute", options: { method: "POST" } },
       { path: "/metrics/dashboard", options: { method: "GET" } },
       { path: "/settings/webhooks", options: { method: "GET" } },
       { path: "/settings/webhooks", options: { method: "POST", body: JSON.stringify({ name: "Test webhook", webhook_url: "https://example.com/webhook" }) } },
@@ -146,6 +153,10 @@ describe("bookmarkApi helpers", () => {
       { path: "/settings/webhook/ping", options: { method: "POST", body: JSON.stringify({ webhook_url: "https://example.com/webhook" }) } },
       { path: "/settings/rss-execution", options: { method: "GET" } },
       { path: "/settings/rss-execution", options: { method: "PUT", body: JSON.stringify({ enabled: true }) } },
+      { path: "/settings/llm", options: { method: "GET" } },
+      { path: "/settings/llm", options: { method: "PUT", body: JSON.stringify({ provider: "ollama", base_url: "http://127.0.0.1:11434", model: "llama3.2" }) } },
+      { path: "/settings/llm/test", options: { method: "POST", body: JSON.stringify({}) } },
+      { path: "/settings/llm", options: { method: "DELETE" } },
     ] as const;
 
     for (const testCase of cases) {

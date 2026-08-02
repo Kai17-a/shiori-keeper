@@ -16,6 +16,10 @@ from api.model.models import (
     BookmarkUpdate,
     FolderCreate,
     FolderUpdate,
+    LLMSettingsTestRequest,
+    LLMSettingsUpdate,
+    NewsSiteCreate,
+    NewsSiteUpdate,
     RSSFeedCreate,
     RSSFeedUpdate,
     SettingsRssExecutionUpdate,
@@ -29,6 +33,7 @@ from api.model.models import (
 from api.services.bookmark_service import BookmarkService
 from api.services.dashboard_service import DashboardService
 from api.services.folder_service import FolderService
+from api.services.news_site_service import NewsSiteService
 from api.services.rss_feed_service import RSSFeedService
 from api.services.settings_service import SettingsService
 from api.services.tag_service import TagService
@@ -186,6 +191,55 @@ class CompatTestClient:
             return self._ok(status_code=204)
         return None
 
+    def _handle_news_sites(self, method: str, path: str, query, json):
+        if method == "POST" and path == "/news-sites":
+            body = NewsSiteCreate(**(json or {}))
+            return self._ok(NewsSiteService().create(body).model_dump(), 201)
+        if method == "GET" and path == "/news-sites":
+            payload = (
+                NewsSiteService()
+                .list(
+                    q=query.get("q", [None])[0],
+                    page=int(query.get("page", ["1"])[0]),
+                    per_page=int(query.get("per_page", ["20"])[0]),
+                )
+                .model_dump()
+            )
+            return self._ok(payload, 200)
+        if method == "GET" and path.startswith("/news-sites/") and path.endswith(
+            "/articles"
+        ):
+            site_id = int(path.strip("/").split("/")[1])
+            payload = (
+                NewsSiteService()
+                .list_articles(
+                    site_id,
+                    q=query.get("q", [None])[0],
+                    page=int(query.get("page", ["1"])[0]),
+                    per_page=int(query.get("per_page", ["20"])[0]),
+                    published_from=query.get("published_from", [None])[0],
+                    published_to=query.get("published_to", [None])[0],
+                )
+                .model_dump()
+            )
+            return self._ok(payload, 200)
+        if method == "POST" and path.startswith("/news-sites/") and path.endswith(
+            "/execute"
+        ):
+            site_id = int(path.strip("/").split("/")[1])
+            return self._ok(NewsSiteService().execute(site_id).model_dump(), 200)
+        if method == "GET" and path.startswith("/news-sites/"):
+            site_id = int(path.rsplit("/", 1)[1])
+            return self._ok(NewsSiteService().get(site_id).model_dump(), 200)
+        if method == "PATCH" and path.startswith("/news-sites/"):
+            site_id = int(path.rsplit("/", 1)[1])
+            body = NewsSiteUpdate(**(json or {}))
+            return self._ok(NewsSiteService().update(site_id, body).model_dump(), 200)
+        if method == "DELETE" and path.startswith("/news-sites/"):
+            NewsSiteService().delete(int(path.rsplit("/", 1)[1]))
+            return self._ok(status_code=204)
+        return None
+
     def _handle_bookmarks(self, method: str, path: str, query, json):
         if method == "POST" and path == "/bookmarks":
             body = BookmarkCreate(**(json or {}))
@@ -316,6 +370,22 @@ class CompatTestClient:
             rss_feeds_response = self._handle_rss_feeds(method, path, query, json)
             if rss_feeds_response is not None:
                 return rss_feeds_response
+
+            news_sites_response = self._handle_news_sites(method, path, query, json)
+            if news_sites_response is not None:
+                return news_sites_response
+
+            if method == "GET" and path == "/settings/llm":
+                return self._ok(SettingsService().get_llm_settings().model_dump(), 200)
+            if method == "PUT" and path == "/settings/llm":
+                body = LLMSettingsUpdate(**(json or {}))
+                return self._ok(SettingsService().set_llm_settings(body).model_dump(), 200)
+            if method == "DELETE" and path == "/settings/llm":
+                SettingsService().delete_llm_settings()
+                return self._ok(None, 204)
+            if method == "POST" and path == "/settings/llm/test":
+                body = LLMSettingsTestRequest(**(json or {}))
+                return self._ok(SettingsService().test_llm_settings(body).model_dump(), 200)
 
             if method == "GET" and path == "/settings/webhooks":
                 payload = SettingsService().list_webhooks().model_dump()

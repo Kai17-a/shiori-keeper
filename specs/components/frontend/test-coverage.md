@@ -7,12 +7,12 @@
   - API base fallback resolution
   - Request header construction
   - Error message normalization
-  - Frontend API path coverage including bookmarks, folders, tags, RSS feeds, metrics, and settings
+  - Frontend API path coverage including bookmarks, folders, tags, RSS feeds, custom news sites, metrics, and LLM settings
 
 - `frontend/tests/sidebarCatalog.test.ts`
   - Empty sidebar state creation
   - Catalog result application
-  - RSS フィードを含むサイドバーカタログ反映
+  - RSS フィードと custom news site を含むサイドバーカタログ反映
   - 初回カタログ失敗を未処理例外にせず、強制再取得できること
 
 - `frontend/tests/apiHealth.test.ts`
@@ -41,6 +41,7 @@
 - Bookmark 作成時の folder/tag 割り当ては明示的に検証していない
 - Folder/Tag 詳細上の関連 bookmark 編集、削除、お気に入り切り替えは明示的に検証していない
 - RSS webhook ping、手動実行、記事一覧の paging は明示的に検証していない
+- LLM 設定画面と custom news site のブラウザ E2E は、外部 LLM test server を必要とするため明示的に検証していない
 - オフラインやバックエンド停止時の描画を、手動のエラー処理以外で明示的に検証するテストはない
 
 ## 実装候補

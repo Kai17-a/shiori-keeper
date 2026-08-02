@@ -15,6 +15,8 @@
 - `webhook_endpoints` に webhook URL が 1 件も登録されていない場合、RSS 巡回と webhook 通知は行わない
 - フィード単位の `rss_feeds.notify_webhook_enabled` が無効な RSS フィードは通知対象にしない
 - フィードに通知先 webhook の選択がある場合は選択した webhook のみに送信し、選択がない場合は全 webhook に送信する
+- `news_sites.notify_webhook_enabled` が無効な custom news site は通知対象にしない
+- custom news site に通知先選択がある場合は選択先のみ、選択がない場合は全 webhook に送信する
 - 選択された webhook が 1 件も存在しないフィードはスキップする
 
 ## RSS と記事記録
@@ -28,6 +30,14 @@
 - item の summary は `description`、`content` の順で採用し、どちらもない場合は `"(no summary)"` とする
 - 送信済み判定は `rss_feed_articles.url` で行う
 - 送信済み記事の記録は `INSERT OR IGNORE` を使い、重複 URL を二重登録しない
+
+## Custom news site と記事記録
+
+- batch は LLM を呼び出さず、登録時に保存された `news_sites.scrape_config` の CSS selector を再利用する
+- `scrape_config` は item、title、link の selector と link attribute を必須とし、published と summary selector は任意とする
+- 相対リンクは site URL を基準に HTTP/HTTPS の絶対 URL へ解決する
+- 1 回の巡回で抽出する記事は先頭 100 件までとする
+- 送信済み判定は `news_site_articles.url` で行い、1 件以上の webhook 成功後に `INSERT OR IGNORE` で記録する
 
 ## 後方互換
 

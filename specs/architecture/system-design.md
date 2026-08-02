@@ -4,8 +4,8 @@
 
 本ドキュメントは、ブックマーク管理システムの技術設計を定義する。
 Python で API サーバーを実装し、SQLite をデータストアとして使用する。
-加えて、Rust の `batch` で RSS 定期巡回と webhook 通知を担当し、`browser_extension/` でブラウザからのブックマーク登録 UI を提供する。
-ブックマーク・RSS フィード・フォルダ・タグ・設定の CRUD と、ブックマークへのタグ付与・解除、RSS 実行による Discord、Slack、Microsoft Teams webhook 通知を提供する。
+加えて、Rust の `batch` で RSS と custom news site の定期巡回・webhook 通知を担当し、`browser_extension/` でブラウザからのブックマーク登録 UI を提供する。
+ブックマーク・RSS フィード・custom news site・フォルダ・タグ・設定の CRUD と、LLM-assisted HTML scraping、Discord、Slack、Microsoft Teams webhook 通知を提供する。
 
 ### 技術スタック
 
@@ -65,7 +65,7 @@ SQLite Database
 └─────────────────────────────┘
 ```
 
-- `batch` は RSS 定期実行が有効な場合だけ RSS フィードを読み込み、未送信の記事だけを webhook に通知する
+- `batch` は定期実行が有効な場合だけ RSS フィードと custom news site を読み込み、未送信の記事だけを webhook に通知する
 - `batch` は送信済み記事を `rss_feed_articles` に記録し、重複通知を避ける
 - `batch` は webhook の接続エラー、HTTP 429、HTTP 5xx を最大 3 回までリトライし、最終失敗時は当該フィードをスキップして次へ進む
 - `batch` の RSS 取得と webhook の各送信試行は10秒でタイムアウトする
@@ -174,6 +174,12 @@ shiori-keeper/
 | PATCH  | `/rss-feeds/{id}`               | RSS フィード部分更新     |
 | DELETE | `/rss-feeds/{id}`               | RSS フィード削除         |
 | POST   | `/rss-feeds/{id}/execute`       | RSS 実行と webhook 通知  |
+| GET/PUT/DELETE | `/settings/llm`        | LLM 設定の取得・疎通確認付き保存・削除 |
+| POST   | `/settings/llm/test`            | LLM 疎通確認             |
+| POST/GET | `/news-sites`                 | custom news site 作成・一覧 |
+| GET/PATCH/DELETE | `/news-sites/{id}`    | custom news site 詳細・更新・削除 |
+| GET    | `/news-sites/{id}/articles`     | scraped article 一覧     |
+| POST   | `/news-sites/{id}/execute`      | HTML scrape と webhook 通知 |
 | GET    | `/health`                       | ヘルスチェック           |
 
 ### レスポンス方針
@@ -281,6 +287,7 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - SQLite の外部キー制約は接続時に `PRAGMA foreign_keys = ON` で有効化する
 - `bookmarks.url`、`rss_feeds.url`、`folders.name`、`tags.name` は DB 一意制約と事前チェックの両方で重複を防ぐ
 - `app_settings` はアプリ全体設定のキーバリューストアとして扱う
+- `app_settings` の `llm_*` key は provider、base URL、API key、model を保持し、API key はレスポンスへ返さない
 - `webhook_endpoints` は RSS 通知先の webhook URL を識別用の名前付きで複数保持し、URL の一意制約で重複登録を防ぐ
 - `webhook_endpoints.url` は Discord、Slack、または Microsoft Teams webhook URL だけを許可する
 - `webhook_endpoints.name` は一覧表示で通知先を識別するためのラベルで、空白のみの名前は拒否する
@@ -297,6 +304,8 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `batch` は `rss_webhook_notification_enabled` が無効な場合、RSS 巡回自体を行わない
 - `batch` は `rss_feeds.notify_webhook_enabled` が無効な RSS フィードを通知対象から除外する
 - `batch` は `rss_feed_articles` を参照して既送信記事を除外し、送信成功後に同テーブルへ記録する
+- custom news site 登録は LLM 設定必須で、HTML 取得、selector 生成、実抽出テストの成功後だけ `news_sites` へ保存する
+- API と batch は `news_sites.scrape_config` を共有し、`news_site_articles` で重複通知を防止する
 - `batch` は webhook の接続エラー、HTTP 429、HTTP 5xx を最大 3 回までリトライし、失敗したフィードはスキップする
 
 ### Pydantic スキーマ
@@ -436,6 +445,7 @@ class DashboardMetricsResponse(BaseModel):
     tags_total: int
     favorites_total: int
     rss_feeds_total: int
+    news_sites_total: int
 ```
 
 ---

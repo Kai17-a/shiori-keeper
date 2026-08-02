@@ -6,7 +6,7 @@
 
     <template #body>
       <div class="space-y-6">
-        <UPageGrid class="grid gap-4 lg:grid-cols-5">
+        <UPageGrid class="grid gap-4 lg:grid-cols-6">
           <StatCard
             v-for="stat in stats"
             :key="stat.title"
@@ -110,6 +110,7 @@ const metrics = ref<DashboardMetricsResponse>({
   tags_total: 0,
   favorites_total: 0,
   rss_feeds_total: 0,
+  news_sites_total: 0,
 });
 
 const stats = computed(() => [
@@ -137,6 +138,11 @@ const stats = computed(() => [
     title: "RSS feeds",
     to: "/rss",
     value: metrics.value.rss_feeds_total,
+  },
+  {
+    title: "Custom news sites",
+    to: "/rss",
+    value: metrics.value.news_sites_total,
   },
 ]);
 
