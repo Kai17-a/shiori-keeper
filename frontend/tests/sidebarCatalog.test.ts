@@ -12,6 +12,7 @@ describe("sidebarCatalog helpers", () => {
       folders: [],
       tags: [],
       rssFeeds: [],
+      newsSites: [],
       loaded: false,
     });
   });
@@ -22,11 +23,14 @@ describe("sidebarCatalog helpers", () => {
     const tags = [{ id: 2, name: "Frontend" }];
     const rssFeeds = [{ id: 3, title: "Daily", url: "https://example.com/feed", description: null, created_at: "2026-04-10T00:00:00Z", updated_at: "2026-04-10T00:00:00Z" }];
 
-    expect(applySidebarCatalogResults(state, folders, tags, rssFeeds)).toBe(state);
+    const newsSites = [{ id: 4, title: "Custom Daily", url: "https://example.com/news", description: null, notify_webhook_enabled: true, webhook_ids: [], created_at: "2026-04-10T00:00:00Z", updated_at: "2026-04-10T00:00:00Z" }];
+
+    expect(applySidebarCatalogResults(state, folders, tags, rssFeeds, newsSites)).toBe(state);
     expect(state).toEqual({
       folders,
       tags,
       rssFeeds,
+      newsSites,
       loaded: true,
     });
   });

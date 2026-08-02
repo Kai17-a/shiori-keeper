@@ -13,6 +13,7 @@
 | 要件5: 永続化とエラー処理             | `data-and-constraints.md` のデータモデル・制約                           |
 | 要件6: RSS フィード管理               | `routes-and-flows.md` の RSS 節、`data-and-constraints.md` の制約       |
 | 要件7: Webhook 設定、RSS 定期実行、集計 | `routes-and-flows.md` の設定・ダッシュボード節、`data-and-constraints.md` の制約 |
+| 要件8: LLM 設定とカスタムニュースサイト | `routes-and-flows.md` の設定・カスタムニュースサイト節、`data-and-constraints.md` の制約 |
 
 ## 補足
 

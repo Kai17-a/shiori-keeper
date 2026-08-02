@@ -10,9 +10,9 @@
 
 ## 実行フロー
 
-1. `rss_feeds` から巡回対象フィードを取得する
+1. `rss_feeds` と `news_sites` から巡回対象を取得する
 2. `app_settings` の `rss_periodic_execution_enabled` を確認する
-3. フィードが 0 件の場合は成功扱いで終了する
+3. RSS フィードと custom news site がともに 0 件の場合は成功扱いで終了する
 4. RSS 定期実行が無効な場合は成功扱いで終了する
 5. `app_settings` の `rss_webhook_notification_enabled` を確認する
 6. RSS webhook 通知が無効な場合は成功扱いで終了する
@@ -24,6 +24,9 @@
 12. 通知対象がないフィードはスキップする
 13. フィードに通知先 webhook が選択されている場合は選択先のみ、未選択の場合は登録済みの全 webhook へ payload を送信する
 14. 1 件でも webhook 送信に成功した場合に `rss_feed_articles` へ送信済み記事を追記する
+15. custom news site ごとに URL の HTML と `scrape_config` を読み、CSS selector で最大 100 件の記事を抽出する
+16. `news_site_articles` の URL で既通知記事を除外し、通知先選択を適用して webhook へ送信する
+17. 1 件でも webhook 送信に成功した場合に `news_site_articles` へ送信済み記事を追記する
 
 RSS 取得と webhook の各送信試行には10秒のタイムアウトを適用し、応答しない外部サービスでbatch全体を無期限に停止させない。
 
@@ -36,6 +39,9 @@ RSS 取得と webhook の各送信試行には10秒のタイムアウトを適�
 | `rss_feeds` | 巡回対象 RSS フィードを読む |
 | `rss_feed_webhooks` | フィードごとの通知先 webhook 選択を読む |
 | `rss_feed_articles` | 送信済み記事 URL の読み込みと送信成功後の記録を行う |
+| `news_sites` | custom news site URL と LLM 生成済み `scrape_config` を読む |
+| `news_site_webhooks` | site ごとの通知先 webhook 選択を読む |
+| `news_site_articles` | scraped article の送信済み URL を読み書きする |
 
 ## webhook 送信
 
@@ -51,5 +57,5 @@ RSS 取得と webhook の各送信試行には10秒のタイムアウトを適�
 
 - DB を開けない場合は起動全体が失敗する
 - 巡回対象取得や設定取得に失敗した場合は `run_batch` がエラーを返す
-- 個別フィードの URL parse、RSS 取得、body 読み込み、RSS parse、送信済み URL 読み込み、webhook 送信、送信済み記事記録の失敗は標準エラーへ出力し、そのフィードをスキップする
+- 個別フィードまたは custom news site の URL parse、取得、body 読み込み、解析、送信済み URL 読み込み、webhook 送信、送信済み記事記録の失敗は標準エラーへ出力し、その対象だけをスキップする
 - 個別フィードの失敗では他フィードの処理を止めない

@@ -1,6 +1,6 @@
 # 概要
 
-`batch/` は、SQLite に保存された RSS フィードを定期巡回し、新着記事を webhook へ通知する Rust 製バッチである。
+`batch/` は、SQLite に保存された RSS フィードと custom news site を定期巡回し、新着記事を webhook へ通知する Rust 製バッチである。
 API サーバーとは別プロセスとして動作し、HTTP ルートは持たない。
 
 ## 主な特徴
@@ -11,6 +11,9 @@ API サーバーとは別プロセスとして動作し、HTTP ルートは持�
 - `webhook_endpoints` から通知先 webhook URL を全件読む
 - `rss_feeds.notify_webhook_enabled = 1` の RSS フィードのみを巡回対象にする
 - `rss_feed_webhooks` でフィードごとに選択された通知先がある場合は、その webhook のみへ送信する
+- `news_sites.notify_webhook_enabled = 1` の custom news site を巡回し、保存済み JSON の CSS selector で HTML を解析する
+- `news_site_webhooks` の選択がある場合は選択先のみ、未選択時は全 webhook へ送信する
+- `news_site_articles` の URL で既通知記事を除外し、送信成功後に記録する
 - RSS URL を取得し、RSS channel として解析する
 - `rss_feed_articles` に保存済みの URL を読み、既送信記事を除外する
 - 新着記事を Discord、Slack、または Microsoft Teams 向けの webhook payload として登録済みの全 webhook へ送信する
@@ -24,6 +27,7 @@ API サーバーとは別プロセスとして動作し、HTTP ルートは持�
 - [DB アクセス](../../../batch/src/db.rs)
 - [実行フロー](../../../batch/src/runner.rs)
 - [webhook 送信と記事記録](../../../batch/src/webhook.rs)
+- [Custom news scraping](../../../batch/src/news.rs)
 - [Cargo 設定](../../../batch/Cargo.toml)
 
 ## 技術スタック
@@ -33,4 +37,5 @@ API サーバーとは別プロセスとして動作し、HTTP ルートは持�
 - `rusqlite` による SQLite アクセス
 - `reqwest` による RSS と webhook の HTTP 通信
 - `rss` crate による RSS channel 解析
+- `scraper` crate による HTML/CSS selector 解析
 - `serde_json` による webhook payload 構築

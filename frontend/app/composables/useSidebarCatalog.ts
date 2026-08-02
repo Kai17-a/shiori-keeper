@@ -3,7 +3,12 @@ import {
   createSidebarCatalogState,
   type SidebarCatalogState,
 } from "~/utils/sidebarCatalog";
-import type { FolderResponse, RSSFeedListResponse, TagResponse } from "~/types";
+import type {
+  FolderResponse,
+  NewsSiteListResponse,
+  RSSFeedListResponse,
+  TagResponse,
+} from "~/types";
 
 let sidebarCatalogLoadPromise: Promise<void> | null = null;
 
@@ -25,13 +30,20 @@ export const useSidebarCatalog = () => {
     sidebarCatalogLoadPromise = (async () => {
       loading.value = true;
       try {
-        const [foldersRes, tagsRes, rssFeedsRes] = await Promise.all([
+        const [foldersRes, tagsRes, rssFeedsRes, newsSitesRes] = await Promise.all([
           request<FolderResponse[]>("/folders"),
           request<TagResponse[]>("/tags"),
           request<RSSFeedListResponse>("/rss-feeds?per_page=100"),
+          request<NewsSiteListResponse>("/news-sites?per_page=100"),
         ]);
 
-        applySidebarCatalogResults(state.value, foldersRes, tagsRes, rssFeedsRes.items || []);
+        applySidebarCatalogResults(
+          state.value,
+          foldersRes,
+          tagsRes,
+          rssFeedsRes.items || [],
+          newsSitesRes.items || [],
+        );
       } finally {
         loading.value = false;
         sidebarCatalogLoadPromise = null;
@@ -45,6 +57,7 @@ export const useSidebarCatalog = () => {
     folders: computed(() => state.value.folders),
     tags: computed(() => state.value.tags),
     rssFeeds: computed(() => state.value.rssFeeds),
+    newsSites: computed(() => state.value.newsSites),
     loaded: computed(() => state.value.loaded),
     loading: computed(() => loading.value),
     refresh,

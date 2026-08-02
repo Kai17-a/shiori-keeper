@@ -50,4 +50,5 @@ export interface DashboardMetricsResponse {
   tags_total: number;
   favorites_total: number;
   rss_feeds_total: number;
+  news_sites_total: number;
 }

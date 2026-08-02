@@ -31,6 +31,10 @@
 | POST   | `/settings/webhooks`            | webhook 登録                     |
 | DELETE | `/settings/webhooks/{id}`       | webhook 削除                     |
 | POST   | `/settings/webhook/ping`        | webhook 疎通確認                 |
+| GET    | `/settings/llm`                 | 保存済み LLM 設定取得            |
+| PUT    | `/settings/llm`                 | LLM 疎通確認と設定保存           |
+| DELETE | `/settings/llm`                 | LLM 設定削除                     |
+| POST   | `/settings/llm/test`            | 入力中または保存済み LLM の疎通確認 |
 | GET    | `/settings/rss-execution`       | RSS 定期実行設定取得             |
 | PUT    | `/settings/rss-execution`       | RSS 定期実行設定更新             |
 | GET    | `/settings/rss-webhook-notification` | RSS 定期実行 webhook 通知設定取得 |
@@ -42,6 +46,13 @@
 | PATCH  | `/rss-feeds/{id}`               | RSS フィード部分更新             |
 | DELETE | `/rss-feeds/{id}`               | RSS フィード削除                 |
 | POST   | `/rss-feeds/{id}/execute`       | RSS 実行と webhook 通知          |
+| POST   | `/news-sites`                   | HTML 解析・抽出テスト後に custom news site 作成 |
+| GET    | `/news-sites`                   | custom news site 一覧取得        |
+| GET    | `/news-sites/{id}`              | custom news site 詳細取得        |
+| GET    | `/news-sites/{id}/articles`     | 保存済み scraped article 一覧取得 |
+| PATCH  | `/news-sites/{id}`              | custom news site 部分更新        |
+| DELETE | `/news-sites/{id}`              | custom news site 削除            |
+| POST   | `/news-sites/{id}/execute`      | HTML scrape と webhook 通知      |
 | GET    | `/health`                       | ヘルスチェック                   |
 
 ## ユーザーフロー
@@ -58,7 +69,7 @@
 
 ### ダッシュボード
 
-- ブックマーク、フォルダ、タグ、お気に入り、RSS フィードの総数を確認する
+- ブックマーク、フォルダ、タグ、お気に入り、RSS フィード、custom news site の総数を確認する
 
 ### フォルダ
 
@@ -81,6 +92,8 @@
 - 重複する webhook URL の登録は 409 を返す
 - RSS 定期実行の有効/無効を切り替える
 - RSS 定期実行時に webhook 通知を送るかどうかを切り替える
+- Ollama、vLLM、OpenAI 互換 endpoint の接続情報をテストしてから保存する
+- 保存済み LLM 設定を取得・削除し、API key は登録有無だけを確認する
 
 ### RSS
 
@@ -90,6 +103,15 @@
 - 詳細を確認して編集または削除する
 - 保存済みの記事一覧を確認する
 - 手動実行して webhook 通知を送る
+
+### カスタムニュースサイト
+
+- LLM 設定が存在する場合だけ URL を登録する
+- URL の HTML を取得し、LLM が CSS selector を生成した後、実際に記事を抽出できることを確認して保存する
+- URL 更新時は新しい URL でも HTML 解析と抽出テストを再実行する
+- 登録・URL 更新の失敗は、対象 site 取得、LLM 接続、LLM upstream rejection、LLM response、selector 抽出のどこで失敗したかを区別し、server log と照合できる reference ID を返す
+- 一覧、詳細、記事履歴を確認し、通知先 webhook と定期通知可否を編集する
+- 手動実行では保存済み selector を使って未通知記事を抽出し、webhook 成功後に記事 URL を記録する
 
 ## 共通レスポンス
 
@@ -163,16 +185,32 @@
 35. `PUT /settings/rss-execution` は、RSS 定期実行の有効/無効状態を更新する。
 36. `GET /settings/rss-webhook-notification` は、定期実行時に webhook 通知を送るかどうかの全体設定を返す。
 37. `PUT /settings/rss-webhook-notification` は、定期実行時に webhook 通知を送るかどうかの全体設定を更新する。
+38. `PUT /settings/llm` は chat completion の成功後だけ設定を保存し、API key 本文は返さない。
+39. `POST /settings/llm/test` は入力値を保存せず疎通確認し、省略項目は保存済み設定で補完する。
+40. `GET /settings/llm` は未設定時に 404、設定時に `api_key_configured` を含む設定を返す。
+41. `DELETE /settings/llm` は保存済み LLM 設定を削除する。
 
 ### RSS
 
-38. `POST /rss-feeds` は、201 と作成済み RSS フィードを返す。
-39. `GET /rss-feeds` は、RSS フィード一覧とページング情報を返す。
-40. `GET /rss-feeds/{id}` は、対象 RSS フィードを返す。
-41. `GET /rss-feeds/{id}/articles` は、保存済み記事一覧とページング情報を返す。
-42. `PATCH /rss-feeds/{id}` は、部分更新を行い更新後 RSS フィードを返す。
-43. `DELETE /rss-feeds/{id}` は、204 を返す。
-44. `POST /rss-feeds/{id}/execute` は、RSS を取得して登録済み webhook に通知する。
+42. `POST /rss-feeds` は、201 と作成済み RSS フィードを返す。
+43. `GET /rss-feeds` は、RSS フィード一覧とページング情報を返す。
+44. `GET /rss-feeds/{id}` は、対象 RSS フィードを返す。
+45. `GET /rss-feeds/{id}/articles` は、保存済み記事一覧とページング情報を返す。
+46. `PATCH /rss-feeds/{id}` は、部分更新を行い更新後 RSS フィードを返す。
+47. `DELETE /rss-feeds/{id}` は、204 を返す。
+48. `POST /rss-feeds/{id}/execute` は、RSS を取得して登録済み webhook に通知する。
+
+### カスタムニュースサイト
+
+49. `POST /news-sites` は LLM 未設定時に 400 を返す。
+50. `POST /news-sites` は HTML 取得、LLM selector 生成、1 件以上の記事抽出がすべて成功した場合だけ 201 を返す。
+51. `GET /news-sites` と `GET /news-sites/{id}` は一覧・詳細を返し、内部の `scrape_config` は公開しない。
+52. `PATCH /news-sites/{id}` の URL 変更は再解析・再テストを行い、失敗時は更新しない。
+53. `GET /news-sites/{id}/articles` は保存済み記事一覧とページング情報を返す。
+54. `POST /news-sites/{id}/execute` は未通知記事を選択対象 webhook へ通知し、1 件以上成功した場合だけ記事を記録する。
+55. `DELETE /news-sites/{id}` はサイト、記事、webhook 関連を連動削除して 204 を返す。
+56. 対象 site が 401/403 を返す場合は、LLM 解析前に認証または自動取得拒否の可能性を含む 422 を返す。
+57. LLM 解析の 502 は接続失敗、upstream HTTP rejection、protocol response 不正、message content 欠落、scraping JSON 不正を区別し、reference ID を含む。
 
 ### `GET /metrics/dashboard`
 
@@ -184,7 +222,8 @@ Response:
   "folders_total": 3,
   "tags_total": 8,
   "favorites_total": 4,
-  "rss_feeds_total": 2
+  "rss_feeds_total": 2,
+  "news_sites_total": 1
 }
 ```
 

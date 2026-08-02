@@ -4,13 +4,14 @@
 
 本ドキュメントは、ブックマーク管理 Web アプリケーション向け REST API の要件を定義する。
 API は Python で実装し、データストアには SQLite を使用する。
-データモデルは `bookmarks`、`rss_feeds`、`rss_feed_articles`、`folders`、`tags`、`bookmark_tags`、`app_settings` の各テーブルで構成する。
+データモデルは `bookmarks`、RSS、カスタムニュースサイト、フォルダ、タグ、webhook、設定の各テーブルで構成する。
 
 ## 用語集
 
 - **API**: ブックマーク管理アプリケーションの REST API サーバー
 - **Bookmark**: URL とそのメタデータ（タイトル、説明、お気に入り状態など）を保持するリソース
 - **RSS Feed**: RSS または Atom フィードの URL とメタデータを保持するリソース
+- **Custom News Site**: RSS を配信しないニュース一覧ページと、LLM が生成したスクレイピング設定を保持するリソース
 - **Folder**: ブックマークを整理するためのコンテナリソース
 - **Tag**: ブックマークに付与できるラベルリソース（多対多の関係）
 - **Webhook**: 外部サービスに通知を送るための URL
@@ -88,7 +89,7 @@ API は Python で実装し、データストアには SQLite を使用する。
 #### 受け入れ基準
 
 1. THE API SHALL 全データを SQLite データベースファイルに永続化する。
-2. THE API SHALL 起動時に `bookmarks`・`rss_feeds`・`rss_feed_articles`・`folders`・`tags`・`bookmark_tags`・`app_settings` テーブルが存在しない場合、自動作成する。
+2. THE API SHALL 起動時に bookmarks、RSS、custom news site、folders、tags、webhook、settings の全 migration table が存在しない場合、自動作成する。
 3. WHILE APIが動作中のとき、THE API SHALL 全ての書き込み操作をトランザクション内で実行し、エラー発生時にはロールバックする。
 4. IF データベースへの接続または書き込みに失敗したとき、THEN THE API SHALL HTTPステータス500を返す。
 
@@ -131,3 +132,20 @@ API は Python で実装し、データストアには SQLite を使用する。
 12. IF すべての webhook 通知に失敗したとき、THEN THE API SHALL HTTP ステータス 502 を返す。
 13. WHEN Clientが `GET /settings/rss-webhook-notification` または `PUT /settings/rss-webhook-notification` にリクエストを送信したとき、THE API SHALL RSS 定期実行時の webhook 通知有効/無効状態を取得・更新する。
 14. THE API SHALL Discord、Slack、Microsoft Teams の incoming webhook に対応する。
+
+### 要件8: LLM 設定とカスタムニュースサイト
+
+**ユーザーストーリー:** 利用者として、RSS を配信しないニュースサイトも RSS と同様に巡回・通知したい。
+
+#### 受け入れ基準
+
+1. WHEN Client が Ollama、vLLM、または OpenAI 互換の接続情報を保存するとき、THE API SHALL 実際の chat completion が成功した場合だけ設定を保存する。
+2. THE API SHALL 保存済み API key をレスポンスへ返さず、登録済みかどうかだけを返す。
+3. IF LLM 設定がない状態で custom news site を登録しようとしたとき、THEN THE API SHALL HTTP ステータス 400 を返す。
+4. WHEN Client が custom news site URL を登録するとき、THE API SHALL HTML を取得し、LLM で記事コンテナ・タイトル・リンク・公開日時・要約の CSS selector を解析する。
+5. THE API SHALL 生成した selector で少なくとも 1 件の記事タイトルと HTTP/HTTPS リンクを取得できた場合だけ custom news site を保存し、取得できない場合は 422 を返す。
+6. THE API SHALL custom news site の一覧・詳細・部分更新・削除・記事履歴・手動実行を提供する。
+7. WHEN custom news site を手動実行または batch 巡回するとき、THE SYSTEM SHALL 未通知の記事だけを選択済み webhook（未選択時は全 webhook）へ通知し、1 件以上の送信成功後に記事を記録する。
+8. WHEN custom news site の URL を変更するとき、THE API SHALL 新しい HTML の LLM 解析と抽出テストが成功した場合だけ URL とスクレイピング設定を更新する。
+9. IF custom news site 登録に失敗したとき、THEN THE API SHALL 対象 site 取得、LLM 接続、LLM upstream rejection、LLM response、selector 抽出の失敗段階を区別したメッセージと log 照合用 reference ID を返す。
+10. WHEN custom news site の解析エラーを記録するとき、THE API SHALL provider、model、対象 URL、HTTP status、HTML サイズまたは短い response preview を必要に応じて記録し、API key と HTML 本文全体は記録しない。
