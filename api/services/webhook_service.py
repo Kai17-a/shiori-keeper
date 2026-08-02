@@ -6,6 +6,19 @@ import httpx
 from fastapi import HTTPException
 
 
+EMBED_TITLE_MAX = 256
+# Keep summaries short enough that a 10-embed chunk stays below Discord's
+# 6000-character per-message total (title + description per embed) and below
+# Slack's 3000-character section block text limit.
+NOTIFICATION_SUMMARY_MAX = 300
+
+
+def _truncate(value: str, limit: int) -> str:
+    if len(value) <= limit:
+        return value
+    return value[: limit - 1].rstrip() + "…"
+
+
 def _is_teams_webhook(hostname: str, path: str) -> bool:
     legacy_webhook = hostname.endswith(".webhook.office.com") and path.startswith(
         "/webhookb2/"
@@ -109,10 +122,14 @@ def build_rss_notification_payload(
         article_count = total_articles if total_articles is not None else len(articles)
         embeds = [
             {
-                "title": str(article["title"]),
+                "title": _truncate(str(article["title"]), EMBED_TITLE_MAX),
                 "url": str(article["url"]),
                 **(
-                    {"description": str(article["summary"])}
+                    {
+                        "description": _truncate(
+                            str(article["summary"]), NOTIFICATION_SUMMARY_MAX
+                        )
+                    }
                     if article.get("summary")
                     else {}
                 ),
@@ -139,12 +156,12 @@ def build_rss_notification_payload(
             }
         ]
         for article in articles:
-            title = str(article["title"])
+            title = _truncate(str(article["title"]), EMBED_TITLE_MAX)
             url = str(article["url"])
             summary = article.get("summary")
             text = f"• <{url}|{title}>"
             if summary:
-                text = f"{text}\n{str(summary)}"
+                text = f"{text}\n{_truncate(str(summary), NOTIFICATION_SUMMARY_MAX)}"
             blocks.append(
                 {
                     "type": "section",
@@ -174,7 +191,7 @@ def build_rss_notification_payload(
             article_body: list[dict[str, object]] = [
                 {
                     "type": "TextBlock",
-                    "text": str(article["title"]),
+                    "text": _truncate(str(article["title"]), EMBED_TITLE_MAX),
                     "weight": "Bolder",
                     "wrap": True,
                 }
@@ -183,7 +200,9 @@ def build_rss_notification_payload(
                 article_body.append(
                     {
                         "type": "TextBlock",
-                        "text": str(article["summary"]),
+                        "text": _truncate(
+                            str(article["summary"]), NOTIFICATION_SUMMARY_MAX
+                        ),
                         "wrap": True,
                         "isSubtle": True,
                     }

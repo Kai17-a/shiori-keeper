@@ -159,6 +159,7 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - SQLite の外部キー制約は `PRAGMA foreign_keys = ON` で有効化する
 - DB 障害は 500 として返す
 - `settings/webhooks` は Discord、Slack、または Microsoft Teams webhook URL を識別用の名前付きで複数登録する
+- webhook 通知の記事タイトルは 256 文字、summary は 300 文字に切り詰める（Discord の embed 上限と Slack の block text 上限を満たすため）
 - `webhook_endpoints.name` は必須で、空白のみの名前は 422 を返す
 - `webhook_endpoints.url` は一意である
 - Microsoft Teams webhook は Adaptive Card 形式で疎通確認と RSS 通知を送信する

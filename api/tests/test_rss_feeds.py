@@ -141,6 +141,53 @@ def test_execute_rss_feed_supports_microsoft_teams_adaptive_cards(client, monkey
     assert card["body"][1]["items"][-1]["actions"][0]["type"] == "Action.OpenUrl"
 
 
+def test_execute_rss_feed_truncates_long_article_content_for_discord(client, monkeypatch):
+    import api.services.rss_feed_service as rss_module
+    import api.services.webhook_service as webhook_module
+
+    payloads = []
+
+    def fake_post(url, json, timeout=5.0):
+        payloads.append(json)
+
+        class Response:
+            status_code = 204
+
+        return Response()
+
+    monkeypatch.setattr(webhook_module.httpx, "post", fake_post)
+    client.post(
+        "/settings/webhooks",
+        json={"name": "Test webhook", "webhook_url": "https://discord.com/api/webhooks/1/token"},
+    )
+    feed_id = create_feed(client).json()["id"]
+
+    class ParsedEntry:
+        def get(self, key, default=None):
+            data = {
+                "title": "T" * 400,
+                "link": "https://example.com/item-1",
+                "summary": "S" * 20000,
+            }
+            return data.get(key, default)
+
+    class ParsedFeed:
+        bozo = False
+        feed = {"title": "Parsed Example"}
+        entries = [ParsedEntry()]
+
+    monkeypatch.setattr(rss_module.feedparser, "parse", lambda content: ParsedFeed())
+
+    resp = client.post(f"/rss-feeds/{feed_id}/execute")
+
+    assert resp.status_code == 200
+    embed = payloads[0]["embeds"][0]
+    assert len(embed["title"]) <= 256
+    assert len(embed["description"]) <= 300
+    assert embed["title"].endswith("…")
+    assert embed["description"].endswith("…")
+
+
 def test_ping_webhook_returns_200(client, monkeypatch):
     import api.services.webhook_service as webhook_module
 
