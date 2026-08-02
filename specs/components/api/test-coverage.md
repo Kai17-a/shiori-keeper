@@ -30,11 +30,13 @@
 
 - `api/tests/test_rss_feeds.py`
   - 作成、一覧、詳細、更新、削除
-  - 記事一覧、実行、webhook 設定
+  - 記事一覧、実行、webhook 登録
   - RSS/Atom 以外の URL 拒否
   - webhook 疎通確認
-  - Slack webhook URL の保存と疎通確認
-  - Microsoft Teams webhook URL の保存、疎通確認、Adaptive Card 通知
+  - Slack webhook URL の登録と疎通確認
+  - Microsoft Teams webhook URL の登録、疎通確認、Adaptive Card 通知
+  - 複数 webhook への送信、一部失敗時の継続、全滅時の 502
+  - フィードごとの通知先 webhook 選択の作成・更新・解除、選択先のみへの送信、未存在 ID の 404、重複 ID と null の 422
   - RSS 定期実行設定
   - 新規記事なしメッセージ
   - 既送信記事のスキップ
@@ -46,8 +48,10 @@
   - ダッシュボード集計
 
 - `api/tests/test_settings.py`
-  - webhook 未設定時の 404
-  - webhook 保存と再取得
+  - webhook 未登録時の空一覧
+  - webhook の複数登録と一覧取得
+  - 重複 webhook URL の 409
+  - webhook 削除と未存在 ID の 404
   - Discord、Slack、Microsoft Teams webhook URL 形式検証
   - ping の 422 と 502
   - RSS 定期実行設定の取得と更新
@@ -100,8 +104,10 @@
   - 紐付け解除
   - 存在しない bookmark/tag の 404
 
-- `GET /settings/webhook` / `PUT /settings/webhook`
-  - 取得と更新
+- `GET /settings/webhooks` / `POST /settings/webhooks` / `DELETE /settings/webhooks/{id}`
+  - 一覧取得、名前付き複数登録、削除
+  - 重複 URL の 409
+  - 空白名の 422
   - Discord、Slack、Microsoft Teams webhook URL の形式検証
 
 - `POST /settings/webhook/ping`

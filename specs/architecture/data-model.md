@@ -67,6 +67,19 @@ erDiagram
         TEXT updated_at
     }
 
+    WEBHOOK_ENDPOINTS {
+        INTEGER id PK
+        TEXT name
+        TEXT url UK
+        TEXT created_at
+        TEXT updated_at
+    }
+
+    RSS_FEED_WEBHOOKS {
+        INTEGER feed_id PK, FK
+        INTEGER webhook_id PK, FK
+    }
+
     SCHEMA_MIGRATIONS {
         varchar version PK
     }
@@ -80,6 +93,8 @@ erDiagram
 | `bookmark_tags.bookmark_id` | `bookmarks.id` | many-to-one | `ON DELETE CASCADE` |
 | `bookmark_tags.tag_id` | `tags.id` | many-to-one | `ON DELETE CASCADE` |
 | `rss_feed_articles.feed_id` | `rss_feeds.id` | many-to-one | `ON DELETE CASCADE` |
+| `rss_feed_webhooks.feed_id` | `rss_feeds.id` | many-to-one | `ON DELETE CASCADE` |
+| `rss_feed_webhooks.webhook_id` | `webhook_endpoints.id` | many-to-one | `ON DELETE CASCADE` |
 
 ## 一意制約と index
 
@@ -102,6 +117,8 @@ erDiagram
 
 | Key | Meaning |
 | --- | --- |
-| `default_webhook_url` | RSS 手動実行や batch 通知で使う webhook URL |
 | `rss_periodic_execution_enabled` | batch による RSS 定期実行の有効/無効 |
 | `rss_webhook_notification_enabled` | batch 実行時の webhook 通知の有効/無効 |
+
+RSS 手動実行や batch 通知で使う webhook URL は `webhook_endpoints` テーブルで複数管理する。
+以前のバージョンが使っていた `app_settings.default_webhook_url` は migration 時に `webhook_endpoints` へコピーされる。

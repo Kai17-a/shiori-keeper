@@ -268,6 +268,48 @@ async fn webhook_succeeds_when_a_retry_recovers() {
     assert_eq!(server.received_requests().await.unwrap().len(), 3);
 }
 
+#[tokio::test]
+async fn long_embed_content_is_truncated_before_sending() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .respond_with(ResponseTemplate::new(204))
+        .mount(&server)
+        .await;
+
+    let long_title = "T".repeat(400);
+    let long_summary = "S".repeat(20_000);
+
+    let result = webhook::send_rss_webhook(
+        &server.uri(),
+        "Example Feed",
+        "https://example.com/feed",
+        &[webhook::Embed {
+            title: &long_title,
+            link: "https://example.com/article",
+            published: "Wed, 01 Jan 2025 00:00:00 GMT",
+            summary: &long_summary,
+        }],
+        &[webhook::Article {
+            url: "https://example.com/article",
+            title: "Example Article",
+            published: "Wed, 01 Jan 2025 00:00:00 GMT",
+        }],
+    )
+    .await;
+
+    assert!(result.is_ok());
+    let requests = server.received_requests().await.unwrap();
+    assert_eq!(requests.len(), 1);
+    let body: serde_json::Value = serde_json::from_slice(&requests[0].body).unwrap();
+    let embed = &body["embeds"][0];
+    let title = embed["title"].as_str().unwrap();
+    let description = embed["description"].as_str().unwrap();
+    assert!(title.chars().count() <= 256);
+    assert!(title.ends_with('…'));
+    assert!(description.chars().count() <= 300);
+    assert!(description.ends_with('…'));
+}
+
 async fn send_example_webhook(webhook_url: &str) -> Result<(), Box<dyn std::error::Error>> {
     webhook::send_rss_webhook(
         webhook_url,

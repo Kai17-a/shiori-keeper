@@ -147,6 +147,34 @@ class AppSetting(SQLModel, table=True):
     )
 
 
+class WebhookEndpoint(SQLModel, table=True):
+    __tablename__: ClassVar[str] = "webhook_endpoints"
+    __table_args__ = (
+        Index("idx_webhook_endpoints_url_unique", "url", unique=True),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(
+        default="",
+        sa_column=Column(String, nullable=False, server_default=text("''")),
+    )
+    url: str = Field(sa_column=Column(String, nullable=False))
+    created_at: datetime = Field(
+        sa_column=Column(
+            DateTime,
+            nullable=False,
+            server_default=text("(datetime('now'))"),
+        )
+    )
+    updated_at: datetime = Field(
+        sa_column=Column(
+            DateTime,
+            nullable=False,
+            server_default=text("(datetime('now'))"),
+        )
+    )
+
+
 class Tag(SQLModel, table=True):
     __tablename__: ClassVar[str] = "tags"
 
@@ -303,6 +331,7 @@ class RSSFeedCreate(BaseModel):
     title: str = PydField(min_length=1)
     description: str | None = None
     notify_webhook_enabled: bool = True
+    webhook_ids: list[int] | None = None
 
     @field_validator("title")
     @classmethod
@@ -312,12 +341,22 @@ class RSSFeedCreate(BaseModel):
             raise ValueError("Title cannot be empty")
         return value
 
+    @field_validator("webhook_ids")
+    @classmethod
+    def validate_webhook_ids(cls, value: list[int] | None) -> list[int] | None:
+        if value is None:
+            return value
+        if len(value) != len(set(value)):
+            raise ValueError("webhook_ids must not contain duplicates")
+        return value
+
 
 class RSSFeedUpdate(BaseModel):
     url: AnyHttpUrl | None = None
     title: str | None = PydField(default=None, min_length=1)
     description: str | None = None
     notify_webhook_enabled: bool | None = None
+    webhook_ids: list[int] | None = None
 
     @field_validator("title")
     @classmethod
@@ -329,9 +368,18 @@ class RSSFeedUpdate(BaseModel):
             raise ValueError("Title cannot be empty")
         return value
 
+    @field_validator("webhook_ids")
+    @classmethod
+    def validate_webhook_ids(cls, value: list[int] | None) -> list[int] | None:
+        if value is None:
+            return value
+        if len(value) != len(set(value)):
+            raise ValueError("webhook_ids must not contain duplicates")
+        return value
+
     @model_validator(mode="after")
     def reject_null_non_nullable_fields(self) -> "RSSFeedUpdate":
-        for field_name in ("url", "title", "notify_webhook_enabled"):
+        for field_name in ("url", "title", "notify_webhook_enabled", "webhook_ids"):
             if field_name in self.model_fields_set and getattr(self, field_name) is None:
                 raise ValueError(f"{field_name} cannot be null")
         return self
@@ -379,6 +427,7 @@ class RSSFeedResponse(BaseModel):
     title: str
     description: str | None
     notify_webhook_enabled: bool
+    webhook_ids: list[int]
     created_at: datetime
     updated_at: datetime
 
@@ -411,17 +460,34 @@ class RSSFeedListResponse(BaseModel):
 class RSSFeedExecuteResponse(BaseModel):
     feed_id: int
     title: str
-    webhook_url: str
     delivered: bool
+    delivered_count: int
     message: str | None = None
 
 
-class SettingsWebhookUpdate(BaseModel):
+class SettingsWebhookCreate(BaseModel):
+    name: str = PydField(min_length=1)
     webhook_url: AnyHttpUrl
+
+    @field_validator("name")
+    @classmethod
+    def normalize_name(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Name cannot be empty")
+        return value
 
 
 class SettingsWebhookResponse(BaseModel):
+    id: int
+    name: str
     webhook_url: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class SettingsWebhookListResponse(BaseModel):
+    items: list[SettingsWebhookResponse]
 
 
 class SettingsWebhookPingRequest(BaseModel):

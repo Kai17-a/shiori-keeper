@@ -56,6 +56,23 @@ CREATE TABLE IF NOT EXISTS app_settings (
     updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS webhook_endpoints (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT    NOT NULL DEFAULT '',
+    url         TEXT    NOT NULL,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+    updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_webhook_endpoints_url_unique
+    ON webhook_endpoints(url);
+
+CREATE TABLE IF NOT EXISTS rss_feed_webhooks (
+    feed_id     INTEGER NOT NULL REFERENCES rss_feeds(id) ON DELETE CASCADE,
+    webhook_id  INTEGER NOT NULL REFERENCES webhook_endpoints(id) ON DELETE CASCADE,
+    PRIMARY KEY (feed_id, webhook_id)
+);
+
 CREATE TABLE IF NOT EXISTS tags (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     name        TEXT NOT NULL UNIQUE,
@@ -77,8 +94,9 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `RSSFeedCreate`
 - `RSSFeedUpdate`
 - `RSSFeedExecuteResponse`
-- `SettingsWebhookUpdate`
+- `SettingsWebhookCreate`
 - `SettingsWebhookResponse`
+- `SettingsWebhookListResponse`
 - `SettingsWebhookPingRequest`
 - `SettingsWebhookPingResponse`
 - `SettingsRssExecutionUpdate`
@@ -105,7 +123,8 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 
 - `PATCH /bookmarks/{id}`、`PATCH /bookmarks/by-url`、`PATCH /rss-feeds/{id}` は、リクエストに含まれないフィールドを変更しない。
 - nullable な `description` と bookmark の `folder_id` は、明示した `null` で保存済みの値を解除できる。
-- URL、title、bookmark の `tag_ids`、RSS の `notify_webhook_enabled` は明示した `null` を受け付けず、422 を返す。
+- URL、title、bookmark の `tag_ids`、RSS の `notify_webhook_enabled`、`webhook_ids` は明示した `null` を受け付けず、422 を返す。
+- RSS の `webhook_ids` に空配列を指定すると通知先選択を解除できる（全 webhook 通知へ戻る）。
 
 ## レスポンススキーマ
 
@@ -113,12 +132,13 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 | --------------------------- | ------------------------------------------------------------------------------------ |
 | `BookmarkResponse`          | `id`, `url`, `title`, `description`, `folder_id`, `is_favorite`, `tags`, `created_at`, `updated_at` |
 | `BookmarkListResponse`      | `items`, `total`, `page`, `per_page`, `total_pages`                                  |
-| `RSSFeedResponse`           | `id`, `url`, `title`, `description`, `notify_webhook_enabled`, `created_at`, `updated_at` |
+| `RSSFeedResponse`           | `id`, `url`, `title`, `description`, `notify_webhook_enabled`, `webhook_ids`, `created_at`, `updated_at` |
 | `RSSFeedListResponse`       | `items`, `total`, `page`, `per_page`, `total_pages`                                  |
 | `RSSFeedArticleResponse`    | `id`, `feed_id`, `url`, `title`, `published`, `created_at`                           |
 | `RSSFeedArticleListResponse`| `items`, `total`, `page`, `per_page`, `total_pages`                                  |
-| `RSSFeedExecuteResponse`    | `feed_id`, `title`, `webhook_url`, `delivered`, `message`                             |
-| `SettingsWebhookResponse`   | `webhook_url`                                                                        |
+| `RSSFeedExecuteResponse`    | `feed_id`, `title`, `delivered`, `delivered_count`, `message`                         |
+| `SettingsWebhookResponse`   | `id`, `name`, `webhook_url`, `created_at`, `updated_at`                              |
+| `SettingsWebhookListResponse` | `items`                                                                            |
 | `SettingsWebhookPingResponse` | `pong`                                                                             |
 | `SettingsRssExecutionResponse` | `enabled`                                                                          |
 | `SettingsRssWebhookNotificationResponse` | `enabled`                                                               |
@@ -137,6 +157,10 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `rss_webhook_notification_enabled` の既定値は `false` である
 - `rss_feeds.notify_webhook_enabled` は batch による RSS 定期実行時の webhook 通知可否を表す
 - `rss_feeds.notify_webhook_enabled` の既定値は `true` である
+- `rss_feed_webhooks` は RSS フィードごとの通知先 webhook 選択を保持する
+- `rss_feed_webhooks` に選択がない RSS フィードは全 webhook へ通知し、選択がある場合は選択した webhook のみへ通知する
+- `rss_feed_webhooks` の `webhook_ids` は重複を 422 で拒否し、存在しない webhook ID は 404 を返す
+- webhook または RSS フィード削除時は `rss_feed_webhooks` を連動削除する
 - `folders.name` と `tags.name` は重複を許可しない
 - `bookmarks.url` は一意である
 - `rss_feeds.url` は一意である
@@ -145,7 +169,10 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - ブックマークまたはタグ削除時は `bookmark_tags` を連動削除する
 - SQLite の外部キー制約は `PRAGMA foreign_keys = ON` で有効化する
 - DB 障害は 500 として返す
-- `settings/webhook` は Discord、Slack、または Microsoft Teams webhook URL を保存する
+- `settings/webhooks` は Discord、Slack、または Microsoft Teams webhook URL を識別用の名前付きで複数登録する
+- webhook 通知の記事タイトルは 256 文字、summary は 300 文字に切り詰める（Discord の embed 上限と Slack の block text 上限を満たすため）
+- `webhook_endpoints.name` は必須で、空白のみの名前は 422 を返す
+- `webhook_endpoints.url` は一意である
 - Microsoft Teams webhook は Adaptive Card 形式で疎通確認と RSS 通知を送信する
 - `settings/webhook/ping` は送信前確認用の疎通確認 API である
 - `settings/rss-execution` は RSS 定期実行フラグを保存する
@@ -173,15 +200,17 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `/rss-feeds` は RSS フィードの CRUD を担当する
 - `/rss-feeds/{id}/articles` は保存済み RSS 記事を返す
 - `/rss-feeds/{id}/articles` は `q`、`published_from`、`published_to`、`page`、`per_page` を受け付ける
-- `GET /settings/webhook` は現在の webhook URL を返す
-- `PUT /settings/webhook` は保存済み webhook を更新する
+- `GET /settings/webhooks` は登録済み webhook の一覧を返す
+- `POST /settings/webhooks` は名前付きの webhook URL を登録し、URL 重複時は 409 を返す
+- `DELETE /settings/webhooks/{id}` は登録済み webhook を削除する
 - `POST /settings/webhook/ping` は webhook 到達確認を行う
 - `GET /settings/rss-execution` は RSS 定期実行の現在値を返す
 - `PUT /settings/rss-execution` は RSS 定期実行の有効/無効を更新する
 - `GET /settings/rss-webhook-notification` は RSS 定期実行時の webhook 通知可否の現在値を返す
 - `PUT /settings/rss-webhook-notification` は RSS 定期実行時の webhook 通知可否を更新する
-- `POST /rss-feeds/{id}/execute` は API プロセスが RSS を実行し、登録済み webhook に通知する
+- `POST /rss-feeds/{id}/execute` は API プロセスが RSS を実行し、登録済みの全 webhook に通知する
 - `POST /rss-feeds/{id}/execute` は webhook URL 未設定時に 400 を返す
+- `POST /rss-feeds/{id}/execute` は全 webhook が失敗した場合に 502 を返し、1 件でも成功した場合は `delivered_count` に成功件数を含めて返す
 - `POST /rss-feeds/{id}/execute` は新規記事がない場合も `delivered: true` を返し、`message` に "No new articles found." を含める
 - RSS 手動実行の通知送信と `rss_feed_articles` への送信済み記録は API が担当する
 - RSS 手動実行は `rss_feeds.notify_webhook_enabled` の値に関わらず webhook 通知を行う

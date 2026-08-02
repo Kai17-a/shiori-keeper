@@ -21,8 +21,7 @@ from api.model.models import (
     RSSFeedUpdate,
 )
 from api.repositories.rss_feed_repo import RSSFeedRepository
-from api.repositories.settings_repo import SettingsRepository
-from api.services.settings_service import WEBHOOK_SETTING_KEY
+from api.repositories.webhook_endpoint_repo import WebhookEndpointRepository
 from api.services.webhook_service import (
     build_rss_notification_payload,
     detect_webhook_service,
@@ -214,6 +213,25 @@ class RSSFeedService:
                 params if has_published else params[:3],
             )
 
+    def _verify_webhook_endpoints(self, conn, webhook_ids: list[int]) -> None:
+        repo = WebhookEndpointRepository(conn)
+        missing = [
+            webhook_id
+            for webhook_id in webhook_ids
+            if repo.find_by_id(webhook_id) is None
+        ]
+        if missing:
+            raise HTTPException(status_code=404, detail="Webhook endpoint not found")
+
+    def _sync_webhook_endpoints(
+        self, repo: RSSFeedRepository, feed_id: int, webhook_ids: list[int] | None
+    ) -> None:
+        if webhook_ids is None:
+            return
+        unique_webhook_ids = list(dict.fromkeys(webhook_ids))
+        self._verify_webhook_endpoints(repo.conn, unique_webhook_ids)
+        repo.set_webhook_ids(feed_id, unique_webhook_ids)
+
     def create(self, data: RSSFeedCreate) -> RSSFeedResponse:
         with get_db() as conn:
             repo = RSSFeedRepository(conn)
@@ -233,7 +251,10 @@ class RSSFeedService:
                 raise HTTPException(
                     status_code=409, detail="RSS feed URL already exists"
                 )
-            return RSSFeedResponse(**row)
+            self._sync_webhook_endpoints(repo, row["id"], data.webhook_ids)
+            saved_row = repo.find_by_id(row["id"])
+            assert saved_row is not None
+            return RSSFeedResponse(**saved_row)
 
     def list(
         self, q: str | None = None, page: int = 1, per_page: int = 20
@@ -360,6 +381,8 @@ class RSSFeedService:
                 and payload["notify_webhook_enabled"] is not None
             ):
                 fields["notify_webhook_enabled"] = int(payload["notify_webhook_enabled"])
+            if "webhook_ids" in payload:
+                self._sync_webhook_endpoints(repo, feed_id, payload["webhook_ids"])
             row = repo.update(feed_id, fields)
             assert row is not None
             return RSSFeedResponse(**row)
@@ -376,12 +399,19 @@ class RSSFeedService:
             row = repo.find_by_id(feed_id)
             if row is None:
                 raise HTTPException(status_code=404, detail="RSS feed not found")
-            webhook_url = SettingsRepository(conn).get(WEBHOOK_SETTING_KEY)
-            if not webhook_url:
+            webhook_rows = WebhookEndpointRepository(conn).find_all()
+            selected_webhook_ids = set(repo.find_webhook_ids(feed_id))
+            if selected_webhook_ids:
+                webhook_rows = [
+                    entry
+                    for entry in webhook_rows
+                    if int(entry["id"]) in selected_webhook_ids
+                ]
+            webhook_urls = [str(entry["url"]) for entry in webhook_rows]
+            if not webhook_urls:
                 raise HTTPException(
                     status_code=400, detail="Webhook URL is not configured"
                 )
-            webhook_service = detect_webhook_service(webhook_url)
 
             try:
                 response = httpx.get(row["url"], timeout=5.0, follow_redirects=True)
@@ -417,37 +447,53 @@ class RSSFeedService:
                 return RSSFeedExecuteResponse(
                     feed_id=feed_id,
                     title=row["title"],
-                    webhook_url=webhook_url,
                     delivered=True,
+                    delivered_count=0,
                     message="No new articles found.",
                 )
 
-            try:
-                article_chunks = self._chunk_embeds(articles) or [[]]
-                for index, chunk in enumerate(article_chunks, start=1):
-                    payload = build_rss_notification_payload(
-                        webhook_service,
-                        feed_title=feed_title,
-                        articles=chunk,
-                        total_articles=len(articles),
-                        chunk_index=index,
-                        chunk_count=len(article_chunks),
-                    )
-                    response = send_webhook(webhook_url, payload)
-                    if response.status_code >= 400:
-                        break
-            except httpx.HTTPError:
-                self._raise_webhook_error(webhook_service)
+            article_chunks = self._chunk_embeds(articles) or [[]]
+            delivered_count = 0
+            last_failed_service: str | None = None
+            last_failed_response: httpx.Response | None = None
+            for webhook_url in webhook_urls:
+                webhook_service = detect_webhook_service(webhook_url)
+                delivered = True
+                try:
+                    for index, chunk in enumerate(article_chunks, start=1):
+                        payload = build_rss_notification_payload(
+                            webhook_service,
+                            feed_title=feed_title,
+                            articles=chunk,
+                            total_articles=len(articles),
+                            chunk_index=index,
+                            chunk_count=len(article_chunks),
+                        )
+                        response = send_webhook(webhook_url, payload)
+                        if response.status_code >= 400:
+                            last_failed_response = response
+                            delivered = False
+                            break
+                except httpx.HTTPError:
+                    last_failed_response = None
+                    delivered = False
 
-            if response.status_code >= 400:
-                self._raise_webhook_error(webhook_service, response)
+                if delivered:
+                    delivered_count += 1
+                else:
+                    last_failed_service = webhook_service
+
+            if delivered_count == 0:
+                self._raise_webhook_error(
+                    last_failed_service or "webhook", last_failed_response
+                )
 
             self._record_sent_articles(conn, feed_id, articles)
 
             return RSSFeedExecuteResponse(
                 feed_id=feed_id,
                 title=row["title"],
-                webhook_url=webhook_url,
                 delivered=True,
+                delivered_count=delivered_count,
                 message=f"Posted {len(articles)} new article(s).",
             )

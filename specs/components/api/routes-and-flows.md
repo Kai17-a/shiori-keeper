@@ -27,8 +27,9 @@
 | GET    | `/tags/{id}`                    | タグ詳細取得                     |
 | PATCH  | `/tags/{id}`                    | タグ更新                         |
 | DELETE | `/tags/{id}`                    | タグ削除                         |
-| PUT    | `/settings/webhook`             | webhook 設定                     |
-| GET    | `/settings/webhook`             | webhook 取得                     |
+| GET    | `/settings/webhooks`            | webhook 一覧取得                 |
+| POST   | `/settings/webhooks`            | webhook 登録                     |
+| DELETE | `/settings/webhooks/{id}`       | webhook 削除                     |
 | POST   | `/settings/webhook/ping`        | webhook 疎通確認                 |
 | GET    | `/settings/rss-execution`       | RSS 定期実行設定取得             |
 | PUT    | `/settings/rss-execution`       | RSS 定期実行設定更新             |
@@ -73,15 +74,18 @@
 
 ### 設定
 
-- Discord、Slack、または Microsoft Teams webhook URL を保存する
+- Discord、Slack、または Microsoft Teams webhook URL を識別用の名前付きで複数登録する
+- 登録済み webhook の一覧を名前と URL で取得する
+- 不要になった webhook を削除する
 - webhook の疎通確認を行う
-- 未設定時の webhook 取得は 404 を返す
+- 重複する webhook URL の登録は 409 を返す
 - RSS 定期実行の有効/無効を切り替える
 - RSS 定期実行時に webhook 通知を送るかどうかを切り替える
 
 ### RSS
 
 - RSS フィードを登録する
+- フィードごとに通知先 webhook を任意で選択する（未選択時は全 webhook へ通知）
 - 一覧で検索・ページングを行う
 - 詳細を確認して編集または削除する
 - 保存済みの記事一覧を確認する
@@ -152,8 +156,8 @@
 
 ### 設定
 
-31. `GET /settings/webhook` は、現在設定済みの webhook URL を返す。
-32. `PUT /settings/webhook` は、Discord、Slack、または Microsoft Teams webhook URL を保存する。
+31. `GET /settings/webhooks` は、登録済み webhook の一覧を返す。
+32. `POST /settings/webhooks` は、Discord、Slack、または Microsoft Teams webhook URL を登録し 201 を返す。
 33. `POST /settings/webhook/ping` は、webhook の疎通確認を行い `pong: true` を返す。
 34. `GET /settings/rss-execution` は、RSS 定期実行の有効/無効状態を返す。
 35. `PUT /settings/rss-execution` は、RSS 定期実行の有効/無効状態を更新する。
@@ -371,25 +375,49 @@ Response:
 - 重複名は 409 を返す
 - 存在しない ID は 404 を返す
 
-### `GET /settings/webhook`
+### `GET /settings/webhooks`
 
 ```json
-{ "webhook_url": "https://discord.com/api/webhooks/1/token" }
+{
+  "items": [
+    {
+      "id": 1,
+      "name": "Discord alerts",
+      "webhook_url": "https://discord.com/api/webhooks/1/token",
+      "created_at": "2026-08-02 10:00:00",
+      "updated_at": "2026-08-02 10:00:00"
+    }
+  ]
+}
 ```
 
-### `PUT /settings/webhook`
+### `POST /settings/webhooks`
 
 Request:
 
 ```json
-{ "webhook_url": "https://discord.com/api/webhooks/1/token" }
+{ "name": "Discord alerts", "webhook_url": "https://discord.com/api/webhooks/1/token" }
 ```
 
-Response:
+Response (201):
 
 ```json
-{ "webhook_url": "https://discord.com/api/webhooks/1/token" }
+{
+  "id": 1,
+  "name": "Discord alerts",
+  "webhook_url": "https://discord.com/api/webhooks/1/token",
+  "created_at": "2026-08-02 10:00:00",
+  "updated_at": "2026-08-02 10:00:00"
+}
 ```
+
+- `name` は必須で、空白のみの場合は 422 を返す
+- 登録済みと同じ URL は 409 を返す
+
+### `DELETE /settings/webhooks/{id}`
+
+- 204 を返す
+- 存在しない ID は 404 を返す
 
 ### `POST /settings/webhook/ping`
 
@@ -470,7 +498,10 @@ Response:
 
 - フィード URL を取得して RSS として解析する
 - 登録済み webhook URL がない場合は 400 を返す
+- フィードに通知先 webhook が選択されている場合は選択先のみ、未選択の場合は登録済みの全 webhook に送信する
 - 新規記事のみ webhook に送信する
+- 一部の webhook が失敗しても、1 件でも成功すれば成功として `delivered_count` に成功件数を返す
+- すべての webhook が失敗した場合は 502 を返し、記事は送信済みに記録しない
 - `notify_webhook_enabled` は batch の定期実行でのみ参照する
 - 新規記事がない場合も成功として扱い、メッセージを返す
 - 送信済み記事は `rss_feed_articles` に保存済みとして追記する

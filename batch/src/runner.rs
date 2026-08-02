@@ -6,7 +6,7 @@ use std::error::Error;
 use std::time::Duration;
 
 use crate::{
-    fetch_app_settings, fetch_rss_feeds, rss_periodic_execution_enabled,
+    fetch_rss_feeds, fetch_webhook_endpoints, rss_periodic_execution_enabled,
     rss_webhook_notification_enabled, webhook,
 };
 
@@ -26,13 +26,12 @@ pub async fn run_batch(conn: &Connection) -> Result<(), Box<dyn Error>> {
         return Ok(());
     }
 
-    let app_settings = fetch_app_settings(conn)?;
-    if app_settings.is_empty() {
+    let webhook_endpoints = fetch_webhook_endpoints(conn)?;
+    if webhook_endpoints.is_empty() {
         eprintln!("Not setting webhook URL");
         return Ok(());
     }
 
-    let webhook_url = &app_settings[0].value;
     let http_client = reqwest::Client::builder()
         .timeout(Duration::from_secs(10))
         .build()?;
@@ -119,16 +118,40 @@ pub async fn run_batch(conn: &Connection) -> Result<(), Box<dyn Error>> {
             continue;
         }
 
-        if let Err(err) = webhook::send_rss_webhook(
-            webhook_url,
-            &rss_feed.title,
-            &rss_feed.url,
-            &embeds,
-            &articles,
-        )
-        .await
-        {
-            eprintln!("{}", err);
+        let targets: Vec<&crate::WebhookEndpoint> = if rss_feed.webhook_ids.is_empty() {
+            webhook_endpoints.iter().collect()
+        } else {
+            webhook_endpoints
+                .iter()
+                .filter(|endpoint| rss_feed.webhook_ids.contains(&endpoint.id))
+                .collect()
+        };
+        if targets.is_empty() {
+            eprintln!(
+                "Skipping RSS feed {}: no matching webhook endpoints",
+                rss_feed.url
+            );
+            continue;
+        }
+
+        let mut delivered = false;
+        for endpoint in targets {
+            if let Err(err) = webhook::send_rss_webhook(
+                &endpoint.url,
+                &rss_feed.title,
+                &rss_feed.url,
+                &embeds,
+                &articles,
+            )
+            .await
+            {
+                eprintln!("{}", err);
+                continue;
+            }
+            delivered = true;
+        }
+
+        if !delivered {
             continue;
         }
 

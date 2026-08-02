@@ -20,7 +20,7 @@ from api.model.models import (
     RSSFeedUpdate,
     SettingsRssExecutionUpdate,
     SettingsRssWebhookNotificationUpdate,
-    SettingsWebhookUpdate,
+    SettingsWebhookCreate,
     SettingsWebhookPingRequest,
     TagAttach,
     TagCreate,
@@ -317,16 +317,19 @@ class CompatTestClient:
             if rss_feeds_response is not None:
                 return rss_feeds_response
 
-            if method == "PUT" and path == "/settings/webhook":
-                body = SettingsWebhookUpdate(**(json or {}))
-                payload = SettingsService().set_webhook(body).model_dump()
+            if method == "GET" and path == "/settings/webhooks":
+                payload = SettingsService().list_webhooks().model_dump()
                 return self._ok(payload, 200)
+            if method == "POST" and path == "/settings/webhooks":
+                body = SettingsWebhookCreate(**(json or {}))
+                payload = SettingsService().create_webhook(body).model_dump()
+                return self._ok(payload, 201)
+            if method == "DELETE" and path.startswith("/settings/webhooks/"):
+                SettingsService().delete_webhook(int(path.rsplit("/", 1)[1]))
+                return self._ok(None, 204)
             if method == "POST" and path == "/settings/webhook/ping":
                 body = SettingsWebhookPingRequest(**(json or {}))
                 payload = SettingsService().ping_webhook(body).model_dump()
-                return self._ok(payload, 200)
-            if method == "GET" and path == "/settings/webhook":
-                payload = SettingsService().get_webhook().model_dump()
                 return self._ok(payload, 200)
             if method == "GET" and path == "/settings/rss-execution":
                 payload = SettingsService().get_rss_execution().model_dump()

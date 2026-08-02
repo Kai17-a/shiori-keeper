@@ -3,6 +3,7 @@ export interface RSSFeedCreateRequest {
   title: string;
   description?: string | null;
   notify_webhook_enabled?: boolean;
+  webhook_ids?: number[];
 }
 
 export interface RSSFeedUpdateRequest {
@@ -10,6 +11,7 @@ export interface RSSFeedUpdateRequest {
   title?: string | null;
   description?: string | null;
   notify_webhook_enabled?: boolean | null;
+  webhook_ids?: number[] | null;
 }
 
 export interface RSSFeedResponse {
@@ -18,6 +20,7 @@ export interface RSSFeedResponse {
   title: string;
   description: string | null;
   notify_webhook_enabled: boolean;
+  webhook_ids: number[];
   created_at: string;
   updated_at: string;
 }
@@ -50,23 +53,7 @@ export interface RSSFeedListResponse {
 export interface RSSFeedExecuteResponse {
   feed_id: number;
   title: string;
-  webhook_url: string;
   delivered: boolean;
+  delivered_count: number;
   message?: string | null;
-}
-
-export interface SettingsWebhookResponse {
-  webhook_url: string;
-}
-
-export interface SettingsWebhookPingResponse {
-  pong: boolean;
-}
-
-export interface SettingsRssExecutionResponse {
-  enabled: boolean;
-}
-
-export interface SettingsRssWebhookNotificationResponse {
-  enabled: boolean;
 }

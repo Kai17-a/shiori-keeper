@@ -28,7 +28,8 @@
   - Folder の画面上での create, rename, detail navigation, detail delete
   - Tag の画面上での create, rename, detail navigation, detail delete
   - RSS feed の画面上での create, edit, detail navigation, 最終ページ削除後のページ正規化, delete
-  - RSS webhook load, save
+  - RSS feed 作成・編集モーダルでの通知先 webhook 選択（未選択時は全 webhook 通知）
+  - Settings page での webhook 複数登録, reload 後の一覧表示, delete
   - RSS periodic execution toggle
   - Settings page theme toggle
 
@@ -45,7 +46,7 @@
 ## 実装候補
 
 - `frontend/tests/bookmarkApi.test.ts`
-  - `/settings/webhook`, `/settings/webhook/ping`, `/settings/rss-execution`, `/metrics/dashboard`, `/bookmarks/by-url`, `/bookmarks/favorite`, `/rss-feeds/{id}/articles` の request path と body を明示確認する
+  - `/settings/webhooks`, `/settings/webhook/ping`, `/settings/rss-execution`, `/metrics/dashboard`, `/bookmarks/by-url`, `/bookmarks/favorite`, `/rss-feeds/{id}/articles` の request path と body を明示確認する
 
 - `frontend/tests/sidebarCatalog.test.ts`
   - folders/tags に加えて RSS feeds を含む結果が状態へ反映されることを確認する
@@ -59,7 +60,8 @@
   - `/favorites` で favorite のみが表示され、21件以上をページング閲覧でき、解除で一覧から消えることを確認する
   - bookmark 作成時の folder/tag 割り当てが detail/filter と整合することを確認する
   - `/folders/[id]` と `/tags/[id]` で関連 bookmark の編集、削除、お気に入り切り替え、21件以上のページング閲覧を確認する
-  - `/rss` で webhook の load, ping, save と RSS periodic execution toggle を確認する
+  - `/settings` で webhook の load, ping, 複数登録, delete を確認する
+  - `/rss` で RSS periodic execution toggle を確認する
   - `/rss/[id]` で article list と paging を確認する
   - `/settings` で theme change が reload 後も維持されることを確認する
 

@@ -5,6 +5,20 @@ use std::time::Duration;
 use reqwest::Url;
 use rusqlite::{Connection, params};
 
+pub(crate) const MAX_EMBED_TITLE_LEN: usize = 256;
+// Keep summaries short enough that a 10-embed chunk stays below Discord's
+// 6000-character per-message total (title + description per embed) and below
+// Slack's 3000-character section block text limit.
+pub(crate) const MAX_EMBED_SUMMARY_LEN: usize = 300;
+
+pub(crate) fn truncate(value: &str, max_chars: usize) -> String {
+    if value.chars().count() <= max_chars {
+        return value.to_string();
+    }
+    let truncated: String = value.chars().take(max_chars - 1).collect();
+    format!("{}…", truncated.trim_end())
+}
+
 #[derive(Debug)]
 pub struct Embed<'a> {
     pub title: &'a str,
@@ -37,8 +51,10 @@ fn chunk_embeds<'a>(embeds: &'a [Embed<'a>]) -> Vec<Vec<&'a Embed<'a>>> {
     let mut current_len = 0usize;
 
     for embed in embeds {
-        let embed_len =
-            embed.title.len() + embed.link.len() + embed.published.len() + embed.summary.len();
+        let embed_len = embed.title.len().min(MAX_EMBED_TITLE_LEN)
+            + embed.link.len()
+            + embed.published.len()
+            + embed.summary.len().min(MAX_EMBED_SUMMARY_LEN);
         if (current.len() >= 10 || current_len + embed_len > 6000) && !current.is_empty() {
             chunks.push(current);
             current = Vec::new();
@@ -210,9 +226,9 @@ pub async fn send_rss_webhook(
             .iter()
             .map(|embed| {
                 serde_json::json!({
-                    "title": embed.title,
+                    "title": truncate(embed.title, MAX_EMBED_TITLE_LEN),
                     "url": embed.link,
-                    "description": embed.summary,
+                    "description": truncate(embed.summary, MAX_EMBED_SUMMARY_LEN),
                 })
             })
             .collect();

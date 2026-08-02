@@ -6,6 +6,10 @@
   - RSS 定期実行が無効な場合に成功扱いで終了する
   - RSS webhook 通知が無効な場合に成功扱いで終了する
   - RSS 定期実行と webhook 通知の有効設定を、それぞれ対応する設定行から取得する
+  - 複数登録された webhook URL を登録順に全件取得する
+  - `webhook_endpoints` テーブルがない DB では `app_settings.default_webhook_url` へフォールバックする
+  - フィードごとの通知先 webhook 選択を取得する
+  - 通知先未選択のフィードは空の選択として扱う
 
 - `batch/tests/webhook.rs`
   - webhook payload の基本形
@@ -17,7 +21,7 @@
 ## 追加で確認したい観点
 
 - `DATABASE_URL` 未指定時に `data/data.db` を選ぶこと
-- `default_webhook_url` 未設定時に成功扱いで終了すること
+- webhook URL 未登録時に成功扱いで終了すること
 - `rss_feeds.notify_webhook_enabled = 0` のフィードをスキップすること
 - 既送信 URL を含む RSS item を通知対象から除外すること
 - 新着記事がないフィードをスキップすること

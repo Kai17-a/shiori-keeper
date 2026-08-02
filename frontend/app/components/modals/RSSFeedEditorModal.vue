@@ -10,6 +10,25 @@
           <UInput v-model="form.url" :placeholder="urlPlaceholder" class="w-full" />
         </UFormField>
 
+        <UFormField
+          label="Notification webhooks"
+          description="When none are selected, all registered webhooks are notified."
+          class="w-full"
+        >
+          <div v-if="webhooks.length" class="space-y-2">
+            <UCheckbox
+              v-for="webhook in webhooks"
+              :key="webhook.id"
+              :model-value="form.webhookIds.includes(webhook.id)"
+              :label="webhook.name"
+              @update:model-value="toggleWebhook(webhook.id, $event)"
+            />
+          </div>
+          <p v-else class="text-sm text-muted">
+            No webhooks are registered yet. Add them from the Settings page.
+          </p>
+        </UFormField>
+
         <UFormField label="Description" class="w-full">
           <UTextarea
             v-model="form.description"
@@ -31,14 +50,18 @@
 </template>
 
 <script setup lang="ts">
+import type { SettingsWebhookResponse } from "~/types";
+
 const openModel = defineModel<boolean>("open", { required: true });
 
-defineProps<{
+const props = defineProps<{
   form: {
     title: string;
     url: string;
     description: string;
+    webhookIds: number[];
   };
+  webhooks: SettingsWebhookResponse[];
   title: string;
   description: string;
   titlePlaceholder: string;
@@ -51,4 +74,14 @@ defineProps<{
 const emit = defineEmits<{
   save: [];
 }>();
+
+const toggleWebhook = (webhookId: number, checked: boolean | string) => {
+  const selected = new Set(props.form.webhookIds);
+  if (checked === true) {
+    selected.add(webhookId);
+  } else {
+    selected.delete(webhookId);
+  }
+  props.form.webhookIds = [...selected];
+};
 </script>

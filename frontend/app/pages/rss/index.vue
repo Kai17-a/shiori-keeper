@@ -6,82 +6,39 @@
 
     <template #body>
       <div class="space-y-6">
-        <div class="grid gap-6 lg:grid-cols-[2fr_1fr]">
-          <UPageCard
-            title="Webhook"
-            description="Configure the global Discord, Slack, or Microsoft Teams webhook used by RSS execution"
-            :ui="{ body: 'space-y-5' }"
-          >
-            <form class="space-y-4" @submit.prevent="saveWebhook">
-              <UFormField
-                label="Webhook URL"
-                description="This single webhook setting is shared across app integrations."
-                class="w-full"
-              >
-                <UInput
-                  v-model="webhookForm.webhookUrl"
-                  class="w-full"
-                  placeholder="Discord, Slack, or Microsoft Teams webhook URL"
-                />
-              </UFormField>
-
-              <div class="flex flex-wrap items-center gap-3">
-                <UButton
-                  type="button"
-                  color="warning"
-                  variant="ghost"
-                  icon="i-lucide-bell-ring"
-                  :loading="webhookChecking"
-                  @click="pingWebhook()"
-                >
-                  Test
-                </UButton>
-                <UButton type="submit" icon="i-lucide-save" :loading="webhookSaving">
-                  Save webhook
-                </UButton>
+        <UPageCard
+          title="RSS periodic execution"
+          description="Enable or disable the scheduled RSS batch process"
+          :ui="{ body: 'space-y-4' }"
+        >
+          <div class="space-y-4">
+            <div class="flex items-start justify-between gap-4">
+              <div class="space-y-1">
+                <p class="text-sm font-medium text-default">Run on schedule</p>
+                <p class="text-sm text-muted">
+                  When enabled, the batch process is allowed to run RSS delivery jobs once
+                  every hour.
+                </p>
               </div>
-
-              <p class="text-sm text-muted">
-                <span v-if="webhookConfigured">Webhook is configured.</span>
-                <span v-else>No webhook is configured yet.</span>
-              </p>
-            </form>
-          </UPageCard>
-
-          <UPageCard
-            title="RSS periodic execution"
-            description="Enable or disable the scheduled RSS batch process"
-            :ui="{ body: 'space-y-4' }"
-          >
-            <div class="space-y-4">
-              <div class="flex items-start justify-between gap-4">
-                <div class="space-y-1">
-                  <p class="text-sm font-medium text-default">Run on schedule</p>
-                  <p class="text-sm text-muted">
-                    When enabled, the batch process is allowed to run RSS delivery jobs once
-                    every hour.
-                  </p>
-                </div>
-                <USwitch v-model="rssExecutionEnabled" :loading="rssExecutionLoading" />
-              </div>
-
-              <div class="h-px bg-border/60" />
-
-              <div class="flex items-start justify-between gap-4">
-                <div class="space-y-1">
-                  <p class="text-sm font-medium text-default">Send webhook notifications</p>
-                  <p class="text-sm text-muted">
-                    When disabled, the batch process still runs but skips webhook delivery.
-                  </p>
-                </div>
-                <USwitch
-                  v-model="rssWebhookNotificationEnabled"
-                  :loading="rssWebhookNotificationLoading"
-                />
-              </div>
+              <USwitch v-model="rssExecutionEnabled" :loading="rssExecutionLoading" />
             </div>
-          </UPageCard>
-        </div>
+
+            <div class="h-px bg-border/60" />
+
+            <div class="flex items-start justify-between gap-4">
+              <div class="space-y-1">
+                <p class="text-sm font-medium text-default">Send webhook notifications</p>
+                <p class="text-sm text-muted">
+                  When disabled, the batch process still runs but skips webhook delivery.
+                </p>
+              </div>
+              <USwitch
+                v-model="rssWebhookNotificationEnabled"
+                :loading="rssWebhookNotificationLoading"
+              />
+            </div>
+          </div>
+        </UPageCard>
 
         <UPageCard :ui="{ body: 'space-y-4' }">
           <div class="flex items-center justify-between gap-3">
@@ -168,6 +125,7 @@
         <RSSFeedEditorModal
           v-model:open="modalOpen"
           :form="feedForm"
+          :webhooks="webhooks"
           :title="feedForm.id ? 'Edit RSS feed' : 'Register RSS feed'"
           :description="feedForm.id ? 'Update the selected feed.' : 'Create a new feed link.'"
           title-placeholder="Feed title"
@@ -199,7 +157,7 @@ import type {
   RSSFeedResponse,
   SettingsRssExecutionResponse,
   SettingsRssWebhookNotificationResponse,
-  SettingsWebhookPingResponse,
+  SettingsWebhookListResponse,
   SettingsWebhookResponse,
 } from "~/types";
 
@@ -212,10 +170,6 @@ const { refresh: refreshSidebarCatalog } = useSidebarCatalog();
 const loading = ref(false);
 const saving = ref(false);
 const deleting = ref(false);
-const webhookLoading = ref(false);
-const webhookChecking = ref(false);
-const webhookSaving = ref(false);
-const webhookConfigured = ref(false);
 const rssExecutionLoading = ref(false);
 const rssExecutionSaving = ref(false);
 const rssWebhookNotificationLoading = ref(false);
@@ -233,9 +187,13 @@ const feedList = ref<RSSFeedListResponse>({
   total_pages: 0,
 });
 const page = ref(1);
-const feedForm = reactive({ id: "", title: "", url: "", description: "" });
-const webhookForm = reactive({
-  webhookUrl: "",
+const webhooks = ref<SettingsWebhookResponse[]>([]);
+const feedForm = reactive({
+  id: "",
+  title: "",
+  url: "",
+  description: "",
+  webhookIds: [] as number[],
 });
 const rssExecutionEnabled = ref(false);
 const rssWebhookNotificationEnabled = ref(false);
@@ -269,6 +227,7 @@ const openCreateModal = () => {
   feedForm.url = "";
   feedForm.title = "";
   feedForm.description = "";
+  feedForm.webhookIds = [];
   modalOpen.value = true;
 };
 
@@ -277,6 +236,7 @@ const openEditModal = (feed: RSSFeedResponse) => {
   feedForm.url = feed.url;
   feedForm.title = feed.title;
   feedForm.description = feed.description || "";
+  feedForm.webhookIds = [...feed.webhook_ids];
   modalOpen.value = true;
 };
 
@@ -284,86 +244,17 @@ const closeModal = () => {
   modalOpen.value = false;
 };
 
-const pingWebhook = async (webhookUrl = webhookForm.webhookUrl.trim()) => {
-  webhookChecking.value = true;
+const loadWebhooks = async () => {
   try {
-    await request<SettingsWebhookPingResponse>("/settings/webhook/ping", {
-      method: "POST",
-      body: JSON.stringify({ webhook_url: webhookUrl }),
-    });
-    toast.show({
-      title: "Webhook endpoint is reachable.",
-      color: "success",
-      icon: "i-lucide-check",
-    });
+    const response = await request<SettingsWebhookListResponse>("/settings/webhooks");
+    webhooks.value = response.items;
   } catch (err) {
     toast.show({
-      title: "Failed to ping webhook setting.",
+      title: "Failed to load webhooks.",
       description: err instanceof Error ? err.message : undefined,
       color: "error",
       icon: "i-lucide-circle-alert",
     });
-  } finally {
-    webhookChecking.value = false;
-  }
-};
-
-const loadWebhook = async () => {
-  webhookLoading.value = true;
-  try {
-    const response = await request<SettingsWebhookResponse>("/settings/webhook");
-    webhookForm.webhookUrl = response.webhook_url;
-    webhookConfigured.value = true;
-  } catch (err) {
-    webhookForm.webhookUrl = "";
-    webhookConfigured.value = false;
-    if (err instanceof Error && err.message.includes("404")) {
-      return;
-    }
-    toast.show({
-      title: "Failed to load webhook setting.",
-      description: err instanceof Error ? err.message : undefined,
-      color: "error",
-      icon: "i-lucide-circle-alert",
-    });
-  } finally {
-    webhookLoading.value = false;
-  }
-};
-
-const saveWebhook = async () => {
-  const webhookUrl = webhookForm.webhookUrl.trim();
-  if (!webhookUrl) {
-    toast.show({
-      title: "Webhook URL is required.",
-      color: "error",
-      icon: "i-lucide-circle-alert",
-    });
-    return;
-  }
-
-  webhookSaving.value = true;
-  try {
-    const response = await request<SettingsWebhookResponse>("/settings/webhook", {
-      method: "PUT",
-      body: JSON.stringify({ webhook_url: webhookUrl }),
-    });
-    webhookForm.webhookUrl = response.webhook_url;
-    webhookConfigured.value = true;
-    toast.show({
-      title: "Webhook setting saved.",
-      color: "success",
-      icon: "i-lucide-check",
-    });
-  } catch (err) {
-    toast.show({
-      title: "Failed to save webhook setting.",
-      description: err instanceof Error ? err.message : undefined,
-      color: "error",
-      icon: "i-lucide-circle-alert",
-    });
-  } finally {
-    webhookSaving.value = false;
   }
 };
 
@@ -520,6 +411,7 @@ const saveFeed = async () => {
       url,
       title,
       description: feedForm.description.trim() || null,
+      webhook_ids: feedForm.webhookIds,
     };
     if (feedForm.id) {
       await request(`/rss-feeds/${feedForm.id}`, { method: "PATCH", body: JSON.stringify(body) });
@@ -565,7 +457,7 @@ const executeFeed = async (feed: RSSFeedResponse) => {
     });
     toast.show({
       title: "RSS feed executed.",
-      description: result.message ?? `Delivered to ${result.webhook_url}`,
+      description: result.message ?? `Delivered to ${result.delivered_count} webhook(s).`,
       color: "success",
       icon: "i-lucide-check",
     });
@@ -640,6 +532,11 @@ const confirmDelete = async () => {
 };
 
 onMounted(async () => {
-  await Promise.all([loadFeeds(), loadWebhook(), loadRssExecution(), loadRssWebhookNotification()]);
+  await Promise.all([
+    loadFeeds(),
+    loadWebhooks(),
+    loadRssExecution(),
+    loadRssWebhookNotification(),
+  ]);
 });
 </script>
