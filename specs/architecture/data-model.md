@@ -67,6 +67,13 @@ erDiagram
         TEXT updated_at
     }
 
+    WEBHOOK_ENDPOINTS {
+        INTEGER id PK
+        TEXT url UK
+        TEXT created_at
+        TEXT updated_at
+    }
+
     SCHEMA_MIGRATIONS {
         varchar version PK
     }
@@ -102,6 +109,8 @@ erDiagram
 
 | Key | Meaning |
 | --- | --- |
-| `default_webhook_url` | RSS 手動実行や batch 通知で使う webhook URL |
 | `rss_periodic_execution_enabled` | batch による RSS 定期実行の有効/無効 |
 | `rss_webhook_notification_enabled` | batch 実行時の webhook 通知の有効/無効 |
+
+RSS 手動実行や batch 通知で使う webhook URL は `webhook_endpoints` テーブルで複数管理する。
+以前のバージョンが使っていた `app_settings.default_webhook_url` は migration 時に `webhook_endpoints` へコピーされる。

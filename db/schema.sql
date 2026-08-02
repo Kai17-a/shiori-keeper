@@ -63,6 +63,14 @@ CREATE INDEX idx_rss_feed_articles_feed_published_id
   ON rss_feed_articles(feed_id, published DESC, id DESC);
 CREATE INDEX idx_rss_feed_articles_feed_published_null_id
   ON rss_feed_articles(feed_id, published IS NULL, published DESC, id DESC);
+CREATE TABLE webhook_endpoints (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  url TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE UNIQUE INDEX idx_webhook_endpoints_url_unique
+  ON webhook_endpoints(url);
 -- Dbmate schema migrations
 INSERT INTO "schema_migrations" (version) VALUES
   ('010'),
@@ -70,4 +78,5 @@ INSERT INTO "schema_migrations" (version) VALUES
   ('012'),
   ('013'),
   ('202604251114'),
-  ('202604251124');
+  ('202604251124'),
+  ('202608021000');

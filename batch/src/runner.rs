@@ -6,7 +6,7 @@ use std::error::Error;
 use std::time::Duration;
 
 use crate::{
-    fetch_app_settings, fetch_rss_feeds, rss_periodic_execution_enabled,
+    fetch_rss_feeds, fetch_webhook_urls, rss_periodic_execution_enabled,
     rss_webhook_notification_enabled, webhook,
 };
 
@@ -26,13 +26,12 @@ pub async fn run_batch(conn: &Connection) -> Result<(), Box<dyn Error>> {
         return Ok(());
     }
 
-    let app_settings = fetch_app_settings(conn)?;
-    if app_settings.is_empty() {
+    let webhook_urls = fetch_webhook_urls(conn)?;
+    if webhook_urls.is_empty() {
         eprintln!("Not setting webhook URL");
         return Ok(());
     }
 
-    let webhook_url = &app_settings[0].value;
     let http_client = reqwest::Client::builder()
         .timeout(Duration::from_secs(10))
         .build()?;
@@ -119,16 +118,24 @@ pub async fn run_batch(conn: &Connection) -> Result<(), Box<dyn Error>> {
             continue;
         }
 
-        if let Err(err) = webhook::send_rss_webhook(
-            webhook_url,
-            &rss_feed.title,
-            &rss_feed.url,
-            &embeds,
-            &articles,
-        )
-        .await
-        {
-            eprintln!("{}", err);
+        let mut delivered = false;
+        for webhook_url in &webhook_urls {
+            if let Err(err) = webhook::send_rss_webhook(
+                webhook_url,
+                &rss_feed.title,
+                &rss_feed.url,
+                &embeds,
+                &articles,
+            )
+            .await
+            {
+                eprintln!("{}", err);
+                continue;
+            }
+            delivered = true;
+        }
+
+        if !delivered {
             continue;
         }
 

@@ -147,6 +147,30 @@ class AppSetting(SQLModel, table=True):
     )
 
 
+class WebhookEndpoint(SQLModel, table=True):
+    __tablename__: ClassVar[str] = "webhook_endpoints"
+    __table_args__ = (
+        Index("idx_webhook_endpoints_url_unique", "url", unique=True),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    url: str = Field(sa_column=Column(String, nullable=False))
+    created_at: datetime = Field(
+        sa_column=Column(
+            DateTime,
+            nullable=False,
+            server_default=text("(datetime('now'))"),
+        )
+    )
+    updated_at: datetime = Field(
+        sa_column=Column(
+            DateTime,
+            nullable=False,
+            server_default=text("(datetime('now'))"),
+        )
+    )
+
+
 class Tag(SQLModel, table=True):
     __tablename__: ClassVar[str] = "tags"
 
@@ -411,17 +435,24 @@ class RSSFeedListResponse(BaseModel):
 class RSSFeedExecuteResponse(BaseModel):
     feed_id: int
     title: str
-    webhook_url: str
     delivered: bool
+    delivered_count: int
     message: str | None = None
 
 
-class SettingsWebhookUpdate(BaseModel):
+class SettingsWebhookCreate(BaseModel):
     webhook_url: AnyHttpUrl
 
 
 class SettingsWebhookResponse(BaseModel):
+    id: int
     webhook_url: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class SettingsWebhookListResponse(BaseModel):
+    items: list[SettingsWebhookResponse]
 
 
 class SettingsWebhookPingRequest(BaseModel):

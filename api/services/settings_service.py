@@ -1,3 +1,5 @@
+import sqlite3
+
 import httpx
 from fastapi import HTTPException
 
@@ -7,19 +9,20 @@ from api.model.models import (
     SettingsRssExecutionUpdate,
     SettingsRssWebhookNotificationResponse,
     SettingsRssWebhookNotificationUpdate,
+    SettingsWebhookCreate,
+    SettingsWebhookListResponse,
     SettingsWebhookPingRequest,
     SettingsWebhookPingResponse,
     SettingsWebhookResponse,
-    SettingsWebhookUpdate,
 )
 from api.repositories.settings_repo import SettingsRepository
+from api.repositories.webhook_endpoint_repo import WebhookEndpointRepository
 from api.services.webhook_service import (
     build_webhook_payload,
     detect_webhook_service,
     send_webhook,
 )
 
-WEBHOOK_SETTING_KEY = "default_webhook_url"
 RSS_EXECUTION_SETTING_KEY = "rss_periodic_execution_enabled"
 RSS_WEBHOOK_NOTIFICATION_SETTING_KEY = "rss_webhook_notification_enabled"
 
@@ -34,15 +37,42 @@ class SettingsService:
                 status_code=422, detail="Webhook URL must be a valid URL"
             )
 
-    def set_webhook(self, data: SettingsWebhookUpdate) -> SettingsWebhookResponse:
+    def _to_webhook_response(self, row: dict) -> SettingsWebhookResponse:
+        return SettingsWebhookResponse(
+            id=int(row["id"]),
+            webhook_url=str(row["url"]),
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+        )
+
+    def list_webhooks(self) -> SettingsWebhookListResponse:
         with get_db() as conn:
-            repo = SettingsRepository(conn)
+            repo = WebhookEndpointRepository(conn)
+            return SettingsWebhookListResponse(
+                items=[self._to_webhook_response(row) for row in repo.find_all()]
+            )
+
+    def create_webhook(self, data: SettingsWebhookCreate) -> SettingsWebhookResponse:
+        with get_db() as conn:
+            repo = WebhookEndpointRepository(conn)
             webhook_url = str(data.webhook_url)
             self._validate_webhook_url(webhook_url)
             detect_webhook_service(webhook_url)
-            return SettingsWebhookResponse(
-                webhook_url=repo.set(WEBHOOK_SETTING_KEY, webhook_url)
-            )
+            try:
+                row = repo.insert(webhook_url)
+            except sqlite3.IntegrityError as exc:
+                raise HTTPException(
+                    status_code=409, detail="Webhook URL is already registered"
+                ) from exc
+            return self._to_webhook_response(row)
+
+    def delete_webhook(self, webhook_id: int) -> None:
+        with get_db() as conn:
+            repo = WebhookEndpointRepository(conn)
+            if not repo.delete(webhook_id):
+                raise HTTPException(
+                    status_code=404, detail="Webhook endpoint not found"
+                )
 
     def ping_webhook(
         self, data: SettingsWebhookPingRequest
@@ -69,16 +99,6 @@ class SettingsService:
             )
 
         return SettingsWebhookPingResponse(pong=True)
-
-    def get_webhook(self) -> SettingsWebhookResponse:
-        with get_db() as conn:
-            repo = SettingsRepository(conn)
-            webhook_url = repo.get(WEBHOOK_SETTING_KEY)
-            if webhook_url is None:
-                raise HTTPException(
-                    status_code=404, detail="Webhook URL is not configured"
-                )
-            return SettingsWebhookResponse(webhook_url=webhook_url)
 
     def get_rss_execution(self) -> SettingsRssExecutionResponse:
         with get_db() as conn:

@@ -6,11 +6,6 @@ pub fn database_path() -> String {
 }
 
 #[derive(Debug)]
-pub struct AppSetting {
-    pub value: String,
-}
-
-#[derive(Debug)]
 pub struct RSSFeed {
     pub id: u32,
     pub url: String,
@@ -32,12 +27,26 @@ fn has_column(conn: &Connection, table: &str, column: &str) -> Result<bool> {
     Ok(false)
 }
 
-pub fn fetch_app_settings(conn: &Connection) -> Result<Vec<AppSetting>> {
+fn has_table(conn: &Connection, table: &str) -> Result<bool> {
+    let count = conn.query_row(
+        "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?",
+        [table],
+        |row| row.get::<_, i64>(0),
+    )?;
+    Ok(count > 0)
+}
+
+pub fn fetch_webhook_urls(conn: &Connection) -> Result<Vec<String>> {
+    if has_table(conn, "webhook_endpoints")? {
+        let mut stmt = conn.prepare("SELECT url FROM webhook_endpoints ORDER BY id ASC")?;
+        let webhook_url_iter = stmt.query_map([], |row| row.get::<_, String>(0))?;
+        return webhook_url_iter.collect();
+    }
+
     let mut stmt =
         conn.prepare("SELECT value FROM app_settings where key = 'default_webhook_url'")?;
-    let app_settings_iter = stmt.query_map([], |row| Ok(AppSetting { value: row.get(0)? }))?;
-
-    app_settings_iter.collect()
+    let legacy_url_iter = stmt.query_map([], |row| row.get::<_, String>(0))?;
+    legacy_url_iter.collect()
 }
 
 pub fn rss_periodic_execution_enabled(conn: &Connection) -> Result<bool> {

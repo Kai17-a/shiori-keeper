@@ -54,8 +54,8 @@
 
 ### RSS
 
-- 画面上部で Discord、Slack、Microsoft Teams webhook 設定の読込、疎通確認、保存を行う
 - RSS 定期実行の有効/無効を切り替える
+- RSS 定期実行時の webhook 通知の有効/無効を切り替える
 - 一覧ページから RSS フィードを作成する
 - モーダルで RSS フィードを編集する
 - RSS フィード詳細ページを開く
@@ -66,6 +66,10 @@
 
 ### 設定
 
+- Discord、Slack、Microsoft Teams webhook URL を複数登録する
+- 登録済み webhook の一覧を表示する
+- 入力中または登録済みの webhook の疎通確認を行う
+- 確認後に登録済み webhook を削除する
 - テーマ切り替えを行える
 
 ## 共通操作

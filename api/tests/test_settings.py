@@ -39,25 +39,66 @@ def client(tmp_path, monkeypatch):
         yield c
 
 
-def test_get_webhook_returns_404_when_unconfigured(client):
-    resp = client.get("/settings/webhook")
+def test_list_webhooks_returns_empty_list_when_unconfigured(client):
+    resp = client.get("/settings/webhooks")
+    assert resp.status_code == 200
+    assert resp.json()["items"] == []
+
+
+def test_create_and_list_webhooks_round_trip(client):
+    first_url = "https://discord.com/api/webhooks/1/token"
+    second_url = "https://hooks.slack.com/services/xxx/yyy/zzz"
+
+    first = client.post("/settings/webhooks", json={"webhook_url": first_url})
+    assert first.status_code == 201
+    assert first.json()["webhook_url"] == first_url
+    assert first.json()["id"]
+
+    second = client.post("/settings/webhooks", json={"webhook_url": second_url})
+    assert second.status_code == 201
+    assert second.json()["webhook_url"] == second_url
+
+    listed = client.get("/settings/webhooks")
+    assert listed.status_code == 200
+    assert [item["webhook_url"] for item in listed.json()["items"]] == [
+        first_url,
+        second_url,
+    ]
+
+
+def test_create_webhook_rejects_duplicate_url(client):
+    webhook_url = "https://discord.com/api/webhooks/1/token"
+    created = client.post("/settings/webhooks", json={"webhook_url": webhook_url})
+    assert created.status_code == 201
+
+    duplicate = client.post("/settings/webhooks", json={"webhook_url": webhook_url})
+    assert duplicate.status_code == 409
+    assert duplicate.json()["detail"] == "Webhook URL is already registered"
+
+
+def test_delete_webhook_removes_it_from_the_list(client):
+    created = client.post(
+        "/settings/webhooks",
+        json={"webhook_url": "https://discord.com/api/webhooks/1/token"},
+    )
+    webhook_id = created.json()["id"]
+
+    deleted = client.delete(f"/settings/webhooks/{webhook_id}")
+    assert deleted.status_code == 204
+
+    listed = client.get("/settings/webhooks")
+    assert listed.status_code == 200
+    assert listed.json()["items"] == []
+
+
+def test_delete_missing_webhook_returns_404(client):
+    resp = client.delete("/settings/webhooks/99999")
     assert resp.status_code == 404
 
 
-def test_set_and_get_webhook_round_trip(client):
-    webhook_url = "https://discord.com/api/webhooks/1/token"
-    put_resp = client.put("/settings/webhook", json={"webhook_url": webhook_url})
-    assert put_resp.status_code == 200
-    assert put_resp.json()["webhook_url"] == webhook_url
-
-    get_resp = client.get("/settings/webhook")
-    assert get_resp.status_code == 200
-    assert get_resp.json()["webhook_url"] == webhook_url
-
-
-def test_set_webhook_rejects_discord_host_with_wrong_path(client):
-    resp = client.put(
-        "/settings/webhook",
+def test_create_webhook_rejects_discord_host_with_wrong_path(client):
+    resp = client.post(
+        "/settings/webhooks",
         json={"webhook_url": "https://discord.com/channels/1/2"},
     )
     assert resp.status_code == 422
@@ -66,10 +107,10 @@ def test_set_webhook_rejects_discord_host_with_wrong_path(client):
     )
 
 
-def test_set_webhook_accepts_slack_url(client):
+def test_create_webhook_accepts_slack_url(client):
     webhook_url = "https://hooks.slack.com/services/xxx/yyy/zzz"
-    resp = client.put("/settings/webhook", json={"webhook_url": webhook_url})
-    assert resp.status_code == 200
+    resp = client.post("/settings/webhooks", json={"webhook_url": webhook_url})
+    assert resp.status_code == 201
     assert resp.json()["webhook_url"] == webhook_url
 
 
@@ -81,9 +122,9 @@ def test_set_webhook_accepts_slack_url(client):
         "https://default.example.api.powerplatform.com/powerautomate/automations/direct/workflows/id/triggers/manual/paths/invoke?sig=token",
     ],
 )
-def test_set_webhook_accepts_microsoft_teams_urls(client, webhook_url):
-    resp = client.put("/settings/webhook", json={"webhook_url": webhook_url})
-    assert resp.status_code == 200
+def test_create_webhook_accepts_microsoft_teams_urls(client, webhook_url):
+    resp = client.post("/settings/webhooks", json={"webhook_url": webhook_url})
+    assert resp.status_code == 201
     assert resp.json()["webhook_url"] == webhook_url
 
 

@@ -244,6 +244,16 @@ CREATE TABLE IF NOT EXISTS app_settings (
     updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS webhook_endpoints (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    url         TEXT    NOT NULL,
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+    updated_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE UNIQUE INDEX idx_webhook_endpoints_url_unique
+  ON webhook_endpoints(url);
+
 CREATE TABLE IF NOT EXISTS tags (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     name        TEXT NOT NULL UNIQUE,
@@ -264,13 +274,14 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - SQLite の外部キー制約は接続時に `PRAGMA foreign_keys = ON` で有効化する
 - `bookmarks.url`、`rss_feeds.url`、`folders.name`、`tags.name` は DB 一意制約と事前チェックの両方で重複を防ぐ
 - `app_settings` はアプリ全体設定のキーバリューストアとして扱う
-- `default_webhook_url` は Discord、Slack、または Microsoft Teams webhook URL だけを許可する
+- `webhook_endpoints` は RSS 通知先の webhook URL を複数保持し、URL の一意制約で重複登録を防ぐ
+- `webhook_endpoints.url` は Discord、Slack、または Microsoft Teams webhook URL だけを許可する
 - `rss_periodic_execution_enabled` は RSS 定期実行の有効/無効を保持する
 - `rss_webhook_notification_enabled` は RSS 定期実行時に webhook 通知を送るかを保持する
 - `rss_feeds.notify_webhook_enabled` は batch による RSS 定期実行時に webhook 通知するかを保持する
 - `rss_feeds.notify_webhook_enabled` の既定値は `1` である
 - `rss_webhook_notification_enabled` の既定値は `0` である
-- RSS 実行 API は `default_webhook_url` 未設定時に 400 を返す
+- RSS 実行 API は `webhook_endpoints` 未登録時に 400 を返し、登録済みの全 webhook へ送信する
 - RSS 手動実行の送信本体は API が担当する
 - `batch` は RSS 定期実行が有効なときだけ RSS 巡回を行う
 - `batch` は `rss_webhook_notification_enabled` が無効な場合、RSS 巡回自体を行わない

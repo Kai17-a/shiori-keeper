@@ -76,9 +76,9 @@ services:
 
 ### Configure notifications
 
-- Set a global Discord, Slack, or Microsoft Teams webhook used across the app
-- Test whether the webhook endpoint is reachable
-- Use the webhook as the notification target for RSS execution
+- Register multiple Discord, Slack, or Microsoft Teams webhooks used across the app
+- Test whether each webhook endpoint is reachable
+- Use the registered webhooks as the notification targets for RSS execution
 
 ### See the overall status at a glance
 
@@ -97,7 +97,7 @@ services:
 - `Folders`: Create, edit, and delete folders
 - `Tags`: Create, edit, and delete tags
 - `RSS`: Register, edit, delete, and execute RSS feeds, including periodic batch runs
-- `Settings`: Configure the theme and webhook
+- `Settings`: Configure the theme and notification webhooks
 
 ## Where Data Is Stored
 
@@ -117,7 +117,7 @@ services:
 ## Notes
 
 - Invalid URL formats cannot be registered
-- Duplicate bookmark URLs, tag names, and RSS feed URLs are not allowed
+- Duplicate bookmark URLs, tag names, RSS feed URLs, and webhook URLs are not allowed
 - The webhook system supports Discord, Slack, and Microsoft Teams incoming webhooks
 
 ## Development Notes

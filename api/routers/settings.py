@@ -2,26 +2,50 @@ from fastapi import APIRouter, Depends
 
 from api.dependencies import get_settings_service
 from api.model.models import (
+    ErrorResponse,
     SettingsRssExecutionResponse,
     SettingsRssExecutionUpdate,
     SettingsRssWebhookNotificationResponse,
     SettingsRssWebhookNotificationUpdate,
+    SettingsWebhookCreate,
+    SettingsWebhookListResponse,
     SettingsWebhookPingRequest,
     SettingsWebhookPingResponse,
     SettingsWebhookResponse,
-    SettingsWebhookUpdate,
 )
 from api.services.settings_service import SettingsService
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
 
-@router.put("/webhook", status_code=200, response_model=SettingsWebhookResponse)
-def set_webhook(
-    body: SettingsWebhookUpdate,
+@router.get(
+    "/webhooks", status_code=200, response_model=SettingsWebhookListResponse
+)
+def list_webhooks(service: SettingsService = Depends(get_settings_service)):
+    return service.list_webhooks()
+
+
+@router.post(
+    "/webhooks",
+    status_code=201,
+    response_model=SettingsWebhookResponse,
+    responses={
+        409: {"model": ErrorResponse, "description": "Webhook URL is already registered"}
+    },
+)
+def create_webhook(
+    body: SettingsWebhookCreate,
     service: SettingsService = Depends(get_settings_service),
 ):
-    return service.set_webhook(body)
+    return service.create_webhook(body)
+
+
+@router.delete("/webhooks/{webhook_id}", status_code=204)
+def delete_webhook(
+    webhook_id: int,
+    service: SettingsService = Depends(get_settings_service),
+):
+    service.delete_webhook(webhook_id)
 
 
 @router.post(
@@ -32,11 +56,6 @@ def ping_webhook(
     service: SettingsService = Depends(get_settings_service),
 ):
     return service.ping_webhook(body)
-
-
-@router.get("/webhook", status_code=200, response_model=SettingsWebhookResponse)
-def get_webhook(service: SettingsService = Depends(get_settings_service)):
-    return service.get_webhook()
 
 
 @router.get(

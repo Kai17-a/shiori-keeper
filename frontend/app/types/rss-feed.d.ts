@@ -50,23 +50,7 @@ export interface RSSFeedListResponse {
 export interface RSSFeedExecuteResponse {
   feed_id: number;
   title: string;
-  webhook_url: string;
   delivered: boolean;
+  delivered_count: number;
   message?: string | null;
-}
-
-export interface SettingsWebhookResponse {
-  webhook_url: string;
-}
-
-export interface SettingsWebhookPingResponse {
-  pong: boolean;
-}
-
-export interface SettingsRssExecutionResponse {
-  enabled: boolean;
-}
-
-export interface SettingsRssWebhookNotificationResponse {
-  enabled: boolean;
 }
