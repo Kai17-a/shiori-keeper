@@ -145,7 +145,7 @@
           <UAlert
             v-if="!llmConfigured"
             title="Configure an LLM before registering a custom site"
-            description="The LLM must be able to open the site's URL itself and create a tested scraping configuration."
+            description="The LLM analyzes the site's HTML and creates a tested scraping configuration."
             color="warning"
             variant="soft"
           >
@@ -196,7 +196,7 @@
           :form="newsForm"
           :webhooks="webhooks"
           :title="newsForm.id ? 'Edit custom news site' : 'Register custom news site'"
-          :description="newsForm.id ? 'Update the selected custom source.' : 'Have a web-capable LLM inspect the URL and save a tested scraping configuration.'"
+          :description="newsForm.id ? 'Update the selected custom source.' : 'Analyze the site HTML and save a tested scraping configuration.'"
           :saving="newsSaving"
           @save="saveNewsSite"
         />

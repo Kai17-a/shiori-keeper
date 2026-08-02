@@ -21,9 +21,9 @@ LLM_SETTING_KEYS = (
     LLM_MODEL_SETTING_KEY,
 )
 
-ANALYSIS_SYSTEM_PROMPT = """You inspect live news websites and design scraping recipes.
-Open the URL supplied by the user using your own web-access or browsing capability.
-Do not ask the user to provide HTML and do not guess selectors without visiting the URL.
+MAX_HTML_CHARS = 50000
+
+ANALYSIS_SYSTEM_PROMPT = """You analyze the HTML of a news site and design a scraping recipe.
 Return ONLY a JSON object with these keys:
 - "site_title": human-readable name of the site (string)
 - "item_selector": CSS selector matching each news article container (string)
@@ -149,6 +149,17 @@ def test_llm_connection(config: LLMConfig) -> str:
     )
 
 
+def sanitize_html_for_analysis(html: str) -> str:
+    from bs4 import BeautifulSoup
+
+    soup = BeautifulSoup(html, "html.parser")
+    for tag in soup(["script", "style", "noscript", "template", "svg"]):
+        tag.decompose()
+    text = str(soup)
+    text = re.sub(r"\s+", " ", text)
+    return text[:MAX_HTML_CHARS]
+
+
 def parse_analysis_reply(reply: str) -> dict:
     candidate = reply.strip()
     fence_match = re.search(r"```(?:json)?\s*(.*?)```", candidate, re.DOTALL)
@@ -180,16 +191,14 @@ def parse_analysis_reply(reply: str) -> dict:
     return config
 
 
-def analyze_news_page(config: LLMConfig, *, page_url: str) -> dict:
-    """Ask a web-capable LLM to inspect a URL and design a scraping recipe."""
+def analyze_news_page(config: LLMConfig, *, page_url: str, html: str) -> dict:
+    """Ask the LLM to design a scraping recipe for a news site HTML page."""
+    cleaned_html = sanitize_html_for_analysis(html)
     reply = chat_completion(
         config,
         [
             {"role": "system", "content": ANALYSIS_SYSTEM_PROMPT},
-            {
-                "role": "user",
-                "content": f"Inspect this live news-list page and build its recipe. URL: {page_url}",
-            },
+            {"role": "user", "content": f"URL: {page_url}\n\nHTML:\n{cleaned_html}"},
         ],
         max_tokens=1024,
         timeout=90.0,

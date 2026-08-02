@@ -38,17 +38,9 @@
 
         <UPageCard
           title="LLM connection"
-          description="Configure the web-capable model used to inspect custom news-site URLs before registration"
+          description="Configure the model used to analyze custom news-site HTML before registration"
           :ui="{ body: 'space-y-5' }"
         >
-          <UAlert
-            title="A model with external URL access is required"
-            description="Custom-site analysis sends the URL only. It works only with models or compatible servers that can open external web pages; ordinary local Ollama/vLLM models and chat-only OpenAI-compatible endpoints may not support it. The connection test checks Chat API access, not browsing capability."
-            color="info"
-            variant="soft"
-            icon="i-lucide-globe-2"
-          />
-
           <UAlert
             v-if="!llmConfigured && !llmLoading"
             title="LLM settings are not configured"

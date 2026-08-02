@@ -63,7 +63,7 @@
 
 - `api/tests/test_news_sites.py`
   - LLM 未設定時の登録拒否
-  - LLM へ URL だけを渡す解析と、HTML 実抽出テスト成功後の登録
+  - HTML 解析と実抽出テスト成功後の登録
   - 記事を抽出できない selector の登録拒否と DB 未保存
   - 手動実行、相対 URL 解決、Webhook 通知、記事履歴、重複通知防止
   - URL 重複拒否

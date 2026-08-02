@@ -34,9 +34,7 @@
 - API 接続が復旧した場合はサイドバーカタログを強制再取得する。
 - RSS 一覧画面は RSS と custom news site の管理、webhook 通知、定期実行設定を持つ。
 - LLM 未設定時は custom news site 登録を無効化し、設定画面への導線を表示する。
-- custom news site 登録中は URL の LLM 解析と HTML 抽出テストの完了まで保存中状態を表示する。
-- custom news site 解析は外部 URL へアクセス可能な一部の model/server だけに対応し、通常の chat-only model は非対応である旨を設定・登録 UI に表示する。
-- LLM 接続テストは Chat API の疎通確認であり URL 閲覧能力を保証しない旨を設定 UI に表示する。
+- custom news site 登録中は HTML 解析と抽出テストの完了まで保存中状態を表示する。
 - 設定画面はテーマ、webhook、LLM 接続の管理を提供し、LLM API key の保存値は再表示しない。
 - API が利用できない場合でもカタログ読込のPromise rejectionを画面外へ漏らさず、UIを維持してエラー状態を表示する。
 
