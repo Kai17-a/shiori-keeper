@@ -19,6 +19,9 @@
   - health state の初期値
   - `/health` の正常、異常、通信失敗を利用可否へ正規化すること
 
+- `frontend/tests/nginxConfig.test.ts`
+  - 外部 reverse proxy 配下で公開 scheme、host、port を維持する相対 redirect 設定
+
 ## E2E テスト
 
 - `frontend/tests/e2e/bookmark-manager.spec.ts`

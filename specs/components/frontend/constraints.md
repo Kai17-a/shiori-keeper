@@ -3,6 +3,7 @@
 ## API 依存
 
 - フロントエンドは相対パス `/api` を使い、nginx または開発時プロキシ経由でバックエンドに到達する。
+- コンテナ内 nginx は相対 redirect を返し、外部 reverse proxy が公開する scheme、host、port を画面 reload 後も維持する。
 - リクエストエラーは `extractErrorMessage()` で正規化する。
 - `useBookmarkApi()` は共通の fetch 基盤として使われ、全ページが同じ `/api` 起点を参照する。
 
