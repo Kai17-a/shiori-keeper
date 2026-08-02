@@ -88,10 +88,14 @@ def test_create_webhook_rejects_blank_name(client):
 
 def test_create_webhook_rejects_duplicate_url(client):
     webhook_url = "https://discord.com/api/webhooks/1/token"
-    created = client.post("/settings/webhooks", json={"name": "Test webhook", "webhook_url": webhook_url})
+    created = client.post(
+        "/settings/webhooks", json={"name": "Test webhook", "webhook_url": webhook_url}
+    )
     assert created.status_code == 201
 
-    duplicate = client.post("/settings/webhooks", json={"name": "Test webhook", "webhook_url": webhook_url})
+    duplicate = client.post(
+        "/settings/webhooks", json={"name": "Test webhook", "webhook_url": webhook_url}
+    )
     assert duplicate.status_code == 409
     assert duplicate.json()["detail"] == "Webhook URL is already registered"
 
@@ -99,7 +103,10 @@ def test_create_webhook_rejects_duplicate_url(client):
 def test_delete_webhook_removes_it_from_the_list(client):
     created = client.post(
         "/settings/webhooks",
-        json={"name": "Test webhook", "webhook_url": "https://discord.com/api/webhooks/1/token"},
+        json={
+            "name": "Test webhook",
+            "webhook_url": "https://discord.com/api/webhooks/1/token",
+        },
     )
     webhook_id = created.json()["id"]
 
@@ -119,7 +126,10 @@ def test_delete_missing_webhook_returns_404(client):
 def test_create_webhook_rejects_discord_host_with_wrong_path(client):
     resp = client.post(
         "/settings/webhooks",
-        json={"name": "Test webhook", "webhook_url": "https://discord.com/channels/1/2"},
+        json={
+            "name": "Test webhook",
+            "webhook_url": "https://discord.com/channels/1/2",
+        },
     )
     assert resp.status_code == 422
     assert resp.json()["detail"] == (
@@ -129,7 +139,9 @@ def test_create_webhook_rejects_discord_host_with_wrong_path(client):
 
 def test_create_webhook_accepts_slack_url(client):
     webhook_url = "https://hooks.slack.com/services/xxx/yyy/zzz"
-    resp = client.post("/settings/webhooks", json={"name": "Test webhook", "webhook_url": webhook_url})
+    resp = client.post(
+        "/settings/webhooks", json={"name": "Test webhook", "webhook_url": webhook_url}
+    )
     assert resp.status_code == 201
     assert resp.json()["webhook_url"] == webhook_url
 
@@ -143,7 +155,9 @@ def test_create_webhook_accepts_slack_url(client):
     ],
 )
 def test_create_webhook_accepts_microsoft_teams_urls(client, webhook_url):
-    resp = client.post("/settings/webhooks", json={"name": "Test webhook", "webhook_url": webhook_url})
+    resp = client.post(
+        "/settings/webhooks", json={"name": "Test webhook", "webhook_url": webhook_url}
+    )
     assert resp.status_code == 201
     assert resp.json()["webhook_url"] == webhook_url
 
@@ -186,7 +200,10 @@ def test_ping_webhook_maps_httpx_error_to_502(client, monkeypatch):
 
     resp = client.post(
         "/settings/webhook/ping",
-        json={"name": "Test webhook", "webhook_url": "https://discord.com/api/webhooks/1/token"},
+        json={
+            "name": "Test webhook",
+            "webhook_url": "https://discord.com/api/webhooks/1/token",
+        },
     )
     assert resp.status_code == 502
     assert resp.json()["detail"] == "Failed to reach webhook"
@@ -224,6 +241,20 @@ def test_rss_webhook_notification_setting_can_toggle_true_and_false(client):
     assert disabled.json()["enabled"] is False
 
     last = client.get("/settings/rss-webhook-notification")
+    assert last.status_code == 200
+    assert last.json()["enabled"] is False
+
+
+def test_webhook_summary_setting_defaults_to_true_and_can_toggle(client):
+    first = client.get("/settings/webhook-summary")
+    assert first.status_code == 200
+    assert first.json()["enabled"] is True
+
+    disabled = client.put("/settings/webhook-summary", json={"enabled": False})
+    assert disabled.status_code == 200
+    assert disabled.json()["enabled"] is False
+
+    last = client.get("/settings/webhook-summary")
     assert last.status_code == 200
     assert last.json()["enabled"] is False
 

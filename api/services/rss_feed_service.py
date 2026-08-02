@@ -21,6 +21,7 @@ from api.model.models import (
     RSSFeedUpdate,
 )
 from api.repositories.rss_feed_repo import RSSFeedRepository
+from api.repositories.settings_repo import SettingsRepository
 from api.repositories.webhook_endpoint_repo import WebhookEndpointRepository
 from api.services.webhook_service import (
     build_rss_notification_payload,
@@ -32,9 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 class RSSFeedService:
-    def _parse_article_published(
-        self, value: object | None
-    ) -> datetime | None:
+    def _parse_article_published(self, value: object | None) -> datetime | None:
         if value is None:
             return None
         if isinstance(value, datetime):
@@ -191,7 +190,9 @@ class RSSFeedService:
     def _record_sent_articles(
         self, conn, feed_id: int, articles: list[dict[str, object]]
     ) -> None:
-        has_published = RSSFeedRepository(conn)._has_column("rss_feed_articles", "published")
+        has_published = RSSFeedRepository(conn)._has_column(
+            "rss_feed_articles", "published"
+        )
         insert_query = (
             """
                 INSERT OR IGNORE INTO rss_feed_articles (feed_id, url, title, published)
@@ -336,7 +337,9 @@ class RSSFeedService:
                 RSSFeedArticleResponse(
                     **{
                         **row,
-                        "published": self._parse_article_published(row.get("published")),
+                        "published": self._parse_article_published(
+                            row.get("published")
+                        ),
                     }
                 )
                 for row in rows
@@ -389,7 +392,9 @@ class RSSFeedService:
                 "notify_webhook_enabled" in payload
                 and payload["notify_webhook_enabled"] is not None
             ):
-                fields["notify_webhook_enabled"] = int(payload["notify_webhook_enabled"])
+                fields["notify_webhook_enabled"] = int(
+                    payload["notify_webhook_enabled"]
+                )
             if "webhook_ids" in payload:
                 self._sync_webhook_endpoints(repo, feed_id, payload["webhook_ids"])
             row = repo.update(feed_id, fields)
@@ -417,6 +422,9 @@ class RSSFeedService:
                     if int(entry["id"]) in selected_webhook_ids
                 ]
             webhook_urls = [str(entry["url"]) for entry in webhook_rows]
+            include_summary = SettingsRepository(conn).get_bool(
+                "webhook_include_summary_enabled", default=True
+            )
             if not webhook_urls:
                 raise HTTPException(
                     status_code=400, detail="Webhook URL is not configured"
@@ -477,6 +485,7 @@ class RSSFeedService:
                             total_articles=len(articles),
                             chunk_index=index,
                             chunk_count=len(article_chunks),
+                            include_summary=include_summary,
                         )
                         response = send_webhook(webhook_url, payload)
                         if response.status_code >= 400:

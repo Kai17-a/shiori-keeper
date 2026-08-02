@@ -1,4 +1,4 @@
-use rusqlite::{Connection, Result};
+use rusqlite::{Connection, OptionalExtension, Result};
 use std::env;
 
 pub fn database_path() -> String {
@@ -90,6 +90,17 @@ pub fn rss_webhook_notification_enabled(conn: &Connection) -> Result<bool> {
     )?;
     let value = stmt.query_row([], |row| row.get::<_, i64>(0)).unwrap_or(0);
     Ok(value != 0)
+}
+
+pub fn webhook_summary_enabled(conn: &Connection) -> Result<bool> {
+    let value = conn
+        .query_row(
+            "SELECT value FROM app_settings WHERE key = 'webhook_include_summary_enabled'",
+            [],
+            |row| row.get::<_, String>(0),
+        )
+        .optional()?;
+    Ok(value.as_deref().unwrap_or("1") != "0")
 }
 
 pub fn fetch_rss_feeds(conn: &Connection) -> Result<Vec<RSSFeed>> {

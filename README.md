@@ -104,6 +104,7 @@ Changing either value requires recreating the container.
 - Register multiple Discord, Slack, or Microsoft Teams webhooks with identifying names
 - Test whether each webhook endpoint is reachable
 - Use the registered webhooks as the notification targets for RSS execution
+- Choose globally whether RSS and custom-news webhook notifications include article summaries
 
 ### See the overall status at a glance
 

@@ -230,6 +230,7 @@ async fn post_with_retry_retries_three_times() {
             title: "Example Article",
             published: "Wed, 01 Jan 2025 00:00:00 GMT",
         }],
+        true,
     )
     .await;
 
@@ -295,6 +296,7 @@ async fn long_embed_content_is_truncated_before_sending() {
             title: "Example Article",
             published: "Wed, 01 Jan 2025 00:00:00 GMT",
         }],
+        true,
     )
     .await;
 
@@ -309,6 +311,39 @@ async fn long_embed_content_is_truncated_before_sending() {
     assert!(title.ends_with('…'));
     assert!(description.chars().count() <= 300);
     assert!(description.ends_with('…'));
+}
+
+#[tokio::test]
+async fn article_summary_can_be_omitted() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .respond_with(ResponseTemplate::new(204))
+        .mount(&server)
+        .await;
+
+    let result = webhook::send_rss_webhook(
+        &server.uri(),
+        "Example Feed",
+        "https://example.com/feed",
+        &[webhook::Embed {
+            title: "Example Article",
+            link: "https://example.com/article",
+            published: "Wed, 01 Jan 2025 00:00:00 GMT",
+            summary: "This summary must not be sent.",
+        }],
+        &[webhook::Article {
+            url: "https://example.com/article",
+            title: "Example Article",
+            published: "Wed, 01 Jan 2025 00:00:00 GMT",
+        }],
+        false,
+    )
+    .await;
+
+    assert!(result.is_ok());
+    let requests = server.received_requests().await.unwrap();
+    let body: serde_json::Value = serde_json::from_slice(&requests[0].body).unwrap();
+    assert!(body["embeds"][0].get("description").is_none());
 }
 
 async fn send_example_webhook(webhook_url: &str) -> Result<(), Box<dyn std::error::Error>> {
@@ -327,6 +362,7 @@ async fn send_example_webhook(webhook_url: &str) -> Result<(), Box<dyn std::erro
             title: "Example Article",
             published: "Wed, 01 Jan 2025 00:00:00 GMT",
         }],
+        true,
     )
     .await
 }

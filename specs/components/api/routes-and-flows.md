@@ -39,6 +39,7 @@
 | PUT    | `/settings/rss-execution`       | RSS 定期実行設定更新             |
 | GET    | `/settings/rss-webhook-notification` | RSS 定期実行 webhook 通知設定取得 |
 | PUT    | `/settings/rss-webhook-notification` | RSS 定期実行 webhook 通知設定更新 |
+| GET/PUT | `/settings/webhook-summary` | 全 webhook 通知のサマリー包含設定取得・更新 |
 | POST   | `/rss-feeds`                    | RSS フィード作成                 |
 | GET    | `/rss-feeds`                    | RSS フィード一覧取得             |
 | GET    | `/rss-feeds/{id}`               | RSS フィード詳細取得             |
@@ -185,6 +186,7 @@
 35. `PUT /settings/rss-execution` は、RSS 定期実行の有効/無効状態を更新する。
 36. `GET /settings/rss-webhook-notification` は、定期実行時に webhook 通知を送るかどうかの全体設定を返す。
 37. `PUT /settings/rss-webhook-notification` は、定期実行時に webhook 通知を送るかどうかの全体設定を更新する。
+38. `GET /settings/webhook-summary` と `PUT /settings/webhook-summary` は、RSS と custom news site の全 webhook 通知にサマリーを含めるかどうかを取得・更新する。
 38. `PUT /settings/llm` は chat completion の成功後だけ設定を保存し、API key 本文は返さない。
 39. `POST /settings/llm/test` は入力値を保存せず疎通確認し、省略項目は保存済み設定で補完する。
 40. `GET /settings/llm` は未設定時に 404、設定時に `api_key_configured` を含む設定を返す。

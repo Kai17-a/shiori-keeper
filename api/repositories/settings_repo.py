@@ -36,12 +36,12 @@ class SettingsRepository:
             (key,),
         )
 
-    def get_bool(self, key: str) -> bool:
+    def get_bool(self, key: str, default: bool = False) -> bool:
         row = self.conn.execute(
             "SELECT rss_periodic_execution_enabled FROM app_settings WHERE key = ?",
             (key,),
         ).fetchone()
-        return bool(row["rss_periodic_execution_enabled"]) if row else False
+        return bool(row["rss_periodic_execution_enabled"]) if row else default
 
     def set_bool(self, key: str, enabled: bool) -> bool:
         value = "1" if enabled else "0"

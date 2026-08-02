@@ -188,6 +188,49 @@ def test_execute_rss_feed_truncates_long_article_content_for_discord(client, mon
     assert embed["description"].endswith("…")
 
 
+def test_execute_rss_feed_can_omit_article_summaries(client, monkeypatch):
+    import api.services.rss_feed_service as rss_module
+    import api.services.webhook_service as webhook_module
+
+    payloads = []
+
+    def fake_post(url, json, timeout=5.0):
+        payloads.append(json)
+
+        class Response:
+            status_code = 204
+
+        return Response()
+
+    monkeypatch.setattr(webhook_module.httpx, "post", fake_post)
+    client.post(
+        "/settings/webhooks",
+        json={"name": "Test webhook", "webhook_url": "https://discord.com/api/webhooks/1/token"},
+    )
+    client.put("/settings/webhook-summary", json={"enabled": False})
+    feed_id = create_feed(client).json()["id"]
+
+    class ParsedEntry:
+        def get(self, key, default=None):
+            return {
+                "title": "Example article",
+                "link": "https://example.com/no-summary-notification",
+                "summary": "This summary must not be sent.",
+            }.get(key, default)
+
+    class ParsedFeed:
+        bozo = False
+        feed = {"title": "Parsed Example"}
+        entries = [ParsedEntry()]
+
+    monkeypatch.setattr(rss_module.feedparser, "parse", lambda content: ParsedFeed())
+
+    response = client.post(f"/rss-feeds/{feed_id}/execute")
+
+    assert response.status_code == 200
+    assert "description" not in payloads[0]["embeds"][0]
+
+
 def test_ping_webhook_returns_200(client, monkeypatch):
     import api.services.webhook_service as webhook_module
 

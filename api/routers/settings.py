@@ -11,6 +11,8 @@ from api.model.models import (
     SettingsRssExecutionUpdate,
     SettingsRssWebhookNotificationResponse,
     SettingsRssWebhookNotificationUpdate,
+    SettingsWebhookSummaryResponse,
+    SettingsWebhookSummaryUpdate,
     SettingsWebhookCreate,
     SettingsWebhookListResponse,
     SettingsWebhookPingRequest,
@@ -48,9 +50,7 @@ def test_llm_settings(
     return service.test_llm_settings(body)
 
 
-@router.get(
-    "/webhooks", status_code=200, response_model=SettingsWebhookListResponse
-)
+@router.get("/webhooks", status_code=200, response_model=SettingsWebhookListResponse)
 def list_webhooks(service: SettingsService = Depends(get_settings_service)):
     return service.list_webhooks()
 
@@ -60,7 +60,10 @@ def list_webhooks(service: SettingsService = Depends(get_settings_service)):
     status_code=201,
     response_model=SettingsWebhookResponse,
     responses={
-        409: {"model": ErrorResponse, "description": "Webhook URL is already registered"}
+        409: {
+            "model": ErrorResponse,
+            "description": "Webhook URL is already registered",
+        }
     },
 )
 def create_webhook(
@@ -126,3 +129,20 @@ def set_rss_webhook_notification(
     service: SettingsService = Depends(get_settings_service),
 ):
     return service.set_rss_webhook_notification(body)
+
+
+@router.get(
+    "/webhook-summary", status_code=200, response_model=SettingsWebhookSummaryResponse
+)
+def get_webhook_summary(service: SettingsService = Depends(get_settings_service)):
+    return service.get_webhook_summary()
+
+
+@router.put(
+    "/webhook-summary", status_code=200, response_model=SettingsWebhookSummaryResponse
+)
+def set_webhook_summary(
+    body: SettingsWebhookSummaryUpdate,
+    service: SettingsService = Depends(get_settings_service),
+):
+    return service.set_webhook_summary(body)

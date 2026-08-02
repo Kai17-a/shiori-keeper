@@ -8,6 +8,7 @@ use std::time::Duration;
 use crate::{
     fetch_news_sites, fetch_rss_feeds, fetch_webhook_endpoints, news,
     rss_periodic_execution_enabled, rss_webhook_notification_enabled, webhook,
+    webhook_summary_enabled,
 };
 
 pub async fn run_batch(conn: &Connection) -> Result<(), Box<dyn Error>> {
@@ -26,6 +27,7 @@ pub async fn run_batch(conn: &Connection) -> Result<(), Box<dyn Error>> {
     if !rss_webhook_notification_enabled(conn)? {
         return Ok(());
     }
+    let include_summary = webhook_summary_enabled(conn)?;
 
     let webhook_endpoints = fetch_webhook_endpoints(conn)?;
     if webhook_endpoints.is_empty() {
@@ -143,6 +145,7 @@ pub async fn run_batch(conn: &Connection) -> Result<(), Box<dyn Error>> {
                 &rss_feed.url,
                 &embeds,
                 &articles,
+                include_summary,
             )
             .await
             {
@@ -263,6 +266,7 @@ pub async fn run_batch(conn: &Connection) -> Result<(), Box<dyn Error>> {
                 &news_site.url,
                 &embeds,
                 &webhook_articles,
+                include_summary,
             )
             .await
             {

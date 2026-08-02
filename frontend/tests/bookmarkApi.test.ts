@@ -153,6 +153,8 @@ describe("bookmarkApi helpers", () => {
       { path: "/settings/webhook/ping", options: { method: "POST", body: JSON.stringify({ webhook_url: "https://example.com/webhook" }) } },
       { path: "/settings/rss-execution", options: { method: "GET" } },
       { path: "/settings/rss-execution", options: { method: "PUT", body: JSON.stringify({ enabled: true }) } },
+      { path: "/settings/webhook-summary", options: { method: "GET" } },
+      { path: "/settings/webhook-summary", options: { method: "PUT", body: JSON.stringify({ enabled: false }) } },
       { path: "/settings/llm", options: { method: "GET" } },
       { path: "/settings/llm", options: { method: "PUT", body: JSON.stringify({ provider: "ollama", base_url: "http://127.0.0.1:11434", model: "llama3.2" }) } },
       { path: "/settings/llm/test", options: { method: "POST", body: JSON.stringify({}) } },

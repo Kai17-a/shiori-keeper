@@ -48,6 +48,7 @@
   - ダッシュボード集計
 
 - `api/tests/test_settings.py`
+  - webhook サマリー包含設定が未設定時に有効であり、無効へ更新できること
   - webhook 未登録時の空一覧
   - webhook の複数登録と一覧取得
   - 重複 webhook URL の 409
@@ -191,6 +192,7 @@
   - RSS periodic execution の true/false 両遷移
 
 - `api/tests/test_rss_feeds.py`
+  - webhook サマリー包含設定が無効な場合に手動実行 payload からサマリーを除外すること
   - `/rss-feeds/{id}/articles` の paging と 404
   - `/rss-feeds/{id}/execute` の 400, 502, no-new-articles message
   - 送信済み article の二重記録防止

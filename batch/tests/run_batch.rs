@@ -1,7 +1,7 @@
 use rusqlite::Connection;
 use shiori_keeper_batch::{
     fetch_news_sites, fetch_rss_feeds, fetch_webhook_endpoints, rss_periodic_execution_enabled,
-    rss_webhook_notification_enabled, run_batch,
+    rss_webhook_notification_enabled, run_batch, webhook_summary_enabled,
 };
 
 fn create_in_memory_test_db(enabled: i64) -> Connection {
@@ -104,6 +104,20 @@ fn rss_execution_settings_read_their_own_rows() {
 
     assert!(rss_periodic_execution_enabled(&conn).expect("read periodic setting"));
     assert!(rss_webhook_notification_enabled(&conn).expect("read webhook notification setting"));
+}
+
+#[test]
+fn webhook_summary_defaults_to_enabled_and_can_be_disabled() {
+    let conn = create_in_memory_test_db(1);
+    assert!(webhook_summary_enabled(&conn).expect("read default summary setting"));
+
+    conn.execute(
+        "INSERT INTO app_settings (key, value) VALUES ('webhook_include_summary_enabled', '0')",
+        [],
+    )
+    .expect("insert summary setting");
+
+    assert!(!webhook_summary_enabled(&conn).expect("read disabled summary setting"));
 }
 
 #[test]

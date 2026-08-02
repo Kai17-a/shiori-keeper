@@ -135,6 +135,21 @@
           description="Register the Discord, Slack, or Microsoft Teams webhooks used by RSS execution"
           :ui="{ body: 'space-y-5' }"
         >
+          <div class="flex items-center justify-between gap-4 rounded-lg border border-default p-4">
+            <div>
+              <p class="font-medium text-highlighted">Include article summaries</p>
+              <p class="text-sm text-muted">
+                Include available summaries in all RSS and custom-news webhook notifications.
+              </p>
+            </div>
+            <USwitch
+              :model-value="webhookSummaryEnabled"
+              :loading="webhookSummaryLoading || webhookSummarySaving"
+              aria-label="Include article summaries"
+              @update:model-value="setWebhookSummary"
+            />
+          </div>
+
           <form class="space-y-4" @submit.prevent="addWebhook">
             <UFormField
               label="Name"
@@ -248,6 +263,7 @@ import type {
   SettingsWebhookListResponse,
   SettingsWebhookPingResponse,
   SettingsWebhookResponse,
+  SettingsWebhookSummaryResponse,
 } from "~/types";
 
 const colorMode = useColorMode();
@@ -276,6 +292,9 @@ const deleteOpen = ref(false);
 const deleting = ref(false);
 const pendingWebhook = ref<SettingsWebhookResponse | null>(null);
 const webhookForm = reactive({ name: "", webhookUrl: "" });
+const webhookSummaryEnabled = ref(true);
+const webhookSummaryLoading = ref(false);
+const webhookSummarySaving = ref(false);
 const llmSettings = ref<LLMSettingsResponse | null>(null);
 const llmLoading = ref(false);
 const llmSaving = ref(false);
@@ -438,6 +457,56 @@ const loadWebhooks = async () => {
   }
 };
 
+const loadWebhookSummary = async () => {
+  webhookSummaryLoading.value = true;
+  try {
+    const response = await request<SettingsWebhookSummaryResponse>(
+      "/settings/webhook-summary",
+    );
+    webhookSummaryEnabled.value = response.enabled;
+  } catch (err) {
+    toast.show({
+      title: "Failed to load webhook summary setting.",
+      description: err instanceof Error ? err.message : undefined,
+      color: "error",
+      icon: "i-lucide-circle-alert",
+    });
+  } finally {
+    webhookSummaryLoading.value = false;
+  }
+};
+
+const setWebhookSummary = async (enabled: boolean) => {
+  const previous = webhookSummaryEnabled.value;
+  webhookSummaryEnabled.value = enabled;
+  webhookSummarySaving.value = true;
+  try {
+    const response = await request<SettingsWebhookSummaryResponse>(
+      "/settings/webhook-summary",
+      {
+        method: "PUT",
+        body: JSON.stringify({ enabled }),
+      },
+    );
+    webhookSummaryEnabled.value = response.enabled;
+    toast.show({
+      title: "Webhook summary setting updated.",
+      color: "success",
+      icon: "i-lucide-check",
+    });
+  } catch (err) {
+    webhookSummaryEnabled.value = previous;
+    toast.show({
+      title: "Failed to update webhook summary setting.",
+      description: err instanceof Error ? err.message : undefined,
+      color: "error",
+      icon: "i-lucide-circle-alert",
+    });
+  } finally {
+    webhookSummarySaving.value = false;
+  }
+};
+
 const addWebhook = async () => {
   const name = webhookForm.name.trim();
   const webhookUrl = webhookForm.webhookUrl.trim();
@@ -557,6 +626,6 @@ const confirmDeleteWebhook = async () => {
 };
 
 onMounted(async () => {
-  await Promise.all([loadLlmSettings(), loadWebhooks()]);
+  await Promise.all([loadLlmSettings(), loadWebhooks(), loadWebhookSummary()]);
 });
 </script>

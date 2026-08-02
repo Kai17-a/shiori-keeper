@@ -224,7 +224,9 @@ class NewsSiteService:
             )
         return response.text
 
-    def _analyze_and_test(self, url: str) -> tuple[dict[str, object], list[dict[str, object]]]:
+    def _analyze_and_test(
+        self, url: str
+    ) -> tuple[dict[str, object], list[dict[str, object]]]:
         reference_id = new_diagnostic_reference()
         with get_db() as conn:
             llm_config = load_llm_config(SettingsRepository(conn))
@@ -283,7 +285,9 @@ class NewsSiteService:
         repo.set_webhook_ids(site_id, webhook_ids)
 
     def _to_response(self, row: dict) -> NewsSiteResponse:
-        response_row = {key: value for key, value in row.items() if key != "scrape_config"}
+        response_row = {
+            key: value for key, value in row.items() if key != "scrape_config"
+        }
         return NewsSiteResponse(**response_row)
 
     def create(self, data: NewsSiteCreate) -> NewsSiteResponse:
@@ -291,7 +295,9 @@ class NewsSiteService:
         with get_db() as conn:
             repo = NewsSiteRepository(conn)
             if repo.find_by_url(url) is not None:
-                raise HTTPException(status_code=409, detail="News site URL already exists")
+                raise HTTPException(
+                    status_code=409, detail="News site URL already exists"
+                )
             if data.webhook_ids is not None:
                 self._verify_webhooks(conn, data.webhook_ids)
 
@@ -360,9 +366,7 @@ class NewsSiteService:
                     )
                 scrape_config, _ = self._analyze_and_test(url)
                 fields["url"] = url
-                fields["scrape_config"] = json.dumps(
-                    scrape_config, ensure_ascii=False
-                )
+                fields["scrape_config"] = json.dumps(scrape_config, ensure_ascii=False)
         if "title" in payload:
             fields["title"] = payload["title"]
         if "description" in payload:
@@ -446,6 +450,9 @@ class NewsSiteService:
                     status_code=400, detail="Webhook URL is not configured"
                 )
             sent_urls = repo.load_sent_article_urls(site_id)
+            include_summary = SettingsRepository(conn).get_bool(
+                "webhook_include_summary_enabled", default=True
+            )
 
         html = self._fetch_page(str(row["url"]))
         try:
@@ -487,6 +494,7 @@ class NewsSiteService:
                             total_articles=len(articles),
                             chunk_index=index,
                             chunk_count=len(chunks),
+                            include_summary=include_summary,
                         ),
                     )
                     if response.status_code >= 400:

@@ -7,7 +7,7 @@
   - API base fallback resolution
   - Request header construction
   - Error message normalization
-  - Frontend API path coverage including bookmarks, folders, tags, RSS feeds, custom news sites, metrics, and LLM settings
+  - Frontend API path coverage including bookmarks, folders, tags, RSS feeds, custom news sites, metrics, LLM settings, and webhook summary settings
 
 - `frontend/tests/sidebarCatalog.test.ts`
   - Empty sidebar state creation

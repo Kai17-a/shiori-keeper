@@ -45,7 +45,7 @@ fn has_published_column(conn: &Connection) -> Result<bool, rusqlite::Error> {
     Ok(false)
 }
 
-fn chunk_embeds<'a>(embeds: &'a [Embed<'a>]) -> Vec<Vec<&'a Embed<'a>>> {
+fn chunk_embeds<'a>(embeds: &'a [Embed<'a>], include_summary: bool) -> Vec<Vec<&'a Embed<'a>>> {
     let mut chunks = Vec::new();
     let mut current = Vec::new();
     let mut current_len = 0usize;
@@ -54,7 +54,11 @@ fn chunk_embeds<'a>(embeds: &'a [Embed<'a>]) -> Vec<Vec<&'a Embed<'a>>> {
         let embed_len = embed.title.len().min(MAX_EMBED_TITLE_LEN)
             + embed.link.len()
             + embed.published.len()
-            + embed.summary.len().min(MAX_EMBED_SUMMARY_LEN);
+            + if include_summary {
+                embed.summary.len().min(MAX_EMBED_SUMMARY_LEN)
+            } else {
+                0
+            };
         if (current.len() >= 10 || current_len + embed_len > 6000) && !current.is_empty() {
             chunks.push(current);
             current = Vec::new();
@@ -123,32 +127,32 @@ pub(crate) fn build_payload(
             body.extend(embeds_payload.into_iter().map(|embed| {
                 let title = embed["title"].as_str().unwrap_or("(no title)");
                 let url = embed["url"].as_str().unwrap_or("(no link)");
-                let summary = embed["description"].as_str().unwrap_or("");
+                let mut items = vec![serde_json::json!({
+                    "type": "TextBlock",
+                    "text": title,
+                    "weight": "Bolder",
+                    "wrap": true,
+                })];
+                if let Some(summary) = embed["description"].as_str() {
+                    items.push(serde_json::json!({
+                        "type": "TextBlock",
+                        "text": summary,
+                        "isSubtle": true,
+                        "wrap": true,
+                    }));
+                }
+                items.push(serde_json::json!({
+                    "type": "ActionSet",
+                    "actions": [{
+                        "type": "Action.OpenUrl",
+                        "title": "Open article",
+                        "url": url,
+                    }],
+                }));
                 serde_json::json!({
                     "type": "Container",
                     "separator": true,
-                    "items": [
-                        {
-                            "type": "TextBlock",
-                            "text": title,
-                            "weight": "Bolder",
-                            "wrap": true,
-                        },
-                        {
-                            "type": "TextBlock",
-                            "text": summary,
-                            "isSubtle": true,
-                            "wrap": true,
-                        },
-                        {
-                            "type": "ActionSet",
-                            "actions": [{
-                                "type": "Action.OpenUrl",
-                                "title": "Open article",
-                                "url": url,
-                            }],
-                        }
-                    ],
+                    "items": items,
                 })
             }));
             serde_json::json!({
@@ -205,6 +209,7 @@ pub async fn send_rss_webhook(
     feed_url: &str,
     embeds: &[Embed<'_>],
     articles: &[Article<'_>],
+    include_summary: bool,
 ) -> Result<(), Box<dyn Error>> {
     send_article_webhook(
         webhook_url,
@@ -213,6 +218,7 @@ pub async fn send_rss_webhook(
         "RSS feed",
         embeds,
         articles,
+        include_summary,
     )
     .await
 }
@@ -223,6 +229,7 @@ pub async fn send_news_webhook(
     site_url: &str,
     embeds: &[Embed<'_>],
     articles: &[Article<'_>],
+    include_summary: bool,
 ) -> Result<(), Box<dyn Error>> {
     send_article_webhook(
         webhook_url,
@@ -231,6 +238,7 @@ pub async fn send_news_webhook(
         "news site",
         embeds,
         articles,
+        include_summary,
     )
     .await
 }
@@ -242,12 +250,13 @@ async fn send_article_webhook(
     source_kind: &str,
     embeds: &[Embed<'_>],
     articles: &[Article<'_>],
+    include_summary: bool,
 ) -> Result<(), Box<dyn Error>> {
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(10))
         .build()?;
     let webhook_service = detect_webhook_service(webhook_url).unwrap_or("discord");
-    let embed_chunks = chunk_embeds(embeds);
+    let embed_chunks = chunk_embeds(embeds, include_summary);
 
     for (index, chunk) in embed_chunks.iter().enumerate() {
         let mut content = format!(
@@ -266,7 +275,7 @@ async fn send_article_webhook(
                     "title": truncate(embed.title, MAX_EMBED_TITLE_LEN),
                     "url": embed.link,
                 });
-                if !embed.summary.is_empty() {
+                if include_summary && !embed.summary.is_empty() {
                     payload["description"] =
                         serde_json::json!(truncate(embed.summary, MAX_EMBED_SUMMARY_LEN));
                 }

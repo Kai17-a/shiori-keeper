@@ -1,7 +1,13 @@
 from datetime import datetime
 from typing import ClassVar, Literal
 
-from pydantic import AnyHttpUrl, BaseModel, Field as PydField, field_validator, model_validator
+from pydantic import (
+    AnyHttpUrl,
+    BaseModel,
+    Field as PydField,
+    field_validator,
+    model_validator,
+)
 from sqlalchemy import (
     Boolean,
     Column,
@@ -168,12 +174,8 @@ class NewsSite(SQLModel, table=True):
 class NewsSiteArticle(SQLModel, table=True):
     __tablename__: ClassVar[str] = "news_site_articles"
     __table_args__ = (
-        Index(
-            "idx_news_site_articles_site_url_unique", "site_id", "url", unique=True
-        ),
-        Index(
-            "idx_news_site_articles_site_published_id", "site_id", "published", "id"
-        ),
+        Index("idx_news_site_articles_site_url_unique", "site_id", "url", unique=True),
+        Index("idx_news_site_articles_site_published_id", "site_id", "published", "id"),
     )
 
     id: int | None = Field(default=None, primary_key=True)
@@ -212,9 +214,7 @@ class AppSetting(SQLModel, table=True):
 
 class WebhookEndpoint(SQLModel, table=True):
     __tablename__: ClassVar[str] = "webhook_endpoints"
-    __table_args__ = (
-        Index("idx_webhook_endpoints_url_unique", "url", unique=True),
-    )
+    __table_args__ = (Index("idx_webhook_endpoints_url_unique", "url", unique=True),)
 
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(
@@ -323,7 +323,10 @@ class BookmarkUpdate(BaseModel):
     @model_validator(mode="after")
     def reject_null_non_nullable_fields(self) -> "BookmarkUpdate":
         for field_name in ("url", "title", "tag_ids"):
-            if field_name in self.model_fields_set and getattr(self, field_name) is None:
+            if (
+                field_name in self.model_fields_set
+                and getattr(self, field_name) is None
+            ):
                 raise ValueError(f"{field_name} cannot be null")
         return self
 
@@ -443,7 +446,10 @@ class RSSFeedUpdate(BaseModel):
     @model_validator(mode="after")
     def reject_null_non_nullable_fields(self) -> "RSSFeedUpdate":
         for field_name in ("url", "title", "notify_webhook_enabled", "webhook_ids"):
-            if field_name in self.model_fields_set and getattr(self, field_name) is None:
+            if (
+                field_name in self.model_fields_set
+                and getattr(self, field_name) is None
+            ):
                 raise ValueError(f"{field_name} cannot be null")
         return self
 
@@ -577,6 +583,14 @@ class SettingsRssWebhookNotificationUpdate(BaseModel):
     enabled: bool
 
 
+class SettingsWebhookSummaryResponse(BaseModel):
+    enabled: bool
+
+
+class SettingsWebhookSummaryUpdate(BaseModel):
+    enabled: bool
+
+
 # --- LLM settings schemas ---
 
 
@@ -680,7 +694,10 @@ class NewsSiteUpdate(BaseModel):
     @model_validator(mode="after")
     def reject_null_non_nullable_fields(self) -> "NewsSiteUpdate":
         for field_name in ("url", "title", "notify_webhook_enabled", "webhook_ids"):
-            if field_name in self.model_fields_set and getattr(self, field_name) is None:
+            if (
+                field_name in self.model_fields_set
+                and getattr(self, field_name) is None
+            ):
                 raise ValueError(f"{field_name} cannot be null")
         return self
 

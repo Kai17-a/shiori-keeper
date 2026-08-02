@@ -17,6 +17,7 @@
   - 通知先未選択のフィードは空の選択として扱う
 
 - `batch/tests/webhook.rs`
+  - 全体設定が無効な場合に webhook payload から記事サマリーを除外する
   - webhook payload の基本形
   - `record_sent_articles` による送信済み記事の記録
   - `load_sent_article_urls` による送信済み URL の読み込み
@@ -29,6 +30,7 @@
   - 不正 CSS selector の拒否
 
 - `batch/tests/run_batch.rs`
+  - webhook サマリー包含設定は未設定時に有効で、`0` の場合は無効になる
   - custom news site の `scrape_config` と選択済み webhook ID の読込
 
 ## 追加で確認したい観点

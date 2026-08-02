@@ -24,6 +24,7 @@ from api.model.models import (
     RSSFeedUpdate,
     SettingsRssExecutionUpdate,
     SettingsRssWebhookNotificationUpdate,
+    SettingsWebhookSummaryUpdate,
     SettingsWebhookCreate,
     SettingsWebhookPingRequest,
     TagAttach,
@@ -148,7 +149,11 @@ class CompatTestClient:
                 RSSFeedService().list(q=q, page=page, per_page=per_page).model_dump()
             )
             return self._ok(payload, 200)
-        if method == "GET" and path.startswith("/rss-feeds/") and path.endswith("/articles"):
+        if (
+            method == "GET"
+            and path.startswith("/rss-feeds/")
+            and path.endswith("/articles")
+        ):
             parts = path.strip("/").split("/")
             feed_id = int(parts[1])
             q = query.get("q", [None])[0]
@@ -206,8 +211,10 @@ class CompatTestClient:
                 .model_dump()
             )
             return self._ok(payload, 200)
-        if method == "GET" and path.startswith("/news-sites/") and path.endswith(
-            "/articles"
+        if (
+            method == "GET"
+            and path.startswith("/news-sites/")
+            and path.endswith("/articles")
         ):
             site_id = int(path.strip("/").split("/")[1])
             payload = (
@@ -223,8 +230,10 @@ class CompatTestClient:
                 .model_dump()
             )
             return self._ok(payload, 200)
-        if method == "POST" and path.startswith("/news-sites/") and path.endswith(
-            "/execute"
+        if (
+            method == "POST"
+            and path.startswith("/news-sites/")
+            and path.endswith("/execute")
         ):
             site_id = int(path.strip("/").split("/")[1])
             return self._ok(NewsSiteService().execute(site_id).model_dump(), 200)
@@ -280,7 +289,9 @@ class CompatTestClient:
             return self._ok(payload, 200)
         if method == "PATCH" and path == "/bookmarks/by-url" and "url" in query:
             body = BookmarkUpdate(**(json or {}))
-            payload = BookmarkService().update_by_url(query["url"][0], body).model_dump()
+            payload = (
+                BookmarkService().update_by_url(query["url"][0], body).model_dump()
+            )
             return self._ok(payload, 200)
         if method == "PATCH" and path.startswith("/bookmarks/") and "/tags" not in path:
             body = BookmarkUpdate(**(json or {}))
@@ -311,8 +322,14 @@ class CompatTestClient:
         if method == "DELETE" and path == "/bookmarks/by-url" and "url" in query:
             BookmarkService().delete_by_url(query["url"][0])
             return self._ok(status_code=204)
-        if method == "DELETE" and path.startswith("/bookmarks/") and "/tags" not in path:
-            BookmarkService().delete_by_criteria(bookmark_id=int(path.rsplit("/", 1)[1]))
+        if (
+            method == "DELETE"
+            and path.startswith("/bookmarks/")
+            and "/tags" not in path
+        ):
+            BookmarkService().delete_by_criteria(
+                bookmark_id=int(path.rsplit("/", 1)[1])
+            )
             return self._ok(status_code=204)
         if (
             method == "POST"
@@ -379,13 +396,17 @@ class CompatTestClient:
                 return self._ok(SettingsService().get_llm_settings().model_dump(), 200)
             if method == "PUT" and path == "/settings/llm":
                 body = LLMSettingsUpdate(**(json or {}))
-                return self._ok(SettingsService().set_llm_settings(body).model_dump(), 200)
+                return self._ok(
+                    SettingsService().set_llm_settings(body).model_dump(), 200
+                )
             if method == "DELETE" and path == "/settings/llm":
                 SettingsService().delete_llm_settings()
                 return self._ok(None, 204)
             if method == "POST" and path == "/settings/llm/test":
                 body = LLMSettingsTestRequest(**(json or {}))
-                return self._ok(SettingsService().test_llm_settings(body).model_dump(), 200)
+                return self._ok(
+                    SettingsService().test_llm_settings(body).model_dump(), 200
+                )
 
             if method == "GET" and path == "/settings/webhooks":
                 payload = SettingsService().list_webhooks().model_dump()
@@ -413,7 +434,16 @@ class CompatTestClient:
                 return self._ok(payload, 200)
             if method == "PUT" and path == "/settings/rss-webhook-notification":
                 body = SettingsRssWebhookNotificationUpdate(**(json or {}))
-                payload = SettingsService().set_rss_webhook_notification(body).model_dump()
+                payload = (
+                    SettingsService().set_rss_webhook_notification(body).model_dump()
+                )
+                return self._ok(payload, 200)
+            if method == "GET" and path == "/settings/webhook-summary":
+                payload = SettingsService().get_webhook_summary().model_dump()
+                return self._ok(payload, 200)
+            if method == "PUT" and path == "/settings/webhook-summary":
+                body = SettingsWebhookSummaryUpdate(**(json or {}))
+                payload = SettingsService().set_webhook_summary(body).model_dump()
                 return self._ok(payload, 200)
             bookmarks_response = self._handle_bookmarks(method, path, query, json)
             if bookmarks_response is not None:

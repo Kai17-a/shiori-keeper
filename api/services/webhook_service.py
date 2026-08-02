@@ -45,8 +45,10 @@ def detect_webhook_service(webhook_url: str) -> str:
         "discordapp.com",
         "www.discordapp.com",
     }
-    if parsed.scheme in {"http", "https"} and hostname in discord_hosts and path.startswith(
-        "/api/webhooks/"
+    if (
+        parsed.scheme in {"http", "https"}
+        and hostname in discord_hosts
+        and path.startswith("/api/webhooks/")
     ):
         return "discord"
 
@@ -117,6 +119,7 @@ def build_rss_notification_payload(
     total_articles: int | None = None,
     chunk_index: int = 1,
     chunk_count: int = 1,
+    include_summary: bool = True,
 ) -> dict[str, object]:
     if webhook_service == "discord":
         article_count = total_articles if total_articles is not None else len(articles)
@@ -130,7 +133,7 @@ def build_rss_notification_payload(
                             str(article["summary"]), NOTIFICATION_SUMMARY_MAX
                         )
                     }
-                    if article.get("summary")
+                    if include_summary and article.get("summary")
                     else {}
                 ),
             }
@@ -160,7 +163,7 @@ def build_rss_notification_payload(
             url = str(article["url"])
             summary = article.get("summary")
             text = f"• <{url}|{title}>"
-            if summary:
+            if include_summary and summary:
                 text = f"{text}\n{_truncate(str(summary), NOTIFICATION_SUMMARY_MAX)}"
             blocks.append(
                 {
@@ -196,7 +199,7 @@ def build_rss_notification_payload(
                     "wrap": True,
                 }
             ]
-            if article.get("summary"):
+            if include_summary and article.get("summary"):
                 article_body.append(
                     {
                         "type": "TextBlock",

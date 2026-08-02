@@ -27,6 +27,10 @@ export interface SettingsRssWebhookNotificationResponse {
   enabled: boolean;
 }
 
+export interface SettingsWebhookSummaryResponse {
+  enabled: boolean;
+}
+
 export type LLMProvider = "vllm" | "ollama" | "openai";
 
 export interface LLMSettingsResponse {

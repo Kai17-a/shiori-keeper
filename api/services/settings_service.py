@@ -13,6 +13,8 @@ from api.model.models import (
     SettingsRssExecutionUpdate,
     SettingsRssWebhookNotificationResponse,
     SettingsRssWebhookNotificationUpdate,
+    SettingsWebhookSummaryResponse,
+    SettingsWebhookSummaryUpdate,
     SettingsWebhookCreate,
     SettingsWebhookListResponse,
     SettingsWebhookPingRequest,
@@ -36,6 +38,7 @@ from api.services.webhook_service import (
 
 RSS_EXECUTION_SETTING_KEY = "rss_periodic_execution_enabled"
 RSS_WEBHOOK_NOTIFICATION_SETTING_KEY = "rss_webhook_notification_enabled"
+WEBHOOK_SUMMARY_SETTING_KEY = "webhook_include_summary_enabled"
 
 
 class SettingsService:
@@ -180,7 +183,9 @@ class SettingsService:
         api_key = (
             None
             if data.clear_api_key
-            else data.api_key if data.api_key is not None else (saved.api_key if saved else None)
+            else data.api_key
+            if data.api_key is not None
+            else (saved.api_key if saved else None)
         )
         return LLMConfig(
             provider=provider,
@@ -223,4 +228,20 @@ class SettingsService:
                 enabled=repo.set_bool(
                     RSS_WEBHOOK_NOTIFICATION_SETTING_KEY, data.enabled
                 )
+            )
+
+    def get_webhook_summary(self) -> SettingsWebhookSummaryResponse:
+        with get_db() as conn:
+            repo = SettingsRepository(conn)
+            return SettingsWebhookSummaryResponse(
+                enabled=repo.get_bool(WEBHOOK_SUMMARY_SETTING_KEY, default=True)
+            )
+
+    def set_webhook_summary(
+        self, data: SettingsWebhookSummaryUpdate
+    ) -> SettingsWebhookSummaryResponse:
+        with get_db() as conn:
+            repo = SettingsRepository(conn)
+            return SettingsWebhookSummaryResponse(
+                enabled=repo.set_bool(WEBHOOK_SUMMARY_SETTING_KEY, data.enabled)
             )

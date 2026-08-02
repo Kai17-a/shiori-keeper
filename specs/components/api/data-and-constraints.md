@@ -221,6 +221,7 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `settings/webhook/ping` は送信前確認用の疎通確認 API である
 - `settings/rss-execution` は RSS 定期実行フラグを保存する
 - `settings/rss-webhook-notification` は RSS 定期実行時の webhook 通知可否を保存する
+- `settings/webhook-summary` は全 webhook 通知に記事サマリーを含めるかを保存し、未設定時は有効として扱う
 - `rss_feed_articles.url` は同一 feed 内で一意である
 - LLM provider は `ollama`、`vllm`、`openai`（OpenAI 互換）のいずれかである
 - LLM 設定は接続・model・credential を使った chat completion 成功後だけ保存する

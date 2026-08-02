@@ -154,6 +154,7 @@ erDiagram
 | --- | --- |
 | `rss_periodic_execution_enabled` | batch による RSS 定期実行の有効/無効 |
 | `rss_webhook_notification_enabled` | batch 実行時の webhook 通知の有効/無効 |
+| `webhook_include_summary_enabled` | 全 webhook 通知に記事サマリーを含めるか。未設定時は有効 |
 | `llm_provider` | `ollama`、`vllm`、`openai` の provider 識別子 |
 | `llm_base_url` | LLM HTTP endpoint の base URL |
 | `llm_api_key` | LLM credential（API レスポンスでは非公開） |
