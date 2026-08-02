@@ -137,6 +137,7 @@
   - 総数取得
 
 - `GET /rss-feeds/{id}/articles`
+  - API と batch が保存する日時形式の違いにかかわらず `published` の新しい順で返し、日時なしを末尾にする
   - 記事一覧取得
   - `page` と `per_page`
   - 存在しない feed の 404

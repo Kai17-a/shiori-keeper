@@ -102,7 +102,7 @@ API は Python で実装し、データストアには SQLite を使用する。
 1. WHEN Clientが有効なフィード URL・タイトルを含む POST リクエストを `/rss-feeds` に送信したとき、THE API SHALL 新しい RSS フィードを DB に保存し、HTTP ステータス 201 と作成された RSS フィードオブジェクトを返す。
 2. WHEN Clientが `GET /rss-feeds` にリクエストを送信したとき、THE API SHALL RSS フィード一覧を返し、`q`、`page`、`per_page` による検索とページングをサポートする。
 3. WHEN Clientが `GET /rss-feeds/{id}` にリクエストを送信したとき、THE API SHALL 指定 ID の RSS フィードを返す。
-4. WHEN Clientが `GET /rss-feeds/{id}/articles` にリクエストを送信したとき、THE API SHALL 保存済み記事一覧を返し、`page` と `per_page` によるページングをサポートする。
+4. WHEN Clientが `GET /rss-feeds/{id}/articles` にリクエストを送信したとき、THE API SHALL 保存済み記事一覧を `published` の新しい順（未設定は末尾）で返し、`page` と `per_page` によるページングをサポートする。
 5. WHEN Clientが `PATCH /rss-feeds/{id}` にリクエストを送信したとき、THE API SHALL 指定 RSS フィードを部分更新し、更新後の RSS フィードを返す。
 6. WHEN Clientが `DELETE /rss-feeds/{id}` にリクエストを送信したとき、THE API SHALL 指定 RSS フィードを削除し、HTTP ステータス 204 を返す。
 7. IF Clientが無効な URL 形式を送信したとき、THEN THE API SHALL HTTP ステータス 422 を返す。

@@ -1,6 +1,6 @@
 import logging
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 import xml.etree.ElementTree as ET
 from typing import cast
@@ -68,6 +68,14 @@ class RSSFeedService:
         if published_parsed is not None:
             return datetime.fromtimestamp(mktime(cast(tuple, published_parsed)))
         return None
+
+    def _article_published_sort_key(self, row: dict) -> tuple[int, float, int]:
+        published = self._parse_article_published(row.get("published"))
+        if published is None:
+            return (0, float("-inf"), int(row.get("id") or 0))
+        if published.tzinfo is None:
+            published = published.replace(tzinfo=timezone.utc)
+        return (1, published.timestamp(), int(row.get("id") or 0))
 
     def _extract_webhook_error_detail(self, response: httpx.Response) -> str | None:
         content_type = response.headers.get("content-type", "")
@@ -299,6 +307,7 @@ class RSSFeedService:
             if repo.find_by_id(feed_id) is None:
                 raise HTTPException(status_code=404, detail="RSS feed not found")
             rows = repo.find_articles_by_feed_id(feed_id)
+            rows.sort(key=self._article_published_sort_key, reverse=True)
             if q is not None:
                 query = q.strip().lower()
                 if query:

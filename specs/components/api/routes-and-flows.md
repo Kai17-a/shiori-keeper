@@ -519,6 +519,7 @@ Response:
 ### `GET /rss-feeds/{id}/articles`
 
 - 保存済み記事の一覧を返す
+- `published` を日時として比較し、新しい記事から古い記事の順で返す。`published` がない記事は末尾に配置する
 - `q`、`published_from`、`published_to`、`page`、`per_page` を受け付ける
 
 Response:

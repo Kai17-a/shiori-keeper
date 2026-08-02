@@ -425,6 +425,50 @@ def test_list_rss_feed_articles_orders_by_published_desc(client, monkeypatch):
     ]
 
 
+def test_list_rss_feed_articles_orders_batch_rfc_dates_by_instant(client):
+    import api.services.rss_feed_service as rss_module
+
+    feed_id = create_feed(client).json()["id"]
+    with rss_module.get_db() as conn:
+        conn.executemany(
+            """
+            INSERT INTO rss_feed_articles (feed_id, url, title, published)
+            VALUES (?, ?, ?, ?)
+            """,
+            [
+                (
+                    feed_id,
+                    "https://example.com/item-1",
+                    "Item 1",
+                    "Wed, 01 Jan 2025 00:00:00 GMT",
+                ),
+                (
+                    feed_id,
+                    "https://example.com/item-2",
+                    "Item 2",
+                    "Fri, 03 Jan 2025 00:00:00 GMT",
+                ),
+                (
+                    feed_id,
+                    "https://example.com/item-3",
+                    "Item 3",
+                    "Thu, 02 Jan 2025 00:00:00 GMT",
+                ),
+                (feed_id, "https://example.com/item-undated", "Undated", None),
+            ],
+        )
+
+    resp = client.get(f"/rss-feeds/{feed_id}/articles")
+
+    assert resp.status_code == 200
+    assert [item["url"] for item in resp.json()["items"]] == [
+        "https://example.com/item-2",
+        "https://example.com/item-3",
+        "https://example.com/item-1",
+        "https://example.com/item-undated",
+    ]
+
+
 def test_list_rss_feed_articles_accepts_page_and_per_page(client, monkeypatch):
     import api.services.rss_feed_service as rss_module
 
