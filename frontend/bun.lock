@@ -4,6 +4,7 @@
   "workspaces": {
     "": {
       "name": "shiori-keeper-frontend",
+      "version": "0.2.0",
       "dependencies": {
         "@iconify-json/lucide": "^1.2.100",
         "@iconify-json/simple-icons": "^1.2.75",
