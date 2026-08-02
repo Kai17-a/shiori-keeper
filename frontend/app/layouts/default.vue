@@ -87,7 +87,7 @@ const {
 } = useApiHealth();
 const toast = useSingleToast();
 
-const open = ref(true);
+const open = ref(false);
 
 const closeSidebar = () => {
   open.value = false;
