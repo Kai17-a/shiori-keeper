@@ -34,12 +34,27 @@ services:
     image: ghcr.io/kai17-a/shiori-keeper:latest
     environment:
       DATABASE_URL: /data/data.db
+      RSS_CRON_SCHEDULE: "0 * * * *"
+      TZ: UTC
     ports:
       - "3000:3000"
       - "8000:8000"
     volumes:
       - ./data:/data
 ```
+
+The scheduled RSS/custom-news batch runs hourly by default. Override
+`RSS_CRON_SCHEDULE` with a cron expression and set `TZ` when the schedule must
+follow a specific timezone. For example, this runs hourly from 06:00 through
+22:00 in Japan and does not run from 23:00 through 05:59:
+
+```yaml
+environment:
+  RSS_CRON_SCHEDULE: "0 6-22 * * *"
+  TZ: Asia/Tokyo
+```
+
+Changing either value requires recreating the container.
 
 ## What You Can Do
 

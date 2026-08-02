@@ -47,7 +47,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends nginx curl \
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends nginx curl tzdata \
   && rm -rf /var/lib/apt/lists/*
 
 RUN case "$TARGETARCH" in \
@@ -81,12 +81,13 @@ COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=frontend-build /app/frontend/dist /usr/share/nginx/html
 COPY --from=batch-build /bin/shiori-keeper-batch /usr/local/bin/shiori-keeper-batch
 
-COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
+COPY start.sh render-scheduler.sh /app/
+RUN chmod +x /app/start.sh /app/render-scheduler.sh
 
 # Runtime defaults; users can override these with `docker run -e` or compose
 ENV DATABASE_URL=/data/data.db
 ENV API_PORT=8000
+ENV RSS_CRON_SCHEDULE="0 * * * *"
 
 EXPOSE 3000 8000
 

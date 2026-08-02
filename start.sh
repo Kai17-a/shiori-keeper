@@ -31,7 +31,7 @@ API_PID=$!
 nginx -g 'daemon off;' &
 FRONTEND_PID=$!
 
-printf '%s\n' "0 * * * * shiori-keeper-batch" > scheduler
+sh ./render-scheduler.sh > scheduler
 supercronic ./scheduler &
 SCHEDULER_PID=$!
 

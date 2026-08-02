@@ -2,6 +2,8 @@
 
 `batch` は CLI として起動される処理であり、Web アプリのルートや HTTP API は提供しない。
 
+コンテナ起動時は `render-scheduler.sh` が `RSS_CRON_SCHEDULE`（既定値 `0 * * * *`）と batch コマンドから Supercronic の crontab を生成する。時間帯や曜日は cron 式で制限でき、評価するタイムゾーンは `TZ` で指定する。不正な複数行または空の設定ではコンテナを起動しない。
+
 ## 起動
 
 1. `main.rs` が `database_path()` で DB パスを決定する

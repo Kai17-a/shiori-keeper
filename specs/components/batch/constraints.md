@@ -3,6 +3,9 @@
 ## 実行条件
 
 - `batch` は API サーバーとは別プロセスとして実行する
+- `RSS_CRON_SCHEDULE` 未指定時は `0 * * * *` として毎時 0 分に実行する
+- `RSS_CRON_SCHEDULE` は単一の Supercronic 互換 cron 式とし、改行または空値を拒否する
+- 実行時刻のタイムゾーンはコンテナの `TZ` に従う
 - `DATABASE_URL` は SQLite DB ファイルパスとして扱う
 - `DATABASE_URL` 未指定時は `data/data.db` を使う
 - DB スキーマは API と dbmate migration が用意したものを前提とする

@@ -132,6 +132,7 @@ API は Python で実装し、データストアには SQLite を使用する。
 12. IF すべての webhook 通知に失敗したとき、THEN THE API SHALL HTTP ステータス 502 を返す。
 13. WHEN Clientが `GET /settings/rss-webhook-notification` または `PUT /settings/rss-webhook-notification` にリクエストを送信したとき、THE API SHALL RSS 定期実行時の webhook 通知有効/無効状態を取得・更新する。
 14. THE API SHALL Discord、Slack、Microsoft Teams の incoming webhook に対応する。
+15. WHEN コンテナを起動するとき、THE SYSTEM SHALL `RSS_CRON_SCHEDULE` の Supercronic 互換 cron 式で定期 batch を起動し、未指定時は毎時 0 分を使用し、`TZ` によるタイムゾーン指定を反映する。
 
 ### 要件8: LLM 設定とカスタムニュースサイト
 

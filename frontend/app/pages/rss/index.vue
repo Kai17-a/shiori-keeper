@@ -16,8 +16,8 @@
               <div class="space-y-1">
                 <p class="text-sm font-medium text-default">Run on schedule</p>
                 <p class="text-sm text-muted">
-                  When enabled, the batch process is allowed to run RSS delivery jobs once
-                  every hour.
+                  When enabled, the batch process runs RSS delivery jobs on the schedule
+                  configured for the container.
                 </p>
               </div>
               <USwitch v-model="rssExecutionEnabled" :loading="rssExecutionLoading" />

@@ -14,6 +14,8 @@ cleanup() {
 
 trap cleanup EXIT INT TERM
 
+sh "$repo_root/scripts/test-scheduler-config.sh"
+
 start_api_server() {
     uv run --directory "$repo_root/api" uvicorn api.main:app --app-dir "$repo_root" --host 127.0.0.1 --port 8000 > /tmp/bookmark-manager-api.log 2>&1 &
     api_pid=$!

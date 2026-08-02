@@ -7,6 +7,8 @@ API サーバーとは別プロセスとして動作し、HTTP ルートは持�
 
 - `DATABASE_URL` で指定された SQLite DB を開く
 - `DATABASE_URL` 未指定時は `data/data.db` を使う
+- コンテナは `RSS_CRON_SCHEDULE` の cron 式で batch を起動し、未指定時は毎時 0 分に実行する
+- cron のタイムゾーンはコンテナの `TZ` で指定する
 - `app_settings` から RSS 定期実行と webhook 通知の全体設定を読む
 - `webhook_endpoints` から通知先 webhook URL を全件読む
 - `rss_feeds.notify_webhook_enabled = 1` の RSS フィードのみを巡回対象にする

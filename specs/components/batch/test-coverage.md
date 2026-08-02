@@ -2,6 +2,11 @@
 
 ## 既存テスト
 
+- `scripts/test-scheduler-config.sh`
+  - cron 式未指定時の毎時実行
+  - 時間帯を限定した cron 式
+  - 空値と複数行設定の拒否
+
 - `batch/tests/run_batch.rs`
   - RSS 定期実行が無効な場合に成功扱いで終了する
   - RSS webhook 通知が無効な場合に成功扱いで終了する
