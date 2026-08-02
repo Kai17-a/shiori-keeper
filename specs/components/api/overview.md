@@ -13,7 +13,7 @@
 - `settings` によるアプリ全体設定の管理
 - RSS 実行 API、RSS 記事の保存済み一覧取得、Discord/Slack/Microsoft Teams webhook 通知
 - Ollama、vLLM、OpenAI 互換 LLM の疎通確認付き設定保存
-- custom news site 登録時の HTML 取得、LLM selector 生成、実抽出テスト
+- custom news site 登録時の URL-only LLM selector 生成、API による HTML 取得と実抽出テスト
 - custom news site の CRUD、手動実行、記事履歴、webhook 通知
 - 手動 RSS 実行は API が直接 RSS 取得と webhook 通知を行う
 - Rust の `batch` は RSS 定期実行が有効な場合のみ巡回処理を担う

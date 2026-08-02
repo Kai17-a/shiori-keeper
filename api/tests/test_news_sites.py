@@ -69,7 +69,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(
         news_module,
         "analyze_news_page",
-        lambda _config, *, page_url, html: scrape_config,
+        lambda _config, *, page_url: scrape_config,
     )
     monkeypatch.setattr(settings_module, "test_llm_connection", lambda _config: "pong")
 
@@ -120,7 +120,7 @@ def test_registration_rejects_a_recipe_that_extracts_no_articles(client, monkeyp
     monkeypatch.setattr(
         news_module,
         "analyze_news_page",
-        lambda _config, *, page_url, html: {
+        lambda _config, *, page_url: {
             "site_title": "Broken",
             "item_selector": ".missing",
             "title_selector": "a",
@@ -145,7 +145,7 @@ def test_registration_requires_extracted_titles(client, monkeypatch):
     monkeypatch.setattr(
         news_module,
         "analyze_news_page",
-        lambda _config, *, page_url, html: {
+        lambda _config, *, page_url: {
             "site_title": "Broken",
             "item_selector": ".news-item",
             "title_selector": ".missing-title",

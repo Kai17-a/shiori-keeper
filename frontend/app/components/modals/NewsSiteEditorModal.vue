@@ -54,7 +54,7 @@
         <UAlert
           v-if="!form.id"
           title="Registration includes a live extraction test"
-          description="The page HTML is analyzed by the configured LLM and at least one title and link must be extracted before the site is saved."
+          description="Only the URL is sent to the LLM, so the selected model must support external web access. Shiori Keeper then extracts at least one title and link from the page before saving."
           color="info"
           variant="soft"
         />

@@ -2,7 +2,12 @@
 
 import pytest
 
-from api.services.llm_service import LLMConfig, chat_completion, parse_analysis_reply
+from api.services.llm_service import (
+    LLMConfig,
+    analyze_news_page,
+    chat_completion,
+    parse_analysis_reply,
+)
 
 
 @pytest.mark.parametrize(
@@ -80,3 +85,36 @@ def test_analysis_reply_accepts_optional_summary_selector():
     )
 
     assert parsed["summary_selector"] == ".summary"
+
+
+def test_news_analysis_sends_only_the_url_to_the_llm(monkeypatch):
+    import api.services.llm_service as llm_module
+
+    captured = {}
+
+    def fake_chat(config, messages, *, max_tokens, timeout):
+        captured["messages"] = messages
+        return """{
+          "site_title": "Example",
+          "item_selector": "article",
+          "title_selector": "h2",
+          "link_selector": "a",
+          "link_attribute": "href",
+          "published_selector": null,
+          "published_attribute": null,
+          "summary_selector": null
+        }"""
+
+    monkeypatch.setattr(llm_module, "chat_completion", fake_chat)
+    config = LLMConfig(
+        provider="ollama",
+        base_url="http://127.0.0.1:11434",
+        api_key=None,
+        model="web-capable-model",
+    )
+
+    analyze_news_page(config, page_url="https://example.com/news")
+
+    user_message = captured["messages"][1]["content"]
+    assert "https://example.com/news" in user_message
+    assert "HTML:" not in user_message

@@ -80,6 +80,7 @@
 - Ollama、vLLM、OpenAI 互換 endpoint、model、任意の API key を入力し、接続テストする
 - LLM 設定は保存時にも接続確認し、失敗時は入力値を保存しない
 - 保存済み LLM API key は再表示せず、登録済み状態と削除操作だけを提供する
+- custom news site 解析には外部 URL へアクセス可能な model/server が必要で、通常の chat-only model は非対応である旨を表示する
 
 ## 共通操作
 

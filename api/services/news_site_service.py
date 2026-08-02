@@ -145,7 +145,7 @@ class NewsSiteService:
                 detail="LLM settings must be configured before registering a news site",
             )
         html = self._fetch_page(url)
-        scrape_config = analyze_news_page(llm_config, page_url=url, html=html)
+        scrape_config = analyze_news_page(llm_config, page_url=url)
         articles = extract_news_articles(
             html=html, page_url=url, scrape_config=scrape_config
         )

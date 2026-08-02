@@ -226,7 +226,9 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - LLM 設定は接続・model・credential を使った chat completion 成功後だけ保存する
 - LLM API key は `app_settings` に保存するが API レスポンスには含めず、`api_key_configured` のみ返す
 - custom news site 登録には保存済み LLM 設定が必要で、未設定時は 400 を返す
-- custom news site 登録は HTML 取得、LLM selector 生成、実抽出テストの順に行い、記事が 0 件なら 422 を返す
+- custom news site 登録では LLM へ URL だけを送信し、外部 URL へアクセス可能な model が selector を生成する
+- API は対象 HTML を別途取得して実抽出テストを行い、記事が 0 件なら 422 を返す
+- URL を閲覧できない通常の chat-only model は custom news site 解析には対応しない
 - `news_sites.url` は一意で、`scrape_config` は batch でも再利用できる JSON として保存する
 - `news_site_articles.url` は同一 site 内で一意である
 - `news_site_webhooks` の選択がない site は全 webhook、選択がある site は選択先だけへ通知する

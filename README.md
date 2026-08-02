@@ -82,6 +82,8 @@ services:
 - Configure Ollama, vLLM, or an OpenAI-compatible chat-completions endpoint
 - Test the endpoint, model, and credentials before settings are saved
 - Custom news sites cannot be registered until working LLM settings exist
+- Custom-site analysis sends only the URL and therefore requires a model or compatible server that can access external web pages; ordinary chat-only models are not supported for this operation
+- The LLM connection test checks the Chat API but does not verify that the selected model can browse external URLs
 
 ### Configure notifications
 

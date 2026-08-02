@@ -46,7 +46,7 @@
 | PATCH  | `/rss-feeds/{id}`               | RSS フィード部分更新             |
 | DELETE | `/rss-feeds/{id}`               | RSS フィード削除                 |
 | POST   | `/rss-feeds/{id}/execute`       | RSS 実行と webhook 通知          |
-| POST   | `/news-sites`                   | HTML 解析・抽出テスト後に custom news site 作成 |
+| POST   | `/news-sites`                   | URL の LLM 解析・HTML 抽出テスト後に custom news site 作成 |
 | GET    | `/news-sites`                   | custom news site 一覧取得        |
 | GET    | `/news-sites/{id}`              | custom news site 詳細取得        |
 | GET    | `/news-sites/{id}/articles`     | 保存済み scraped article 一覧取得 |
@@ -107,8 +107,9 @@
 ### カスタムニュースサイト
 
 - LLM 設定が存在する場合だけ URL を登録する
-- URL の HTML を取得し、LLM が CSS selector を生成した後、実際に記事を抽出できることを確認して保存する
-- URL 更新時は新しい URL でも HTML 解析と抽出テストを再実行する
+- LLM へ URL だけを渡し、外部 URL へアクセス可能な model が CSS selector を生成する
+- API は URL の HTML を別途取得し、生成済み selector で実際に記事を抽出できることを確認して保存する
+- URL 更新時も新しい URL の LLM 解析と HTML 抽出テストを再実行する
 - 一覧、詳細、記事履歴を確認し、通知先 webhook と定期通知可否を編集する
 - 手動実行では保存済み selector を使って未通知記事を抽出し、webhook 成功後に記事 URL を記録する
 
@@ -202,7 +203,7 @@
 ### カスタムニュースサイト
 
 49. `POST /news-sites` は LLM 未設定時に 400 を返す。
-50. `POST /news-sites` は HTML 取得、LLM selector 生成、1 件以上の記事抽出がすべて成功した場合だけ 201 を返す。
+50. `POST /news-sites` は URL の LLM selector 生成、HTML 取得、1 件以上の記事抽出がすべて成功した場合だけ 201 を返す。
 51. `GET /news-sites` と `GET /news-sites/{id}` は一覧・詳細を返し、内部の `scrape_config` は公開しない。
 52. `PATCH /news-sites/{id}` の URL 変更は再解析・再テストを行い、失敗時は更新しない。
 53. `GET /news-sites/{id}/articles` は保存済み記事一覧とページング情報を返す。
