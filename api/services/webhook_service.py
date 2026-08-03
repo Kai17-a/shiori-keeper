@@ -191,10 +191,12 @@ def build_rss_notification_payload(
             }
         ]
         for article in articles:
+            title = _truncate(str(article["title"]), EMBED_TITLE_MAX)
+            url = str(article["url"])
             article_body: list[dict[str, object]] = [
                 {
                     "type": "TextBlock",
-                    "text": _truncate(str(article["title"]), EMBED_TITLE_MAX),
+                    "text": f"[{title}]({url})",
                     "weight": "Bolder",
                     "wrap": True,
                 }
@@ -210,18 +212,6 @@ def build_rss_notification_payload(
                         "isSubtle": True,
                     }
                 )
-            article_body.append(
-                {
-                    "type": "ActionSet",
-                    "actions": [
-                        {
-                            "type": "Action.OpenUrl",
-                            "title": "Open article",
-                            "url": str(article["url"]),
-                        }
-                    ],
-                }
-            )
             body.append(
                 {
                     "type": "Container",

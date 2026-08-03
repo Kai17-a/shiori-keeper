@@ -129,7 +129,7 @@ pub(crate) fn build_payload(
                 let url = embed["url"].as_str().unwrap_or("(no link)");
                 let mut items = vec![serde_json::json!({
                     "type": "TextBlock",
-                    "text": title,
+                    "text": format!("[{}]({})", title, url),
                     "weight": "Bolder",
                     "wrap": true,
                 })];
@@ -141,14 +141,6 @@ pub(crate) fn build_payload(
                         "wrap": true,
                     }));
                 }
-                items.push(serde_json::json!({
-                    "type": "ActionSet",
-                    "actions": [{
-                        "type": "Action.OpenUrl",
-                        "title": "Open article",
-                        "url": url,
-                    }],
-                }));
                 serde_json::json!({
                     "type": "Container",
                     "separator": true,

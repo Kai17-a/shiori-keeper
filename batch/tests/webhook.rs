@@ -162,9 +162,13 @@ fn build_payload_supports_microsoft_teams_adaptive_cards() {
         "application/vnd.microsoft.card.adaptive"
     );
     assert_eq!(
-        payload["attachments"][0]["content"]["body"][1]["items"][2]["actions"][0]["url"],
-        "https://example.com/article"
+        payload["attachments"][0]["content"]["body"][1]["items"][0]["text"],
+        "[Example Article](https://example.com/article)"
     );
+    let article_items = payload["attachments"][0]["content"]["body"][1]["items"]
+        .as_array()
+        .expect("article items");
+    assert!(article_items.iter().all(|item| item["type"] != "ActionSet"));
 }
 
 #[test]

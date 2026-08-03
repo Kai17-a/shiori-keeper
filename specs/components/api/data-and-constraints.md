@@ -217,7 +217,7 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - webhook 通知の記事タイトルは 256 文字、summary は 300 文字に切り詰める（Discord の embed 上限と Slack の block text 上限を満たすため）
 - `webhook_endpoints.name` は必須で、空白のみの名前は 422 を返す
 - `webhook_endpoints.url` は一意である
-- Microsoft Teams webhook は Adaptive Card 形式で疎通確認と RSS 通知を送信する
+- Microsoft Teams webhook は Adaptive Card 形式で疎通確認と RSS 通知を送信し、記事タイトルをリンクとして表示して個別の遷移ボタンは設けない
 - `settings/webhook/ping` は送信前確認用の疎通確認 API である
 - `settings/rss-execution` は RSS 定期実行フラグを保存する
 - `settings/rss-webhook-notification` は RSS 定期実行時の webhook 通知可否を保存する

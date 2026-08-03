@@ -17,6 +17,7 @@
   - 通知先未選択のフィードは空の選択として扱う
 
 - `batch/tests/webhook.rs`
+  - Microsoft Teams の記事タイトルがリンクで、個別の遷移ボタンを含まないこと
   - 全体設定が無効な場合に webhook payload から記事サマリーを除外する
   - webhook payload の基本形
   - `record_sent_articles` による送信済み記事の記録

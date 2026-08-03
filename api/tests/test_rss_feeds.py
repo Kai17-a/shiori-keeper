@@ -138,7 +138,9 @@ def test_execute_rss_feed_supports_microsoft_teams_adaptive_cards(client, monkey
     card = payloads[0]["attachments"][0]["content"]
     assert card["type"] == "AdaptiveCard"
     assert card["body"][0]["text"] == "Parsed Example - New articles (2 items)"
-    assert card["body"][1]["items"][-1]["actions"][0]["type"] == "Action.OpenUrl"
+    first_article = card["body"][1]["items"]
+    assert first_article[0]["text"] == "[Item 1](https://example.com/item-1)"
+    assert not any(item["type"] == "ActionSet" for item in first_article)
 
 
 def test_execute_rss_feed_truncates_long_article_content_for_discord(client, monkeypatch):
