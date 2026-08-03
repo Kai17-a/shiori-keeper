@@ -1,3 +1,4 @@
+use chrono::{DateTime, NaiveDate, NaiveDateTime};
 use reqwest::Url;
 use rusqlite::{Connection, params};
 use scraper::{ElementRef, Html, Selector};
@@ -27,6 +28,30 @@ fn optional_string<'a>(config: &'a Value, key: &str) -> Option<&'a str> {
     config[key]
         .as_str()
         .filter(|value| !value.trim().is_empty())
+}
+
+fn normalize_published(value: &str) -> Option<String> {
+    let candidate = value.trim();
+    if candidate.is_empty() {
+        return None;
+    }
+    if let Ok(value) = DateTime::parse_from_rfc3339(candidate) {
+        return Some(value.to_rfc3339());
+    }
+    if let Ok(value) = DateTime::parse_from_rfc2822(candidate) {
+        return Some(value.to_rfc3339());
+    }
+    for format in ["%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S"] {
+        if let Ok(value) = NaiveDateTime::parse_from_str(candidate, format) {
+            return Some(value.format("%Y-%m-%d %H:%M:%S").to_string());
+        }
+    }
+    for format in ["%Y-%m-%d", "%Y.%m.%d"] {
+        if let Ok(value) = NaiveDate::parse_from_str(candidate, format) {
+            return Some(format!("{} 00:00:00", value.format("%Y-%m-%d")));
+        }
+    }
+    None
 }
 
 fn select_value(
@@ -88,6 +113,7 @@ pub fn extract_news_articles(
             optional_string(&config, "published_selector"),
             optional_string(&config, "published_attribute"),
         )?
+        .and_then(|value| normalize_published(&value))
         .unwrap_or_default();
         let summary = select_value(&item, optional_string(&config, "summary_selector"), None)?
             .unwrap_or_default();

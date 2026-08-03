@@ -41,6 +41,7 @@
 - 相対リンクは site URL を基準に HTTP/HTTPS の絶対 URL へ解決する
 - 1 回の巡回で抽出する記事は先頭 100 件までとする
 - 送信済み判定は `news_site_articles.url` で行い、1 件以上の webhook 成功後に `INSERT OR IGNORE` で記録する
+- scraped article の公開日は ISO/RFC 形式または `YYYY.MM.DD` を正規化し、解析不能な値は `NULL` として記録する
 
 ## 後方互換
 

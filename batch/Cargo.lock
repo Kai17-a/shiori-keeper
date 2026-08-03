@@ -1675,6 +1675,7 @@ dependencies = [
 name = "shiori-keeper-batch"
 version = "0.2.1"
 dependencies = [
+ "chrono",
  "reqwest",
  "rss",
  "rusqlite",

@@ -39,6 +39,26 @@ fn extracts_articles_with_relative_urls_and_optional_metadata() {
 }
 
 #[test]
+fn normalizes_dotted_dates_and_discards_invalid_dates() {
+    let html = r#"
+      <article class="news-item">
+        <h2><a href="/articles/dotted">Dotted date</a></h2>
+        <time datetime="2026.08.03">August 3</time>
+      </article>
+      <article class="news-item">
+        <h2><a href="/articles/invalid">Invalid date</a></h2>
+        <time datetime="not-a-date">Unknown</time>
+      </article>
+    "#;
+
+    let articles = extract_news_articles(html, "https://example.com/news", SCRAPE_CONFIG)
+        .expect("extract articles");
+
+    assert_eq!(articles[0].published, "2026-08-03 00:00:00");
+    assert_eq!(articles[1].published, "");
+}
+
+#[test]
 fn records_and_loads_sent_news_articles() {
     let conn = Connection::open_in_memory().expect("open db");
     conn.execute_batch(

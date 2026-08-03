@@ -78,6 +78,10 @@ def _normalize_published(value: str | None) -> str | None:
         return datetime.fromisoformat(normalized).isoformat(sep=" ")
     except ValueError:
         try:
+            return datetime.strptime(candidate, "%Y.%m.%d").isoformat(sep=" ")
+        except ValueError:
+            pass
+        try:
             return parsedate_to_datetime(candidate).isoformat(sep=" ")
         except (TypeError, ValueError, OverflowError):
             return None
@@ -423,8 +427,28 @@ class NewsSiteService:
                 limit=per_page,
                 offset=(page - 1) * per_page,
             )
+            items = []
+            for row in rows:
+                published = row.get("published")
+                normalized_published = (
+                    _normalize_published(published)
+                    if isinstance(published, str)
+                    else published
+                )
+                if published and normalized_published is None:
+                    logger.warning(
+                        "news_article_published_invalid site_id=%s article_id=%s value=%r",
+                        site_id,
+                        row.get("id"),
+                        published,
+                    )
+                items.append(
+                    NewsSiteArticleResponse(
+                        **{**row, "published": normalized_published}
+                    )
+                )
             return NewsSiteArticleListResponse(
-                items=[NewsSiteArticleResponse(**row) for row in rows],
+                items=items,
                 total=total,
                 page=page,
                 per_page=per_page,

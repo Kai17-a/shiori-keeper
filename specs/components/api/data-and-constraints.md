@@ -228,6 +228,7 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - LLM API key は `app_settings` に保存するが API レスポンスには含めず、`api_key_configured` のみ返す
 - custom news site 登録には保存済み LLM 設定が必要で、未設定時は 400 を返す
 - custom news site 登録は HTML 取得、LLM selector 生成、実抽出テストの順に行い、記事が 0 件なら 422 を返す
+- custom news article の公開日は ISO/RFC 形式または `YYYY.MM.DD` を正規化し、保存済みの解析不能値は警告ログを出してレスポンス上 `null` とする
 - custom news site 登録エラーは失敗段階と reference ID を返し、対象 site の 401/403 は認証または自動取得拒否として区別する
 - LLM upstream の 401/403、404、429、400/413/422、5xx は原因別の利用者向けメッセージへ写像する
 - 診断 log は reference ID、provider、model、query を除いた対象 URL、upstream status、HTML 文字数または最大 500 文字の response preview を記録し、API key と HTML 本文全体は記録しない

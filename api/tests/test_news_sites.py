@@ -94,6 +94,28 @@ def create_site(client, **overrides):
     return client.post("/news-sites", json=body)
 
 
+def test_extract_news_articles_normalizes_dotted_dates():
+    from api.services.news_site_service import extract_news_articles
+
+    articles = extract_news_articles(
+        html="""
+        <article><a href="/news/one">Article</a><time>2026.08.03</time></article>
+        """,
+        page_url="https://example.com/news",
+        scrape_config={
+            "item_selector": "article",
+            "title_selector": "a",
+            "link_selector": "a",
+            "link_attribute": "href",
+            "published_selector": "time",
+            "published_attribute": None,
+            "summary_selector": None,
+        },
+    )
+
+    assert articles[0]["published"] == "2026-08-03 00:00:00"
+
+
 def test_registration_requires_llm_settings(client):
     response = create_site(client)
 
@@ -112,6 +134,29 @@ def test_registration_analyzes_and_tests_scraping_before_saving(client):
     assert response.json()["webhook_ids"] == []
     listed = client.get("/news-sites")
     assert listed.json()["total"] == 1
+
+
+def test_article_list_tolerates_existing_invalid_published_values(client, caplog):
+    import api.services.news_site_service as news_module
+
+    assert configure_llm(client).status_code == 200
+    site = create_site(client)
+    site_id = site.json()["id"]
+    with news_module.get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO news_site_articles (site_id, url, title, published)
+            VALUES (?, ?, ?, ?)
+            """,
+            (site_id, "https://example.com/invalid-date", "Invalid date", "not-a-date"),
+        )
+
+    with caplog.at_level(logging.WARNING):
+        response = client.get(f"/news-sites/{site_id}/articles")
+
+    assert response.status_code == 200
+    assert response.json()["items"][0]["published"] is None
+    assert "news_article_published_invalid" in caplog.text
 
 
 def test_registration_rejects_a_recipe_that_extracts_no_articles(

@@ -26,6 +26,7 @@
   - webhook の HTTP 429/5xx 応答時の 3 回リトライと途中回復
 
 - `batch/tests/news.rs`
+  - `YYYY.MM.DD` の公開日正規化と解析不能な公開日の破棄
   - 保存済み CSS selector による title、相対/絶対 link、published、summary の抽出
   - custom news site の送信済み URL 記録と重複防止
   - 不正 CSS selector の拒否
