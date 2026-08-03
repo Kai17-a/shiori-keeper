@@ -66,7 +66,9 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(db_module, "get_db", patched_get_db)
     monkeypatch.setattr(news_module, "get_db", patched_get_db)
     monkeypatch.setattr(settings_module, "get_db", patched_get_db)
-    monkeypatch.setattr(news_module.httpx, "get", lambda *args, **kwargs: PageResponse())
+    monkeypatch.setattr(
+        news_module.httpx, "get", lambda *args, **kwargs: PageResponse()
+    )
     monkeypatch.setattr(
         news_module,
         "analyze_news_page",
@@ -168,7 +170,7 @@ def test_registration_rejects_a_recipe_that_extracts_no_articles(
     monkeypatch.setattr(
         news_module,
         "analyze_news_page",
-        lambda _config, *, page_url, html, reference_id: {
+        lambda _config, *, page_url, html, reference_id, retry_context=None: {
             "site_title": "Broken",
             "item_selector": ".missing",
             "title_selector": "a",
@@ -180,14 +182,16 @@ def test_registration_rejects_a_recipe_that_extracts_no_articles(
         },
     )
 
-    with caplog.at_level(logging.ERROR):
+    with caplog.at_level(logging.WARNING):
         response = create_site(client)
 
     assert response.status_code == 422
     assert response.json()["detail"].startswith("Selector extraction error:")
     assert "LLM request succeeded" in response.json()["detail"]
     assert "Reference ID:" in response.json()["detail"]
-    assert "news_extraction_empty" in caplog.text
+    assert "news_extraction_retry" in caplog.text
+    assert "item_matches=0" in caplog.text
+    assert "news_extraction_retry_unchanged" in caplog.text
     assert client.get("/news-sites").json()["total"] == 0
 
 
@@ -198,7 +202,7 @@ def test_registration_requires_extracted_titles(client, monkeypatch):
     monkeypatch.setattr(
         news_module,
         "analyze_news_page",
-        lambda _config, *, page_url, html, reference_id: {
+        lambda _config, *, page_url, html, reference_id, retry_context=None: {
             "site_title": "Broken",
             "item_selector": ".news-item",
             "title_selector": ".missing-title",
@@ -215,6 +219,59 @@ def test_registration_requires_extracted_titles(client, monkeypatch):
     assert response.status_code == 422
     assert response.json()["detail"].startswith("Selector extraction error:")
     assert client.get("/news-sites").json()["total"] == 0
+
+
+def test_registration_retries_empty_selector_analysis_once(client, monkeypatch, caplog):
+    import api.services.news_site_service as news_module
+
+    configure_llm(client)
+    attempts = []
+    broken_config = {
+        "site_title": "Example News",
+        "item_selector": "article",
+        "title_selector": "h2 a",
+        "link_selector": "a",
+        "link_attribute": "href",
+        "published_selector": "time",
+        "published_attribute": "datetime",
+        "summary_selector": ".summary",
+    }
+    repaired_config = {
+        **broken_config,
+        "title_selector": "h1",
+        "link_selector": "a.article-link",
+    }
+
+    def analyze(_config, *, page_url, html, reference_id, retry_context=None):
+        attempts.append(retry_context)
+        return broken_config if retry_context is None else repaired_config
+
+    monkeypatch.setattr(news_module, "analyze_news_page", analyze)
+    monkeypatch.setattr(
+        news_module.NewsSiteService,
+        "_fetch_page",
+        lambda self, url, *, reference_id=None: (
+            """
+        <article>
+          <h1>Kong article</h1>
+          <time datetime="2026-08-04">August 4</time>
+          <a class="article-link" href="/blog/kong-article"></a>
+        </article>
+        """
+        ),
+    )
+
+    with caplog.at_level(logging.INFO):
+        response = create_site(client)
+
+    assert response.status_code == 201
+    assert len(attempts) == 2
+    assert attempts[0] is None
+    assert attempts[1]["item_matches"] == 1
+    assert attempts[1]["title_matches"] == 0
+    assert attempts[1]["link_matches"] == 1
+    assert attempts[1]["previous_scrape_config"] == broken_config
+    assert "news_extraction_retry_succeeded" in caplog.text
 
 
 def test_registration_identifies_target_site_automation_block(

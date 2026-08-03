@@ -146,6 +146,8 @@ API は Python で実装し、データストアには SQLite を使用する。
 3. IF LLM 設定がない状態で custom news site を登録しようとしたとき、THEN THE API SHALL HTTP ステータス 400 を返す。
 4. WHEN Client が custom news site URL を登録するとき、THE API SHALL HTML を取得し、LLM で記事コンテナ・タイトル・リンク・公開日時・要約の CSS selector を解析する。
 5. THE API SHALL 生成した selector で少なくとも 1 件の記事タイトルと HTTP/HTTPS リンクを取得できた場合だけ custom news site を保存し、取得できない場合は 422 を返す。
+   - 初回の selector で抽出結果が 0 件の場合、THE API SHALL 取得済み HTML、失敗した selector、一致件数を使って LLM 解析を最大 1 回再試行する。
+   - 再解析が同じ selector を返した場合、THE API SHALL 追加の抽出を行わず 422 を返す。
 6. THE API SHALL custom news site の一覧・詳細・部分更新・削除・記事履歴・手動実行を提供する。
 7. WHEN custom news site を手動実行または batch 巡回するとき、THE SYSTEM SHALL 未通知の記事だけを選択済み webhook（未選択時は全 webhook）へ通知し、1 件以上の送信成功後に記事を記録する。
 8. WHEN custom news site の URL を変更するとき、THE API SHALL 新しい HTML の LLM 解析と抽出テストが成功した場合だけ URL とスクレイピング設定を更新する。

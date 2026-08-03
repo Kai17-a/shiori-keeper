@@ -168,6 +168,45 @@ def extract_news_articles(
     return articles
 
 
+def _selector_diagnostics(
+    html: str, scrape_config: dict[str, object]
+) -> dict[str, object]:
+    soup = BeautifulSoup(html, "html.parser")
+    items = soup.select(str(scrape_config["item_selector"]))
+    title_matches = 0
+    link_matches = 0
+    for item in items:
+        if _read_element_value(item, scrape_config.get("title_selector"), None):
+            title_matches += 1
+        if _read_element_value(
+            item,
+            scrape_config.get("link_selector"),
+            scrape_config.get("link_attribute"),
+        ):
+            link_matches += 1
+    return {
+        "previous_scrape_config": scrape_config,
+        "item_matches": len(items),
+        "title_matches": title_matches,
+        "link_matches": link_matches,
+    }
+
+
+def _selector_signature(scrape_config: dict[str, object]) -> tuple[object, ...]:
+    return tuple(
+        scrape_config.get(key)
+        for key in (
+            "item_selector",
+            "title_selector",
+            "link_selector",
+            "link_attribute",
+            "published_selector",
+            "published_attribute",
+            "summary_selector",
+        )
+    )
+
+
 class NewsSiteService:
     def _fetch_page(self, url: str, *, reference_id: str | None = None) -> str:
         reference_id = reference_id or new_diagnostic_reference()
@@ -253,9 +292,11 @@ class NewsSiteService:
             reference_id=reference_id,
         )
         if not articles:
-            logger.error(
-                "news_extraction_empty reference_id=%s provider=%s model=%s target_url=%s "
-                "item_selector=%r title_selector=%r link_selector=%r",
+            diagnostics = _selector_diagnostics(html, scrape_config)
+            logger.warning(
+                "news_extraction_retry reference_id=%s provider=%s model=%s target_url=%s "
+                "item_selector=%r title_selector=%r link_selector=%r "
+                "item_matches=%s title_matches=%s link_matches=%s",
                 reference_id,
                 llm_config.provider,
                 llm_config.model,
@@ -263,14 +304,75 @@ class NewsSiteService:
                 scrape_config.get("item_selector"),
                 scrape_config.get("title_selector"),
                 scrape_config.get("link_selector"),
+                diagnostics["item_matches"],
+                diagnostics["title_matches"],
+                diagnostics["link_matches"],
+            )
+            retry_config = analyze_news_page(
+                llm_config,
+                page_url=url,
+                html=html,
+                reference_id=reference_id,
+                retry_context=diagnostics,
+            )
+            if _selector_signature(retry_config) == _selector_signature(scrape_config):
+                logger.error(
+                    "news_extraction_retry_unchanged reference_id=%s provider=%s model=%s "
+                    "target_url=%s",
+                    reference_id,
+                    llm_config.provider,
+                    llm_config.model,
+                    _safe_target_url(url),
+                )
+                raise HTTPException(
+                    status_code=422,
+                    detail=(
+                        "Selector extraction error: The target site and LLM request "
+                        "succeeded, but the generated selectors did not extract any "
+                        "article titles and links. The automatic retry returned the same "
+                        f"selectors. Reference ID: {reference_id}."
+                    ),
+                )
+            retry_articles = extract_news_articles(
+                html=html,
+                page_url=url,
+                scrape_config=retry_config,
+                reference_id=reference_id,
+            )
+            if retry_articles:
+                logger.info(
+                    "news_extraction_retry_succeeded reference_id=%s provider=%s model=%s "
+                    "target_url=%s article_count=%s",
+                    reference_id,
+                    llm_config.provider,
+                    llm_config.model,
+                    _safe_target_url(url),
+                    len(retry_articles),
+                )
+                return retry_config, retry_articles
+            retry_diagnostics = _selector_diagnostics(html, retry_config)
+            logger.error(
+                "news_extraction_empty reference_id=%s provider=%s model=%s target_url=%s "
+                "item_selector=%r title_selector=%r link_selector=%r "
+                "item_matches=%s title_matches=%s link_matches=%s",
+                reference_id,
+                llm_config.provider,
+                llm_config.model,
+                _safe_target_url(url),
+                retry_config.get("item_selector"),
+                retry_config.get("title_selector"),
+                retry_config.get("link_selector"),
+                retry_diagnostics["item_matches"],
+                retry_diagnostics["title_matches"],
+                retry_diagnostics["link_matches"],
             )
             raise HTTPException(
                 status_code=422,
                 detail=(
                     "Selector extraction error: The target site and LLM request succeeded, "
                     "but the generated selectors "
-                    "did not extract any article titles and links. This is usually an LLM "
-                    f"selector issue. Reference ID: {reference_id}."
+                    "did not extract any article titles and links. The automatic selector "
+                    f"retry also failed. Reference ID: {reference_id}."
                 ),
             )
         return scrape_config, articles

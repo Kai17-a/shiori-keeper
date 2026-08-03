@@ -125,9 +125,7 @@ def test_chat_completion_reports_upstream_rejection_without_logging_api_key(
     assert "secret-key-must-not-be-logged" not in caplog.text
 
 
-def test_news_analysis_reports_invalid_llm_recipe_with_diagnostics(
-    monkeypatch, caplog
-):
+def test_news_analysis_reports_invalid_llm_recipe_with_diagnostics(monkeypatch, caplog):
     import api.services.llm_service as llm_module
 
     monkeypatch.setattr(
@@ -158,3 +156,50 @@ def test_news_analysis_reports_invalid_llm_recipe_with_diagnostics(
     assert "https://example.com/news" in caplog.text
     assert "secret=query" not in caplog.text
     assert "I need more information" in caplog.text
+
+
+def test_news_analysis_includes_failed_selector_diagnostics_on_retry(monkeypatch):
+    import api.services.llm_service as llm_module
+
+    captured_messages = []
+
+    def complete(_config, messages, **kwargs):
+        captured_messages.extend(messages)
+        return """{
+          "site_title": "Example",
+          "item_selector": "article",
+          "title_selector": "h1",
+          "link_selector": "a.article-link",
+          "link_attribute": "href",
+          "published_selector": null,
+          "published_attribute": null,
+          "summary_selector": null
+        }"""
+
+    monkeypatch.setattr(llm_module, "chat_completion", complete)
+    analyze_news_page(
+        LLMConfig(
+            provider="ollama",
+            base_url="http://127.0.0.1:11434",
+            api_key=None,
+            model="small-model",
+        ),
+        page_url="https://example.com/news",
+        html="<article><h1>News</h1></article>",
+        retry_context={
+            "previous_scrape_config": {
+                "item_selector": "article",
+                "title_selector": "h2 a",
+                "link_selector": "a",
+            },
+            "item_matches": 1,
+            "title_matches": 0,
+            "link_matches": 0,
+        },
+    )
+
+    retry_prompt = captured_messages[1]["content"]
+    assert "previous scraping recipe extracted zero" in retry_prompt
+    assert '"title_selector": "h2 a"' in retry_prompt
+    assert '"item_matches": 1' in retry_prompt
+    assert "Do not return the same selector recipe unchanged" in retry_prompt

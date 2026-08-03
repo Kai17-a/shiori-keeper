@@ -96,7 +96,9 @@ def _upstream_error_detail(
     elif status_code == 404:
         reason = "The LLM endpoint or model was not found. Check the base URL and model name."
     elif status_code == 429:
-        reason = "The LLM server is busy or rate-limited. Retry after it becomes available."
+        reason = (
+            "The LLM server is busy or rate-limited. Retry after it becomes available."
+        )
     elif status_code in {400, 413, 422}:
         if operation == "news_site_analysis":
             reason = (
@@ -316,7 +318,9 @@ def parse_analysis_reply(reply: str) -> dict:
         config[key] = value.strip()
     for key in ("published_selector", "published_attribute", "summary_selector"):
         value = data.get(key)
-        config[key] = value.strip() if isinstance(value, str) and value.strip() else None
+        config[key] = (
+            value.strip() if isinstance(value, str) and value.strip() else None
+        )
     return config
 
 
@@ -326,15 +330,29 @@ def analyze_news_page(
     page_url: str,
     html: str,
     reference_id: str | None = None,
+    retry_context: dict[str, object] | None = None,
 ) -> dict:
     """Ask the LLM to design a scraping recipe for a news site HTML page."""
     reference_id = reference_id or new_diagnostic_reference()
     cleaned_html = sanitize_html_for_analysis(html)
+    retry_instructions = ""
+    if retry_context is not None:
+        retry_instructions = (
+            "\n\nThe previous scraping recipe extracted zero complete articles. "
+            "Correct the selectors using the HTML below. Do not return the same "
+            "selector recipe unchanged.\nPrevious attempt diagnostics:\n"
+            f"{json.dumps(retry_context, ensure_ascii=False)}"
+        )
     reply = chat_completion(
         config,
         [
             {"role": "system", "content": ANALYSIS_SYSTEM_PROMPT},
-            {"role": "user", "content": f"URL: {page_url}\n\nHTML:\n{cleaned_html}"},
+            {
+                "role": "user",
+                "content": (
+                    f"URL: {page_url}{retry_instructions}\n\nHTML:\n{cleaned_html}"
+                ),
+            },
         ],
         max_tokens=1024,
         timeout=90.0,

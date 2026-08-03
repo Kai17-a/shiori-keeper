@@ -108,7 +108,8 @@
 ### カスタムニュースサイト
 
 - LLM 設定が存在する場合だけ URL を登録する
-- URL の HTML を取得し、LLM が CSS selector を生成した後、実際に記事を抽出できることを確認して保存する
+- URL の HTML を取得し、LLM が CSS selector を生成した後、実際に記事を抽出できることを確認して保存する。抽出が 0 件の場合は、同じ HTML と失敗した selector・一致件数を使って LLM 解析を 1 回だけ再試行する
+- 再解析で selector が修正されて抽出に成功した場合は修正版を保存し、同じ selector が返るか再度 0 件になった場合は 422 を返す
 - URL 更新時は新しい URL でも HTML 解析と抽出テストを再実行する
 - 登録・URL 更新の失敗は、対象 site 取得、LLM 接続、LLM upstream rejection、LLM response、selector 抽出のどこで失敗したかを区別し、server log と照合できる reference ID を返す
 - 一覧、詳細、記事履歴を確認し、通知先 webhook と定期通知可否を編集する
