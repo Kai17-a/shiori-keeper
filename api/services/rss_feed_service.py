@@ -413,7 +413,7 @@ class RSSFeedService:
             row = repo.find_by_id(feed_id)
             if row is None:
                 raise HTTPException(status_code=404, detail="RSS feed not found")
-            webhook_rows = WebhookEndpointRepository(conn).find_all()
+            webhook_rows = WebhookEndpointRepository(conn).find_enabled()
             selected_webhook_ids = set(repo.find_webhook_ids(feed_id))
             if selected_webhook_ids:
                 webhook_rows = [

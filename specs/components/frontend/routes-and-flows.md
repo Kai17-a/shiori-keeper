@@ -76,6 +76,7 @@
 - Discord、Slack、Microsoft Teams webhook URL を識別用の名前付きで複数登録する
 - RSS と custom news site の全 webhook 通知に記事サマリーを含めるかを切り替える
 - 登録済み webhook の一覧を名前と URL で表示する
+- 登録済み webhook URL ごとに通知の有効/無効を切り替える
 - 入力中または登録済みの webhook の疎通確認を行う
 - 確認後に登録済み webhook を削除する
 - テーマ切り替えを行える

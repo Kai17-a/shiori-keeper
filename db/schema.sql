@@ -68,7 +68,7 @@ CREATE TABLE webhook_endpoints (
   url TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-, name TEXT NOT NULL DEFAULT '');
+, name TEXT NOT NULL DEFAULT '', enabled INTEGER NOT NULL DEFAULT 1);
 CREATE UNIQUE INDEX idx_webhook_endpoints_url_unique
   ON webhook_endpoints(url);
 CREATE TABLE rss_feed_webhooks (
@@ -116,4 +116,5 @@ INSERT INTO "schema_migrations" (version) VALUES
   ('202608021000'),
   ('202608021100'),
   ('202608021200'),
-  ('202608021300');
+  ('202608021300'),
+  ('202608041600');

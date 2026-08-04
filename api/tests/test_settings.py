@@ -56,6 +56,7 @@ def test_create_and_list_webhooks_round_trip(client):
     assert first.status_code == 201
     assert first.json()["name"] == "Discord alerts"
     assert first.json()["webhook_url"] == first_url
+    assert first.json()["enabled"] is True
     assert first.json()["id"]
 
     second = client.post(
@@ -76,6 +77,37 @@ def test_create_and_list_webhooks_round_trip(client):
         first_url,
         second_url,
     ]
+    assert [item["enabled"] for item in listed.json()["items"]] == [True, True]
+
+
+def test_update_webhook_enabled_round_trip(client):
+    created = client.post(
+        "/settings/webhooks",
+        json={
+            "name": "Discord alerts",
+            "webhook_url": "https://discord.com/api/webhooks/1/token",
+        },
+    ).json()
+
+    disabled = client.patch(
+        f"/settings/webhooks/{created['id']}", json={"enabled": False}
+    )
+    assert disabled.status_code == 200
+    assert disabled.json()["enabled"] is False
+
+    listed = client.get("/settings/webhooks")
+    assert listed.json()["items"][0]["enabled"] is False
+
+    enabled = client.patch(
+        f"/settings/webhooks/{created['id']}", json={"enabled": True}
+    )
+    assert enabled.status_code == 200
+    assert enabled.json()["enabled"] is True
+
+
+def test_update_missing_webhook_returns_404(client):
+    resp = client.patch("/settings/webhooks/99999", json={"enabled": False})
+    assert resp.status_code == 404
 
 
 def test_create_webhook_rejects_blank_name(client):

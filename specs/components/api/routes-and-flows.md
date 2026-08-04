@@ -29,6 +29,7 @@
 | DELETE | `/tags/{id}`                    | タグ削除                         |
 | GET    | `/settings/webhooks`            | webhook 一覧取得                 |
 | POST   | `/settings/webhooks`            | webhook 登録                     |
+| PATCH  | `/settings/webhooks/{id}`       | webhook 通知有効状態更新         |
 | DELETE | `/settings/webhooks/{id}`       | webhook 削除                     |
 | POST   | `/settings/webhook/ping`        | webhook 疎通確認                 |
 | GET    | `/settings/llm`                 | 保存済み LLM 設定取得            |
@@ -88,6 +89,7 @@
 
 - Discord、Slack、または Microsoft Teams webhook URL を識別用の名前付きで複数登録する
 - 登録済み webhook の一覧を名前と URL で取得する
+- webhook URL ごとに通知の有効/無効を切り替える
 - 不要になった webhook を削除する
 - webhook の疎通確認を行う
 - 重複する webhook URL の登録は 409 を返す
@@ -181,7 +183,7 @@
 ### 設定
 
 31. `GET /settings/webhooks` は、登録済み webhook の一覧を返す。
-32. `POST /settings/webhooks` は、Discord、Slack、または Microsoft Teams webhook URL を登録し 201 を返す。
+32. `POST /settings/webhooks` は Discord、Slack、または Microsoft Teams webhook URL を登録し 201 を返し、`PATCH /settings/webhooks/{id}` はURLごとの通知有効状態を更新して更新後の webhook を返す。
 33. `POST /settings/webhook/ping` は、webhook の疎通確認を行い `pong: true` を返す。
 34. `GET /settings/rss-execution` は、RSS 定期実行の有効/無効状態を返す。
 35. `PUT /settings/rss-execution` は、RSS 定期実行の有効/無効状態を更新する。

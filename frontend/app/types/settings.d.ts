@@ -7,8 +7,13 @@ export interface SettingsWebhookResponse {
   id: number;
   name: string;
   webhook_url: string;
+  enabled: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface SettingsWebhookUpdateRequest {
+  enabled: boolean;
 }
 
 export interface SettingsWebhookListResponse {

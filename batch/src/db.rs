@@ -55,7 +55,12 @@ fn has_table(conn: &Connection, table: &str) -> Result<bool> {
 
 pub fn fetch_webhook_endpoints(conn: &Connection) -> Result<Vec<WebhookEndpoint>> {
     if has_table(conn, "webhook_endpoints")? {
-        let mut stmt = conn.prepare("SELECT id, url FROM webhook_endpoints ORDER BY id ASC")?;
+        let query = if has_column(conn, "webhook_endpoints", "enabled")? {
+            "SELECT id, url FROM webhook_endpoints WHERE enabled = 1 ORDER BY id ASC"
+        } else {
+            "SELECT id, url FROM webhook_endpoints ORDER BY id ASC"
+        };
+        let mut stmt = conn.prepare(query)?;
         let endpoint_iter = stmt.query_map([], |row| {
             Ok(WebhookEndpoint {
                 id: row.get(0)?,

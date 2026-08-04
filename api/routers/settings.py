@@ -18,6 +18,7 @@ from api.model.models import (
     SettingsWebhookPingRequest,
     SettingsWebhookPingResponse,
     SettingsWebhookResponse,
+    SettingsWebhookUpdate,
 )
 from api.services.settings_service import SettingsService
 
@@ -71,6 +72,17 @@ def create_webhook(
     service: SettingsService = Depends(get_settings_service),
 ):
     return service.create_webhook(body)
+
+
+@router.patch(
+    "/webhooks/{webhook_id}", status_code=200, response_model=SettingsWebhookResponse
+)
+def update_webhook(
+    webhook_id: int,
+    body: SettingsWebhookUpdate,
+    service: SettingsService = Depends(get_settings_service),
+):
+    return service.update_webhook(webhook_id, body)
 
 
 @router.delete("/webhooks/{webhook_id}", status_code=204)

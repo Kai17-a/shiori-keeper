@@ -203,6 +203,12 @@
                 <p class="break-all text-xs text-muted">{{ webhook.webhook_url }}</p>
               </div>
               <div class="flex shrink-0 items-center gap-2">
+                <USwitch
+                  :model-value="webhook.enabled"
+                  :loading="updatingWebhookId === webhook.id"
+                  :aria-label="`${webhook.enabled ? 'Disable' : 'Enable'} ${webhook.name}`"
+                  @update:model-value="setWebhookEnabled(webhook, $event)"
+                />
                 <UButton
                   size="sm"
                   color="warning"
@@ -288,6 +294,7 @@ const webhookLoading = ref(false);
 const webhookSaving = ref(false);
 const testingNewWebhook = ref(false);
 const testingWebhookId = ref<number | null>(null);
+const updatingWebhookId = ref<number | null>(null);
 const deleteOpen = ref(false);
 const deleting = ref(false);
 const pendingWebhook = ref<SettingsWebhookResponse | null>(null);
@@ -591,6 +598,39 @@ const pingWebhook = async (webhookUrl: string, target: "new" | number) => {
     } else {
       testingWebhookId.value = null;
     }
+  }
+};
+
+const setWebhookEnabled = async (
+  webhook: SettingsWebhookResponse,
+  enabled: boolean,
+) => {
+  updatingWebhookId.value = webhook.id;
+  try {
+    const updated = await request<SettingsWebhookResponse>(
+      `/settings/webhooks/${webhook.id}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ enabled }),
+      },
+    );
+    webhooks.value = webhooks.value.map((item) =>
+      item.id === updated.id ? updated : item,
+    );
+    toast.show({
+      title: updated.enabled ? "Webhook enabled." : "Webhook disabled.",
+      color: "success",
+      icon: "i-lucide-check",
+    });
+  } catch (err) {
+    toast.show({
+      title: "Failed to update webhook.",
+      description: err instanceof Error ? err.message : undefined,
+      color: "error",
+      icon: "i-lucide-circle-alert",
+    });
+  } finally {
+    updatingWebhookId.value = null;
   }
 };
 

@@ -337,6 +337,32 @@ def test_manual_execution_notifies_and_records_only_new_articles(client, monkeyp
     assert articles.json()["items"][0]["title"] == "Second article"
 
 
+def test_manual_execution_skips_disabled_webhook(client, monkeypatch):
+    import api.services.news_site_service as news_module
+
+    configure_llm(client)
+    webhook = client.post(
+        "/settings/webhooks",
+        json={
+            "name": "Discord alerts",
+            "webhook_url": "https://discord.com/api/webhooks/1/token",
+        },
+    ).json()
+    site = create_site(client, webhook_ids=[webhook["id"]])
+    client.patch(f"/settings/webhooks/{webhook['id']}", json={"enabled": False})
+    payloads = []
+    monkeypatch.setattr(
+        news_module,
+        "send_webhook",
+        lambda url, payload: payloads.append((url, payload)),
+    )
+
+    response = client.post(f"/news-sites/{site.json()['id']}/execute")
+
+    assert response.status_code == 400
+    assert payloads == []
+
+
 def test_duplicate_news_site_url_is_rejected_before_registration(client):
     configure_llm(client)
     assert create_site(client).status_code == 201

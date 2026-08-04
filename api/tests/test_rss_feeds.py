@@ -1143,6 +1143,38 @@ def test_execute_rss_feed_delivers_to_all_registered_webhooks(client, monkeypatc
     ]
 
 
+def test_execute_rss_feed_skips_disabled_webhooks(client, monkeypatch):
+    import api.services.webhook_service as webhook_module
+
+    notified_urls = []
+
+    def fake_post(url, json, timeout=5.0):
+        notified_urls.append(url)
+
+        class Response:
+            status_code = 204
+
+        return Response()
+
+    monkeypatch.setattr(webhook_module.httpx, "post", fake_post)
+    disabled = client.post(
+        "/settings/webhooks",
+        json={"name": "Discord", "webhook_url": "https://discord.com/api/webhooks/1/token"},
+    ).json()
+    client.patch(f"/settings/webhooks/{disabled['id']}", json={"enabled": False})
+    client.post(
+        "/settings/webhooks",
+        json={"name": "Slack", "webhook_url": "https://hooks.slack.com/services/xxx/yyy/zzz"},
+    )
+    feed_id = create_feed(client).json()["id"]
+
+    resp = client.post(f"/rss-feeds/{feed_id}/execute")
+
+    assert resp.status_code == 200
+    assert resp.json()["delivered_count"] == 1
+    assert notified_urls == ["https://hooks.slack.com/services/xxx/yyy/zzz"]
+
+
 def test_execute_rss_feed_succeeds_when_one_webhook_fails(client, monkeypatch):
     import api.services.webhook_service as webhook_module
 

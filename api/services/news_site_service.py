@@ -563,7 +563,7 @@ class NewsSiteService:
             row = repo.find_by_id(site_id)
             if row is None:
                 raise HTTPException(status_code=404, detail="News site not found")
-            webhook_rows = WebhookEndpointRepository(conn).find_all()
+            webhook_rows = WebhookEndpointRepository(conn).find_enabled()
             selected = set(repo.find_webhook_ids(site_id))
             if selected:
                 webhook_rows = [

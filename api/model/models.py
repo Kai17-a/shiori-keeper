@@ -222,6 +222,10 @@ class WebhookEndpoint(SQLModel, table=True):
         sa_column=Column(String, nullable=False, server_default=text("''")),
     )
     url: str = Field(sa_column=Column(String, nullable=False))
+    enabled: bool = Field(
+        default=True,
+        sa_column=Column(Boolean, nullable=False, server_default=text("1")),
+    )
     created_at: datetime = Field(
         sa_column=Column(
             DateTime,
@@ -551,8 +555,13 @@ class SettingsWebhookResponse(BaseModel):
     id: int
     name: str
     webhook_url: str
+    enabled: bool
     created_at: datetime
     updated_at: datetime
+
+
+class SettingsWebhookUpdate(BaseModel):
+    enabled: bool
 
 
 class SettingsWebhookListResponse(BaseModel):

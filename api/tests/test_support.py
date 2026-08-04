@@ -27,6 +27,7 @@ from api.model.models import (
     SettingsWebhookSummaryUpdate,
     SettingsWebhookCreate,
     SettingsWebhookPingRequest,
+    SettingsWebhookUpdate,
     TagAttach,
     TagCreate,
     TagUpdate,
@@ -415,6 +416,12 @@ class CompatTestClient:
                 body = SettingsWebhookCreate(**(json or {}))
                 payload = SettingsService().create_webhook(body).model_dump()
                 return self._ok(payload, 201)
+            if method == "PATCH" and path.startswith("/settings/webhooks/"):
+                body = SettingsWebhookUpdate(**(json or {}))
+                payload = SettingsService().update_webhook(
+                    int(path.rsplit("/", 1)[1]), body
+                ).model_dump()
+                return self._ok(payload, 200)
             if method == "DELETE" and path.startswith("/settings/webhooks/"):
                 SettingsService().delete_webhook(int(path.rsplit("/", 1)[1]))
                 return self._ok(None, 204)

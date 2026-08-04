@@ -15,7 +15,7 @@
 
 - `rss_periodic_execution_enabled` が無効な場合、RSS 巡回は行わない
 - `rss_webhook_notification_enabled` が無効な場合、RSS 巡回と webhook 通知は行わない
-- `webhook_endpoints` に webhook URL が 1 件も登録されていない場合、RSS 巡回と webhook 通知は行わない
+- `webhook_endpoints` に有効な webhook URL が 1 件もない場合、RSS 巡回と webhook 通知は行わない
 - フィード単位の `rss_feeds.notify_webhook_enabled` が無効な RSS フィードは通知対象にしない
 - フィードに通知先 webhook の選択がある場合は選択した webhook のみに送信し、選択がない場合は全 webhook に送信する
 - `news_sites.notify_webhook_enabled` が無効な custom news site は通知対象にしない
@@ -48,6 +48,7 @@
 - `rss_feeds.notify_webhook_enabled` 列がない DB では、全 RSS フィードを通知対象として扱う
 - `rss_feed_articles.published` 列がない DB では、`published` を除外して送信済み記事を記録する
 - `webhook_endpoints` テーブルがない DB では、`app_settings.default_webhook_url` を通知先として扱う
+- `webhook_endpoints.enabled` 列がない DB では、登録済みの全 webhook URL を有効として扱う
 - `rss_feed_webhooks` テーブルがない DB では、全 RSS フィードを通知先未選択（全 webhook 通知）として扱う
 
 ## webhook
@@ -62,5 +63,5 @@
 - webhook の接続エラー、HTTP 429、HTTP 5xx は最大 3 回リトライする
 - リトライ間隔は 500ms とする
 - リトライ後の HTTP 429/5xx と、それ以外の HTTP 4xx は当該 webhook 単位の失敗として扱う
-- 登録済みの全 webhook へ送信し、1 件でも成功すれば当該フィードの記事を送信済みとして記録する
+- 有効な webhook へ送信し、1 件でも成功すれば当該フィードの記事を送信済みとして記録する
 - すべての webhook が失敗したフィードはスキップする

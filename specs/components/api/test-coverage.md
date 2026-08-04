@@ -36,6 +36,7 @@
   - Slack webhook URL の登録と疎通確認
   - Microsoft Teams webhook URL の登録、疎通確認、タイトルリンクを持ち遷移ボタンを持たない Adaptive Card 通知
   - 複数 webhook への送信、一部失敗時の継続、全滅時の 502
+  - 無効な webhook URL を手動通知先から除外
   - フィードごとの通知先 webhook 選択の作成・更新・解除、選択先のみへの送信、未存在 ID の 404、重複 ID と null の 422
   - RSS 定期実行設定
   - 新規記事なしメッセージ
@@ -51,6 +52,7 @@
   - webhook サマリー包含設定が未設定時に有効であり、無効へ更新できること
   - webhook 未登録時の空一覧
   - webhook の複数登録と一覧取得
+  - webhook URLごとの通知有効状態の更新と未存在 ID の 404
   - 重複 webhook URL の 409
   - webhook 削除と未存在 ID の 404
   - Discord、Slack、Microsoft Teams webhook URL 形式検証
@@ -71,6 +73,7 @@
   - 初回 selector が 0 件の場合の診断情報付き再解析、修正版 selector の保存、同一 selector 再応答時の打ち切り
   - 対象 site の 403/automation block と selector 抽出 0 件の原因別メッセージ・診断 log
   - 手動実行、相対 URL 解決、Webhook 通知、記事履歴、重複通知防止
+  - 無効な webhook URL を手動通知先から除外
   - 保存済み記事の公開日が解析不能でも一覧全体を 500 にせず、該当日付を `null` として返す
   - URL 重複拒否
 

@@ -12,6 +12,7 @@
   - RSS webhook 通知が無効な場合に成功扱いで終了する
   - RSS 定期実行と webhook 通知の有効設定を、それぞれ対応する設定行から取得する
   - 複数登録された webhook URL を登録順に全件取得する
+  - 無効な webhook URL を通知先から除外する
   - `webhook_endpoints` テーブルがない DB では `app_settings.default_webhook_url` へフォールバックする
   - フィードごとの通知先 webhook 選択を取得する
   - 通知先未選択のフィードは空の選択として扱う

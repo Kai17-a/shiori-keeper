@@ -145,6 +145,26 @@ fn fetch_webhook_endpoints_reads_multiple_endpoints_in_registration_order() {
 }
 
 #[test]
+fn fetch_webhook_endpoints_excludes_disabled_endpoints() {
+    let conn = create_in_memory_test_db(1);
+    conn.execute(
+        "ALTER TABLE webhook_endpoints ADD COLUMN enabled INTEGER NOT NULL DEFAULT 1",
+        [],
+    )
+    .expect("add enabled column");
+    conn.execute(
+        "INSERT INTO webhook_endpoints (url, enabled) VALUES (?, 0)",
+        ["https://hooks.slack.com/services/xxx/yyy/zzz"],
+    )
+    .expect("insert disabled endpoint");
+
+    let endpoints = fetch_webhook_endpoints(&conn).expect("read enabled endpoints");
+
+    assert_eq!(endpoints.len(), 1);
+    assert_eq!(endpoints[0].url, "https://discord.com/api/webhooks/1/token");
+}
+
+#[test]
 fn fetch_webhook_endpoints_falls_back_to_legacy_app_settings_key() {
     let conn = Connection::open_in_memory().expect("open in-memory db");
     conn.execute_batch(

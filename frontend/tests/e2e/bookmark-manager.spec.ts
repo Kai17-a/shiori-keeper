@@ -373,6 +373,17 @@ test.describe("rss feeds", () => {
     await expect(page.getByText(discordWebhookName)).toBeVisible();
     await expect(page.getByText(slackWebhookName)).toBeVisible();
 
+    const slackEnabledSwitch = page.getByRole("switch", { name: `Disable ${slackWebhookName}` });
+    await expect(slackEnabledSwitch).toHaveAttribute("aria-checked", "true");
+    await slackEnabledSwitch.click({ force: true });
+    await expect(
+      page.getByRole("switch", { name: `Enable ${slackWebhookName}` }),
+    ).toHaveAttribute("aria-checked", "false");
+    await page.reload();
+    await expect(
+      page.getByRole("switch", { name: `Enable ${slackWebhookName}` }),
+    ).toHaveAttribute("aria-checked", "false");
+
     const firstWebhookRow = page
       .locator("div.rounded-xl", { hasText: discordWebhookName })
       .first();

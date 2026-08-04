@@ -57,6 +57,10 @@ def test_initialize_database_applies_every_migration_idempotently(tmp_path):
         feed_columns = {
             row[1] for row in conn.execute("PRAGMA table_info(rss_feeds)").fetchall()
         }
+        webhook_columns = {
+            row[1]
+            for row in conn.execute("PRAGMA table_info(webhook_endpoints)").fetchall()
+        }
 
     assert versions == {
         "010",
@@ -69,9 +73,11 @@ def test_initialize_database_applies_every_migration_idempotently(tmp_path):
         "202608021100",
         "202608021200",
         "202608021300",
+        "202608041600",
     }
     assert "published" in article_columns
     assert "notify_webhook_enabled" in feed_columns
+    assert "enabled" in webhook_columns
 
 
 def test_db_error_returns_500(tmp_path, monkeypatch):

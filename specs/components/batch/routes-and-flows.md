@@ -18,8 +18,8 @@
 4. RSS 定期実行が無効な場合は成功扱いで終了する
 5. `app_settings` の `rss_webhook_notification_enabled` を確認する
 6. RSS webhook 通知が無効な場合は成功扱いで終了する
-7. `webhook_endpoints` から登録済み webhook URL を全件取得する
-8. webhook URL が 1 件も登録されていない場合は標準エラーへ出力して成功扱いで終了する
+7. `webhook_endpoints` から有効な webhook URL を取得する
+8. 有効な webhook URL が 1 件もない場合は標準エラーへ出力して成功扱いで終了する
 9. フィードごとに RSS URL を取得してRSSまたはAtomフィードとして解析する
 10. `rss_feed_articles` から送信済み URL を読み込む
 11. RSS item の URL が送信済みでなければ通知対象に追加する
@@ -37,7 +37,7 @@ RSS 取得と webhook の各送信試行には10秒のタイムアウトを適�
 | Table | Purpose |
 | ----- | ------- |
 | `app_settings` | `rss_periodic_execution_enabled`、`rss_webhook_notification_enabled` を読む |
-| `webhook_endpoints` | 通知先 webhook URL を全件読む |
+| `webhook_endpoints` | 有効な通知先 webhook URL を読む |
 | `rss_feeds` | 巡回対象 RSS フィードを読む |
 | `rss_feed_webhooks` | フィードごとの通知先 webhook 選択を読む |
 | `rss_feed_articles` | 送信済み記事 URL の読み込みと送信成功後の記録を行う |

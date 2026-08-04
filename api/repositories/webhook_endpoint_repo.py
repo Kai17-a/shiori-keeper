@@ -8,8 +8,19 @@ class WebhookEndpointRepository:
     def find_all(self) -> list[dict]:
         rows = self.conn.execute(
             """
-            SELECT id, name, url, created_at, updated_at
+            SELECT id, name, url, enabled, created_at, updated_at
             FROM webhook_endpoints
+            ORDER BY id ASC
+            """
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+    def find_enabled(self) -> list[dict]:
+        rows = self.conn.execute(
+            """
+            SELECT id, name, url, enabled, created_at, updated_at
+            FROM webhook_endpoints
+            WHERE enabled = 1
             ORDER BY id ASC
             """
         ).fetchall()
@@ -22,7 +33,7 @@ class WebhookEndpointRepository:
         )
         row = self.conn.execute(
             """
-            SELECT id, name, url, created_at, updated_at
+            SELECT id, name, url, enabled, created_at, updated_at
             FROM webhook_endpoints
             WHERE id = ?
             """,
@@ -33,13 +44,26 @@ class WebhookEndpointRepository:
     def find_by_id(self, webhook_id: int) -> dict | None:
         row = self.conn.execute(
             """
-            SELECT id, name, url, created_at, updated_at
+            SELECT id, name, url, enabled, created_at, updated_at
             FROM webhook_endpoints
             WHERE id = ?
             """,
             (webhook_id,),
         ).fetchone()
         return dict(row) if row else None
+
+    def update_enabled(self, webhook_id: int, enabled: bool) -> dict | None:
+        cursor = self.conn.execute(
+            """
+            UPDATE webhook_endpoints
+            SET enabled = ?, updated_at = datetime('now')
+            WHERE id = ?
+            """,
+            (int(enabled), webhook_id),
+        )
+        if cursor.rowcount == 0:
+            return None
+        return self.find_by_id(webhook_id)
 
     def delete(self, webhook_id: int) -> bool:
         cursor = self.conn.execute(

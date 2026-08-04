@@ -20,6 +20,7 @@ from api.model.models import (
     SettingsWebhookPingRequest,
     SettingsWebhookPingResponse,
     SettingsWebhookResponse,
+    SettingsWebhookUpdate,
 )
 from api.repositories.settings_repo import SettingsRepository
 from api.repositories.webhook_endpoint_repo import WebhookEndpointRepository
@@ -56,6 +57,7 @@ class SettingsService:
             id=int(row["id"]),
             name=str(row["name"]),
             webhook_url=str(row["url"]),
+            enabled=bool(row["enabled"]),
             created_at=row["created_at"],
             updated_at=row["updated_at"],
         )
@@ -79,6 +81,19 @@ class SettingsService:
                 raise HTTPException(
                     status_code=409, detail="Webhook URL is already registered"
                 ) from exc
+            return self._to_webhook_response(row)
+
+    def update_webhook(
+        self, webhook_id: int, data: SettingsWebhookUpdate
+    ) -> SettingsWebhookResponse:
+        with get_db() as conn:
+            row = WebhookEndpointRepository(conn).update_enabled(
+                webhook_id, data.enabled
+            )
+            if row is None:
+                raise HTTPException(
+                    status_code=404, detail="Webhook endpoint not found"
+                )
             return self._to_webhook_response(row)
 
     def delete_webhook(self, webhook_id: int) -> None:

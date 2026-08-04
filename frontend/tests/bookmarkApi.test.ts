@@ -149,6 +149,7 @@ describe("bookmarkApi helpers", () => {
       { path: "/metrics/dashboard", options: { method: "GET" } },
       { path: "/settings/webhooks", options: { method: "GET" } },
       { path: "/settings/webhooks", options: { method: "POST", body: JSON.stringify({ name: "Test webhook", webhook_url: "https://example.com/webhook" }) } },
+      { path: "/settings/webhooks/123", options: { method: "PATCH", body: JSON.stringify({ enabled: false }) } },
       { path: "/settings/webhooks/123", options: { method: "DELETE" } },
       { path: "/settings/webhook/ping", options: { method: "POST", body: JSON.stringify({ webhook_url: "https://example.com/webhook" }) } },
       { path: "/settings/rss-execution", options: { method: "GET" } },

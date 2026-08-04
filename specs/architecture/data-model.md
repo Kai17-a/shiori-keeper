@@ -99,6 +99,7 @@ erDiagram
         INTEGER id PK
         TEXT name
         TEXT url UK
+        INTEGER enabled
         TEXT created_at
         TEXT updated_at
     }
