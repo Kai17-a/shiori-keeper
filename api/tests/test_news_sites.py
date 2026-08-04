@@ -1,10 +1,12 @@
 """Tests for LLM-assisted custom news-site scraping."""
 
+import json
 import logging
 import sqlite3
 from contextlib import contextmanager
 
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from api.main import app
@@ -136,6 +138,95 @@ def test_registration_analyzes_and_tests_scraping_before_saving(client):
     assert response.json()["webhook_ids"] == []
     listed = client.get("/news-sites")
     assert listed.json()["total"] == 1
+
+
+def test_update_can_reanalyze_unchanged_site_url(client, monkeypatch):
+    import api.services.news_site_service as news_module
+
+    configure_llm(client)
+    site = create_site(client).json()
+    replacement_config = {
+        "site_title": "Example News",
+        "item_selector": ".updated-news-item",
+        "title_selector": "h3 a",
+        "link_selector": "h3 a",
+        "link_attribute": "href",
+        "published_selector": None,
+        "published_attribute": None,
+        "summary_selector": None,
+    }
+    analyzed_urls = []
+
+    def reanalyze(_self, url):
+        analyzed_urls.append(url)
+        return replacement_config, [{"title": "Updated article"}]
+
+    monkeypatch.setattr(news_module.NewsSiteService, "_analyze_and_test", reanalyze)
+
+    response = client.patch(
+        f"/news-sites/{site['id']}", json={"reanalyze": True}
+    )
+
+    assert response.status_code == 200
+    assert analyzed_urls == [site["url"]]
+    with news_module.get_db() as conn:
+        row = conn.execute(
+            "SELECT scrape_config FROM news_sites WHERE id = ?", (site["id"],)
+        ).fetchone()
+    assert row is not None
+    assert json.loads(row["scrape_config"]) == replacement_config
+
+
+def test_update_without_reanalyze_keeps_current_analysis(client, monkeypatch):
+    import api.services.news_site_service as news_module
+
+    configure_llm(client)
+    site = create_site(client).json()
+
+    def unexpected_reanalysis(_self, _url):
+        raise AssertionError("site should not be reanalyzed")
+
+    monkeypatch.setattr(
+        news_module.NewsSiteService, "_analyze_and_test", unexpected_reanalysis
+    )
+
+    response = client.patch(
+        f"/news-sites/{site['id']}", json={"title": "Updated title"}
+    )
+
+    assert response.status_code == 200
+    assert response.json()["title"] == "Updated title"
+
+
+def test_failed_update_reanalysis_keeps_current_analysis(client, monkeypatch):
+    import api.services.news_site_service as news_module
+
+    configure_llm(client)
+    site = create_site(client).json()
+    with news_module.get_db() as conn:
+        before = conn.execute(
+            "SELECT scrape_config FROM news_sites WHERE id = ?", (site["id"],)
+        ).fetchone()
+    assert before is not None
+
+    def failed_reanalysis(_self, _url):
+        raise HTTPException(status_code=422, detail="Selector extraction error")
+
+    monkeypatch.setattr(
+        news_module.NewsSiteService, "_analyze_and_test", failed_reanalysis
+    )
+
+    response = client.patch(
+        f"/news-sites/{site['id']}", json={"reanalyze": True}
+    )
+
+    assert response.status_code == 422
+    with news_module.get_db() as conn:
+        after = conn.execute(
+            "SELECT scrape_config FROM news_sites WHERE id = ?", (site["id"],)
+        ).fetchone()
+    assert after is not None
+    assert after["scrape_config"] == before["scrape_config"]
 
 
 def test_article_list_tolerates_existing_invalid_published_values(client, caplog):

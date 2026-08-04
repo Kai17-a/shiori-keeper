@@ -684,6 +684,7 @@ class NewsSiteUpdate(BaseModel):
     description: str | None = None
     notify_webhook_enabled: bool | None = None
     webhook_ids: list[int] | None = None
+    reanalyze: bool = False
 
     @field_validator("title")
     @classmethod

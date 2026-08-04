@@ -164,6 +164,7 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - URL、title、bookmark の `tag_ids`、RSS の `notify_webhook_enabled`、`webhook_ids` は明示した `null` を受け付けず、422 を返す。
 - RSS の `webhook_ids` に空配列を指定すると通知先選択を解除できる（全 webhook 通知へ戻る）。
 - custom news site の `url` を更新すると LLM 再解析と抽出テストを実行し、成功時だけ URL と `scrape_config` を更新する。
+- `NewsSiteUpdate.reanalyze` は既定で `false` とし、`true` の場合はURLが変わっていなくてもLLM再解析と抽出テストを実行し、成功時だけ `scrape_config` を更新する。
 
 ## レスポンススキーマ
 

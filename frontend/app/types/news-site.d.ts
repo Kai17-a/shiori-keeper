@@ -11,6 +11,7 @@ export interface NewsSiteUpdateRequest {
   description?: string | null;
   notify_webhook_enabled?: boolean | null;
   webhook_ids?: number[] | null;
+  reanalyze?: boolean;
 }
 
 export interface NewsSiteResponse {

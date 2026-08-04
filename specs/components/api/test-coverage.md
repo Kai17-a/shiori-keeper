@@ -73,6 +73,7 @@
   - 初回 selector が 0 件の場合の診断情報付き再解析、修正版 selector の保存、同一 selector 再応答時の打ち切り
   - 対象 site の 403/automation block と selector 抽出 0 件の原因別メッセージ・診断 log
   - 手動実行、相対 URL 解決、Webhook 通知、記事履歴、重複通知防止
+  - 更新時の任意LLM再解析と、省略時に既存selectorを維持すること
   - 無効な webhook URL を手動通知先から除外
   - 保存済み記事の公開日が解析不能でも一覧全体を 500 にせず、該当日付を `null` として返す
   - URL 重複拒否

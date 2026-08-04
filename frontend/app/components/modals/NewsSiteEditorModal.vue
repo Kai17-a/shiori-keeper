@@ -51,6 +51,18 @@
           />
         </UFormField>
 
+        <UFormField
+          v-if="form.id"
+          label="Site analysis"
+          description="Use this after the target site's layout changes. For an unchanged URL, saving without this option keeps the current selectors."
+          class="w-full"
+        >
+          <UCheckbox
+            v-model="form.reanalyze"
+            label="Re-analyze with LLM when saving"
+          />
+        </UFormField>
+
         <UAlert
           v-if="!form.id"
           title="Registration includes a live extraction test"
@@ -92,6 +104,7 @@ const props = defineProps<{
     url: string;
     description: string;
     webhookIds: number[];
+    reanalyze: boolean;
   };
   webhooks: SettingsWebhookResponse[];
   title: string;

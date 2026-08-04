@@ -201,6 +201,7 @@ const form = reactive({
   url: "",
   description: "",
   webhookIds: [] as number[],
+  reanalyze: false,
 });
 const pageCount = computed(() => Math.max(articleList.value.total_pages, 1));
 
@@ -274,6 +275,7 @@ const openEditModal = () => {
   form.url = site.value.url;
   form.description = site.value.description || "";
   form.webhookIds = [...site.value.webhook_ids];
+  form.reanalyze = false;
   modalOpen.value = true;
 };
 
@@ -292,6 +294,7 @@ const saveSite = async () => {
         title: form.title.trim(),
         description: form.description.trim() || null,
         webhook_ids: form.webhookIds,
+        reanalyze: form.reanalyze,
       }),
     });
     saveError.value = "";

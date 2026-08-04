@@ -143,7 +143,7 @@ describe("bookmarkApi helpers", () => {
       { path: "/news-sites", options: { method: "POST", body: JSON.stringify({ url: "https://example.com/news" }) } },
       { path: "/news-sites/123", options: { method: "GET" } },
       { path: "/news-sites/123/articles?page=1", options: { method: "GET" } },
-      { path: "/news-sites/123", options: { method: "PATCH", body: JSON.stringify({ title: "News" }) } },
+      { path: "/news-sites/123", options: { method: "PATCH", body: JSON.stringify({ title: "News", reanalyze: true }) } },
       { path: "/news-sites/123", options: { method: "DELETE" } },
       { path: "/news-sites/123/execute", options: { method: "POST" } },
       { path: "/metrics/dashboard", options: { method: "GET" } },

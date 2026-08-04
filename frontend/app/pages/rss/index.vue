@@ -291,6 +291,7 @@ const newsForm = reactive({
   url: "",
   description: "",
   webhookIds: [] as number[],
+  reanalyze: false,
 });
 const rssExecutionEnabled = ref(false);
 const rssWebhookNotificationEnabled = ref(false);
@@ -394,6 +395,7 @@ const resetNewsForm = () => {
   newsForm.url = "";
   newsForm.description = "";
   newsForm.webhookIds = [];
+  newsForm.reanalyze = false;
 };
 
 const openNewsCreateModal = () => {
@@ -409,6 +411,7 @@ const openNewsEditModal = (site: NewsSiteResponse) => {
   newsForm.url = site.url;
   newsForm.description = site.description || "";
   newsForm.webhookIds = [...site.webhook_ids];
+  newsForm.reanalyze = false;
   newsModalOpen.value = true;
 };
 
@@ -432,6 +435,7 @@ const saveNewsSite = async () => {
       ...(title ? { title } : {}),
       description: newsForm.description.trim() || null,
       webhook_ids: newsForm.webhookIds,
+      ...(newsForm.id ? { reanalyze: newsForm.reanalyze } : {}),
     };
     await request(newsForm.id ? `/news-sites/${newsForm.id}` : "/news-sites", {
       method: newsForm.id ? "PATCH" : "POST",

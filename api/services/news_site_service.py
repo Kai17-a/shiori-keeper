@@ -460,19 +460,21 @@ class NewsSiteService:
                 raise HTTPException(status_code=404, detail="News site not found")
 
         payload = data.model_dump(exclude_unset=True)
+        reanalyze = bool(payload.pop("reanalyze", False))
         fields: dict[str, object] = {}
-        if "url" in payload:
-            url = str(payload["url"])
-            if url != current["url"]:
-                with get_db() as conn:
-                    existing = NewsSiteRepository(conn).find_by_url(url)
-                if existing is not None and int(existing["id"]) != site_id:
-                    raise HTTPException(
-                        status_code=409, detail="News site URL already exists"
-                    )
-                scrape_config, _ = self._analyze_and_test(url)
-                fields["url"] = url
-                fields["scrape_config"] = json.dumps(scrape_config, ensure_ascii=False)
+        url = str(payload["url"]) if "url" in payload else str(current["url"])
+        url_changed = url != current["url"]
+        if url_changed:
+            with get_db() as conn:
+                existing = NewsSiteRepository(conn).find_by_url(url)
+            if existing is not None and int(existing["id"]) != site_id:
+                raise HTTPException(
+                    status_code=409, detail="News site URL already exists"
+                )
+            fields["url"] = url
+        if url_changed or reanalyze:
+            scrape_config, _ = self._analyze_and_test(url)
+            fields["scrape_config"] = json.dumps(scrape_config, ensure_ascii=False)
         if "title" in payload:
             fields["title"] = payload["title"]
         if "description" in payload:

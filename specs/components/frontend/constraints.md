@@ -37,6 +37,7 @@
 - LLM 未設定時は custom news site 登録を無効化し、設定画面への導線を表示する。
 - custom news site 登録中は HTML 解析と抽出テストの完了まで保存中状態を表示する。
 - custom news site の登録・URL 更新失敗は toast だけでなく editor modal 内の error alert に保持し、失敗段階と reference ID を確認できるようにする。
+- custom news site 更新時のLLM再解析は任意で、モーダルを開くたびに未選択へ戻す。
 - 設定画面はテーマ、webhook、LLM 接続の管理を提供し、LLM API key の保存値は再表示しない。
 - API が利用できない場合でもカタログ読込のPromise rejectionを画面外へ漏らさず、UIを維持してエラー状態を表示する。
 
