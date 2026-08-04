@@ -58,6 +58,10 @@ run = "bun --cwd frontend run typecheck"
 description = "Run frontend end-to-end tests"
 run = "./scripts/run-e2e-tests.sh"
 
+[tasks.update-readme-screenshots]
+description = "Update the README application screenshots"
+run = "./scripts/playwright-screenshot/capture-playwright-screenshots.sh"
+
 [tasks.batch-check]
 description = "Check the batch application"
 run = "cargo check --manifest-path batch/Cargo.toml"
