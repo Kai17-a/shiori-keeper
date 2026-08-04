@@ -16,6 +16,10 @@
   - フィードごとの通知先 webhook 選択を取得する
   - 通知先未選択のフィードは空の選択として扱う
 
+- `batch/src/runner.rs`
+  - RSS itemの記事情報を共通形式へ変換する
+  - Atom entryのlink、published／updated、summary／contentを共通形式へ変換する
+
 - `batch/tests/webhook.rs`
   - Microsoft Teams の記事タイトルがリンクで、個別の遷移ボタンを含まないこと
   - 全体設定が無効な場合に webhook payload から記事サマリーを除外する

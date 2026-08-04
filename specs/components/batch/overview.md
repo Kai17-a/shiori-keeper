@@ -16,7 +16,7 @@ API サーバーとは別プロセスとして動作し、HTTP ルートは持�
 - `news_sites.notify_webhook_enabled = 1` の custom news site を巡回し、保存済み JSON の CSS selector で HTML を解析する
 - `news_site_webhooks` の選択がある場合は選択先のみ、未選択時は全 webhook へ送信する
 - `news_site_articles` の URL で既通知記事を除外し、送信成功後に記録する
-- RSS URL を取得し、RSS channel として解析する
+- RSS URL を取得し、RSSまたはAtomフィードとして解析する
 - `rss_feed_articles` に保存済みの URL を読み、既送信記事を除外する
 - 新着記事を Discord、Slack、または Microsoft Teams 向けの webhook payload として登録済みの全 webhook へ送信する
 - 1 件でも webhook 送信に成功した後に `rss_feed_articles` へ送信済み記事を記録する
@@ -38,6 +38,6 @@ API サーバーとは別プロセスとして動作し、HTTP ルートは持�
 - `tokio` による async 実行
 - `rusqlite` による SQLite アクセス
 - `reqwest` による RSS と webhook の HTTP 通信
-- `rss` crate による RSS channel 解析
+- `feed-rs` crate によるRSS・Atomフィード解析
 - `scraper` crate による HTML/CSS selector 解析
 - `serde_json` による webhook payload 構築

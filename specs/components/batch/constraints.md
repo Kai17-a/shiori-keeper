@@ -26,11 +26,11 @@
 
 - RSS URL は `reqwest::Url::parse` で解釈できる必要がある
 - RSS 取得は10秒でタイムアウトし、当該フィードだけをスキップする
-- 取得結果は `rss::Channel::read_from` で RSS channel として解析できる必要がある
+- 取得結果は `feed-rs` でRSSまたはAtomフィードとして解析できる必要がある
 - item の `link` がない場合は `"(no link)"` を URL として扱う
 - item の `title` がない場合は `"(no title)"` をタイトルとして扱う
-- item の `pub_date` がない場合は `"(no published date)"` を published として扱う
-- item の summary は `description`、`content` の順で採用し、どちらもない場合は `"(no summary)"` とする
+- published はRSSの `pubDate` またはAtomの `published`、`updated` から取得してRFC 3339へ正規化し、いずれもない場合は `"(no published date)"` として扱う
+- summary はRSS・Atomのsummary相当フィールド、contentの順で採用し、どちらもない場合は `"(no summary)"` とする
 - 送信済み判定は `rss_feed_articles.url` で行う
 - 送信済み記事の記録は `INSERT OR IGNORE` を使い、重複 URL を二重登録しない
 

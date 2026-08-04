@@ -1,5 +1,5 @@
+use feed_rs::parser;
 use reqwest::Url;
-use rss::Channel;
 use rusqlite::Connection;
 use std::collections::HashSet;
 use std::error::Error;
@@ -10,6 +10,49 @@ use crate::{
     rss_periodic_execution_enabled, rss_webhook_notification_enabled, webhook,
     webhook_summary_enabled,
 };
+
+#[derive(Debug, PartialEq)]
+struct FeedArticle {
+    title: String,
+    link: String,
+    published: String,
+    summary: String,
+}
+
+fn parse_feed_articles(content: &[u8]) -> Result<Vec<FeedArticle>, parser::ParseFeedError> {
+    let feed = parser::parse(content)?;
+    Ok(feed
+        .entries
+        .into_iter()
+        .map(|entry| {
+            let published = entry
+                .published
+                .or(entry.updated)
+                .map(|date| date.to_rfc3339())
+                .unwrap_or_else(|| "(no published date)".to_string());
+            FeedArticle {
+                title: entry
+                    .title
+                    .map(|title| title.content)
+                    .unwrap_or_else(|| "(no title)".to_string()),
+                link: entry
+                    .links
+                    .iter()
+                    .find(|link| link.rel.as_deref() == Some("alternate"))
+                    .or_else(|| entry.links.iter().find(|link| link.rel.is_none()))
+                    .or_else(|| entry.links.first())
+                    .map(|link| link.href.clone())
+                    .unwrap_or_else(|| "(no link)".to_string()),
+                published,
+                summary: entry
+                    .summary
+                    .map(|summary| summary.content)
+                    .or_else(|| entry.content.and_then(|content| content.body))
+                    .unwrap_or_else(|| "(no summary)".to_string()),
+            }
+        })
+        .collect())
+}
 
 pub async fn run_batch(conn: &Connection) -> Result<(), Box<dyn Error>> {
     let rss_feeds = fetch_rss_feeds(conn)?;
@@ -69,8 +112,8 @@ pub async fn run_batch(conn: &Connection) -> Result<(), Box<dyn Error>> {
                 continue;
             }
         };
-        let channel = match Channel::read_from(&content[..]) {
-            Ok(channel) => channel,
+        let feed_articles = match parse_feed_articles(&content) {
+            Ok(articles) => articles,
             Err(err) => {
                 eprintln!(
                     "Skipping RSS feed {}: failed to parse channel: {}",
@@ -92,28 +135,21 @@ pub async fn run_batch(conn: &Connection) -> Result<(), Box<dyn Error>> {
 
         let mut articles = Vec::new();
         let mut embeds = Vec::new();
-        for item in channel.items() {
-            let title = item.title().unwrap_or("(no title)");
-            let link = item.link().unwrap_or("(no link)");
-            if sent_urls.contains(link) {
+        for item in &feed_articles {
+            if sent_urls.contains(&item.link) {
                 continue;
             }
-            let published = item.pub_date().unwrap_or("(no published date)");
-            let summary = item
-                .description()
-                .or(item.content())
-                .unwrap_or("(no summary)");
 
             embeds.push(webhook::Embed {
-                title,
-                link,
-                published,
-                summary,
+                title: &item.title,
+                link: &item.link,
+                published: &item.published,
+                summary: &item.summary,
             });
             articles.push(webhook::Article {
-                url: link,
-                title,
-                published,
+                url: &item.link,
+                title: &item.title,
+                published: &item.published,
             });
         }
 
@@ -286,4 +322,62 @@ pub async fn run_batch(conn: &Connection) -> Result<(), Box<dyn Error>> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_feed_articles;
+
+    #[test]
+    fn parses_rss_articles() {
+        let content = br#"<?xml version="1.0" encoding="UTF-8"?>
+            <rss version="2.0">
+              <channel>
+                <title>Example RSS</title>
+                <link>https://example.com/</link>
+                <description>Example feed</description>
+                <item>
+                  <title>RSS article</title>
+                  <link>https://example.com/rss-article</link>
+                  <pubDate>Mon, 04 Aug 2025 06:00:00 +0000</pubDate>
+                  <description>RSS summary</description>
+                </item>
+              </channel>
+            </rss>"#;
+
+        let articles = parse_feed_articles(content).expect("parse RSS feed");
+
+        assert_eq!(articles.len(), 1);
+        assert_eq!(articles[0].title, "RSS article");
+        assert_eq!(articles[0].link, "https://example.com/rss-article");
+        assert_eq!(articles[0].published, "2025-08-04T06:00:00+00:00");
+        assert_eq!(articles[0].summary, "RSS summary");
+    }
+
+    #[test]
+    fn parses_atom_articles() {
+        let content = br#"<?xml version="1.0" encoding="UTF-8"?>
+            <feed xmlns="http://www.w3.org/2005/Atom">
+              <title>Example Atom</title>
+              <id>https://example.com/atom</id>
+              <updated>2026-08-04T06:00:00Z</updated>
+              <entry>
+                <title>Atom article</title>
+                <id>https://example.com/atom-article</id>
+                <link rel="self" href="https://example.com/atom-article.atom" />
+                <link rel="alternate" href="https://example.com/atom-article" />
+                <published>2026-08-04T14:30:00+09:00</published>
+                <updated>2026-08-04T14:35:00+09:00</updated>
+                <content type="text">Atom content</content>
+              </entry>
+            </feed>"#;
+
+        let articles = parse_feed_articles(content).expect("parse Atom feed");
+
+        assert_eq!(articles.len(), 1);
+        assert_eq!(articles[0].title, "Atom article");
+        assert_eq!(articles[0].link, "https://example.com/atom-article");
+        assert_eq!(articles[0].published, "2026-08-04T05:30:00+00:00");
+        assert_eq!(articles[0].summary, "Atom content");
+    }
 }

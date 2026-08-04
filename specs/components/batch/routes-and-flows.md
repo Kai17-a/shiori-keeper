@@ -20,7 +20,7 @@
 6. RSS webhook 通知が無効な場合は成功扱いで終了する
 7. `webhook_endpoints` から登録済み webhook URL を全件取得する
 8. webhook URL が 1 件も登録されていない場合は標準エラーへ出力して成功扱いで終了する
-9. フィードごとに RSS URL を取得して RSS channel として解析する
+9. フィードごとに RSS URL を取得してRSSまたはAtomフィードとして解析する
 10. `rss_feed_articles` から送信済み URL を読み込む
 11. RSS item の URL が送信済みでなければ通知対象に追加する
 12. 通知対象がないフィードはスキップする
