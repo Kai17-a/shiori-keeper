@@ -221,7 +221,7 @@ CREATE TABLE IF NOT EXISTS bookmark_tags (
 - `webhook_endpoints.url` は一意である
 - `webhook_endpoints.enabled` の既定値は `true` で、無効なURLはRSS・Atom・custom newsの通知先から除外する
 - webhook一覧は無効なURLも返し、`PATCH /settings/webhooks/{id}` で有効状態を更新する
-- Microsoft Teams webhook は Adaptive Card 形式で疎通確認と RSS 通知を送信し、記事タイトルをリンクとして表示して個別の遷移ボタンは設けない
+- Microsoft Teams webhook は Adaptive Card 形式で疎通確認とRSS・custom news通知を送信し、記事タイトルを箇条書きのリンクとして表示する。記事間は罫線ではなく余白で区切り、個別の遷移ボタンは設けない
 - `settings/webhook/ping` は送信前確認用の疎通確認 API である
 - `settings/rss-execution` は RSS 定期実行フラグを保存する
 - `settings/rss-webhook-notification` は RSS 定期実行時の webhook 通知可否を保存する

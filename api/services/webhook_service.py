@@ -196,7 +196,7 @@ def build_rss_notification_payload(
             article_body: list[dict[str, object]] = [
                 {
                     "type": "TextBlock",
-                    "text": f"[{title}]({url})",
+                    "text": f"• [{title}]({url})",
                     "weight": "Bolder",
                     "wrap": True,
                 }
@@ -208,6 +208,7 @@ def build_rss_notification_payload(
                         "text": _truncate(
                             str(article["summary"]), NOTIFICATION_SUMMARY_MAX
                         ),
+                        "spacing": "Small",
                         "wrap": True,
                         "isSubtle": True,
                     }
@@ -215,7 +216,7 @@ def build_rss_notification_payload(
             body.append(
                 {
                     "type": "Container",
-                    "separator": True,
+                    "spacing": "Medium",
                     "items": article_body,
                 }
             )

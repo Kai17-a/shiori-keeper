@@ -34,7 +34,7 @@
   - RSS/Atom 以外の URL 拒否
   - webhook 疎通確認
   - Slack webhook URL の登録と疎通確認
-  - Microsoft Teams webhook URL の登録、疎通確認、タイトルリンクを持ち遷移ボタンを持たない Adaptive Card 通知
+  - Microsoft Teams webhook URL の登録、疎通確認、箇条書きタイトルリンクと記事間余白を持ち、罫線と遷移ボタンを持たない Adaptive Card 通知
   - 複数 webhook への送信、一部失敗時の継続、全滅時の 502
   - 無効な webhook URL を手動通知先から除外
   - フィードごとの通知先 webhook 選択の作成・更新・解除、選択先のみへの送信、未存在 ID の 404、重複 ID と null の 422

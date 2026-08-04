@@ -56,7 +56,7 @@
 - batch は webhook URL から Discord、Slack、Microsoft Teams を識別する
 - `webhook_include_summary_enabled` が `0` の場合は RSS と custom news site の通知 payload から記事サマリーを除外し、設定行がない場合は含める
 - Discord には `username`、`content`、`embeds`、Slack には Block Kit、Microsoft Teams には Adaptive Card 形式を送る
-- Microsoft Teams の記事タイトルは記事 URL への Markdown link とし、`Action.OpenUrl` ボタンは送らない
+- Microsoft Teams の記事タイトルは箇条書きの Markdown link とし、記事間は罫線ではなく余白で区切り、`Action.OpenUrl` ボタンは送らない
 - 記事タイトルは 256 文字、summary は 300 文字に切り詰めてから payload に載せる（Discord の embed 上限と Slack の block text 上限を満たすため）
 - embed のチャンクサイズ見積もりには切り詰め後の文字数を使う
 - webhook の各送信試行は10秒でタイムアウトする

@@ -2,6 +2,7 @@
 
 import sqlite3
 from contextlib import contextmanager
+from typing import cast
 
 import pytest
 from fastapi.testclient import TestClient
@@ -139,8 +140,27 @@ def test_execute_rss_feed_supports_microsoft_teams_adaptive_cards(client, monkey
     assert card["type"] == "AdaptiveCard"
     assert card["body"][0]["text"] == "Parsed Example - New articles (2 items)"
     first_article = card["body"][1]["items"]
-    assert first_article[0]["text"] == "[Item 1](https://example.com/item-1)"
+    assert card["body"][1]["spacing"] == "Medium"
+    assert "separator" not in card["body"][1]
+    assert first_article[0]["text"] == "• [Item 1](https://example.com/item-1)"
     assert not any(item["type"] == "ActionSet" for item in first_article)
+
+    summary_payload = webhook_module.build_rss_notification_payload(
+        "teams",
+        feed_title="Example",
+        articles=[
+            {
+                "title": "Article",
+                "url": "https://example.com/article",
+                "summary": "Summary",
+            }
+        ],
+    )
+    attachments = cast(list[dict[str, object]], summary_payload["attachments"])
+    content = cast(dict[str, object], attachments[0]["content"])
+    body = cast(list[dict[str, object]], content["body"])
+    summary_items = cast(list[dict[str, object]], body[1]["items"])
+    assert summary_items[1]["spacing"] == "Small"
 
 
 def test_execute_rss_feed_truncates_long_article_content_for_discord(client, monkeypatch):

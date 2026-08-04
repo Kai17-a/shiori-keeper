@@ -22,7 +22,7 @@
   - Atom entryのlink、published／updated、summary／contentを共通形式へ変換する
 
 - `batch/tests/webhook.rs`
-  - Microsoft Teams の記事タイトルがリンクで、個別の遷移ボタンを含まないこと
+  - Microsoft Teams の記事タイトルが箇条書きリンクで、記事間を余白で区切り、罫線と個別の遷移ボタンを含まないこと
   - 全体設定が無効な場合に webhook payload から記事サマリーを除外する
   - webhook payload の基本形
   - `record_sent_articles` による送信済み記事の記録

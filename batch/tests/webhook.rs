@@ -163,7 +163,16 @@ fn build_payload_supports_microsoft_teams_adaptive_cards() {
     );
     assert_eq!(
         payload["attachments"][0]["content"]["body"][1]["items"][0]["text"],
-        "[Example Article](https://example.com/article)"
+        "• [Example Article](https://example.com/article)"
+    );
+    assert_eq!(
+        payload["attachments"][0]["content"]["body"][1]["spacing"],
+        "Medium"
+    );
+    assert!(payload["attachments"][0]["content"]["body"][1]["separator"].is_null());
+    assert_eq!(
+        payload["attachments"][0]["content"]["body"][1]["items"][1]["spacing"],
+        "Small"
     );
     let article_items = payload["attachments"][0]["content"]["body"][1]["items"]
         .as_array()
