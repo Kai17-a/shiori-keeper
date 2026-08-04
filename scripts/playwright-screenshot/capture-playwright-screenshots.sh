@@ -52,8 +52,20 @@ start_frontend_server() {
     frontend_pid=$!
 }
 
-if [ ! -d "$HOME/.cache/ms-playwright" ] || [ -z "$(find "$HOME/.cache/ms-playwright" -mindepth 1 -maxdepth 1 2>/dev/null | head -n 1)" ]; then
+playwright_browser=""
+if [ -d "$HOME/.cache/ms-playwright" ]; then
+    playwright_browser=$(find "$HOME/.cache/ms-playwright" -type f -name chrome-headless-shell 2>/dev/null | sort | tail -n 1)
+fi
+playwright_install_required=0
+if [ -z "$playwright_browser" ]; then
+    playwright_install_required=1
+elif command -v ldd >/dev/null 2>&1 && ldd "$playwright_browser" 2>/dev/null | grep -q "not found"; then
+    playwright_install_required=1
+fi
+
+if [ "$playwright_install_required" -eq 1 ]; then
     cd "$repo_root/frontend"
+    echo "Playwright browser dependencies are missing; sudo may prompt for installation." >&2
     bunx playwright install --with-deps chromium
 fi
 
